@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>王佳怡 · 网页简历</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&family=Noto+Serif+SC:wght@400;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,700;1,800&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com">
+</script>
+
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f5f0e8;font-family:'Noto Serif SC','Nunito',sans-serif}
+#gameCanvas{display:block;width:100%;height:100%;position:fixed;top:0;left:0;touch-action:none;cursor:default}
+#interactionPrompt{position:fixed;z-index:30;display:none;pointer-events:none;transform:translate(-50%,-100%);padding-bottom:16px;transition:opacity .3s}
+#interactionPrompt.visible{display:block;pointer-events:auto}
+#interactionPrompt .prompt-bg{background:rgba(255,255,255,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.5);border-radius:14px;padding:10px 20px;box-shadow:0 8px 32px rgba(0,0,0,.08);text-align:center;animation:promptPulse 2s ease-in-out infinite}
+@keyframes promptPulse{0%,100%{transform:scale(1);box-shadow:0 8px 32px rgba(0,0,0,.08)}50%{transform:scale(1.04);box-shadow:0 8px 40px rgba(0,0,0,.14)}}
+#interactionPrompt .prompt-key{display:inline-block;background:rgba(60,60,70,.12);border-radius:6px;padding:2px 10px;font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;color:#555;margin:0 4px}
+#interactionPrompt .prompt-text{font-family:'Noto Serif SC',serif;font-size:14px;font-weight:600;color:#555;letter-spacing:1px}
+#virtualDPad{position:fixed;bottom:40px;left:40px;z-index:40;display:none;user-select:none;-webkit-user-select:none;touch-action:none}
+@media(pointer:coarse){#virtualDPad{display:block}}
+#virtualDPad .dpad-bg{width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.5);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.6);box-shadow:0 4px 24px rgba(0,0,0,.06);position:relative}
+#virtualDPad .dpad-btn{position:absolute;width:44px;height:44px;border-radius:12px;background:rgba(200,190,175,.35);border:1px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:20px;color:#888;transition:background .1s;touch-action:none}
+#virtualDPad .dpad-btn:active,#virtualDPad .dpad-btn.active{background:rgba(200,190,175,.6)}
+#virtualDPad .dpad-up{top:6px;left:50%;transform:translateX(-50%)}
+#virtualDPad .dpad-down{bottom:6px;left:50%;transform:translateX(-50%)}
+#virtualDPad .dpad-left{left:6px;top:50%;transform:translateY(-50%)}
+#virtualDPad .dpad-right{right:6px;top:50%;transform:translateY(-50%)}
+#hudHint{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:25;background:rgba(255,255,255,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.4);border-radius:30px;padding:8px 22px;font-family:'Nunito','Noto Serif SC',sans-serif;font-size:13px;color:#888;letter-spacing:.5px;text-align:center;transition:opacity .6s;pointer-events:none}
+#hudHint .hint-icon{display:inline-block;margin:0 3px}
+.modal-overlay{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.15);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:modalFadeIn .3s ease-out}
+.modal-overlay.open{display:flex}
+@keyframes modalFadeIn{from{opacity:0;backdrop-filter:blur(0)}to{opacity:1;backdrop-filter:blur(6px)}}
+.modal-glass{position:relative;width:90%;max-width:720px;max-height:85vh;overflow-y:auto;background:rgba(255,255,255,.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.5);border-radius:28px;box-shadow:0 24px 80px rgba(0,0,0,.08),0 0 0 1px rgba(255,255,255,.3)inset;padding:40px 44px;animation:modalSlideUp .35s ease-out}
+@keyframes modalSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.modal-glass::-webkit-scrollbar{width:4px}
+.modal-glass::-webkit-scrollbar-track{background:transparent}
+.modal-glass::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:4px}
+.modal-close{position:absolute;top:16px;right:20px;width:36px;height:36px;border:none;background:rgba(200,190,175,.2);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;color:#888;transition:background .2s,transform .2s}
+.modal-close:hover{background:rgba(200,190,175,.35);transform:rotate(90deg)}
+.modal-title{font-family:'ZCOOL QingKe HuangYou',cursive;font-size:28px;color:#3a3a3a;margin-bottom:8px;line-height:1.3}
+.modal-subtitle{font-family:'Noto Serif SC',serif;font-size:15px;color:#999;margin-bottom:20px;font-weight:400}
+.modal-desc{font-family:'Noto Serif SC',serif;font-size:15px;line-height:1.8;color:#555;margin-bottom:24px}
+.modal-section-title{font-family:'ZCOOL QingKe HuangYou',cursive;font-size:18px;color:#5a5a5a;margin-bottom:10px;margin-top:20px}
+.modal-modules{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+.modal-module{background:rgba(255,255,255,.5);border:1px solid rgba(200,190,175,.15);border-radius:14px;padding:16px 20px;transition:background .2s}
+.modal-module:hover{background:rgba(255,255,255,.7)}
+.modal-module h4{font-family:'Nunito','Noto Serif SC',sans-serif;font-weight:700;font-size:14px;color:#4a4a4a;margin-bottom:4px;letter-spacing:.3px}
+.modal-module p{font-family:'Noto Serif SC',serif;font-size:14px;line-height:1.7;color:#777}
+.diagram-placeholder{width:100%;min-height:180px;border:2px dashed rgba(180,170,155,.3);border-radius:16px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.2);margin:16px 0 8px;padding:24px;position:relative;transition:border-color .2s}
+.diagram-placeholder:hover{border-color:rgba(180,170,155,.5)}
+.diagram-placeholder .diagram-icon{font-size:32px;margin-right:16px;opacity:.5}
+.diagram-placeholder .diagram-text{font-family:'Noto Serif SC',serif;font-size:14px;color:#bbb;letter-spacing:.5px}
+.edu-item{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid rgba(200,190,175,.15)}
+.edu-item:last-child{border-bottom:none}
+.edu-icon{font-size:28px;flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(200,190,175,.15);border-radius:12px}
+.edu-details h4{font-family:'Nunito','Noto Serif SC',sans-serif;font-weight:700;font-size:16px;color:#4a4a4a}
+.edu-details .edu-meta{font-family:'Noto Serif SC',serif;font-size:13px;color:#999;margin-top:2px}
+.edu-honors{margin-top:16px;padding:16px 20px;background:rgba(200,190,175,.08);border-radius:14px}
+.edu-honors h4{font-family:'Nunito','Noto Serif SC',sans-serif;font-weight:700;font-size:14px;color:#6a6a6a;margin-bottom:8px}
+.edu-honors p{font-family:'Noto Serif SC',serif;font-size:14px;line-height:1.8;color:#888}
+.image-modal-overlay{position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);animation:modalFadeIn .2s ease-out}
+.image-modal-overlay.open{display:flex}
+.image-modal-content{position:relative;max-width:90vw;max-height:90vh;animation:modalSlideUp .3s ease-out}
+.image-modal-content img{max-width:100%;max-height:90vh;width:auto;height:auto;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.image-modal-close{position:absolute;top:-40px;right:0;width:36px;height:36px;border:none;background:rgba(255,255,255,.3);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;transition:background .2s,transform .2s}
+.image-modal-close:hover{background:rgba(255,255,255,.5);transform:rotate(90deg)}
+.image-zoomable{cursor:zoom-in;transition:transform .2s,box-shadow .2s}
+.image-zoomable:hover{transform:scale(1.02);box-shadow:0 8px 32px rgba(0,0,0,.12)}
+@media(max-width:640px){.modal-glass{padding:28px 20px;border-radius:20px;max-width:95%}.modal-title{font-size:22px}#virtualDPad{left:16px;bottom:24px}#virtualDPad .dpad-bg{width:130px;height:130px}#virtualDPad .dpad-btn{width:38px;height:38px;font-size:16px}#hudHint{font-size:11px;padding:6px 14px;top:12px}}
+body.modal-open{overflow:hidden}
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="hudHint"><span class="hint-icon">⌨</span> WASD / 方向键 探索 &nbsp;·&nbsp; <span class="hint-icon" style="font-weight:700;font-size:14px">E</span> 交互</div>
+
+<div id="interactionPrompt"><div class="prompt-bg"><span class="prompt-key">E</span><span class="prompt-text">打开</span></div></div>
+
+<div id="virtualDPad"><div class="dpad-bg"><button class="dpad-btn dpad-up" data-dir="up">▲</button><button class="dpad-btn dpad-down" data-dir="down">▼</button><button class="dpad-btn dpad-left" data-dir="left">◀</button><button class="dpad-btn dpad-right" data-dir="right">▶</button></div></div>
+
+<div class="modal-overlay" id="modal-internship"><div class="modal-glass"><button class="modal-close" onclick="closeModal('internship')">✕</button><div class="modal-title">北源创智</div><div class="modal-subtitle">大模型产品评测实习生 · 2026.02 – 2026.04</div><div class="modal-desc">负责 MinerU 文档解析模型的多维度 OCR 评测及金融大模型微调测试集构建。</div><div class="modal-section-title">📋 核心模块</div><div class="modal-modules"><div class="modal-module"><h4>评测框架搭建</h4><p>搭建基于 OmniDocBench 与 OCRBench 的综合自动化评测框架，量化公式、表格、布局等多维度指标。</p></div><div class="modal-module"><h4>模型微调</h4><p>负责金融信息数据模型微调任务，利用XTuner 框架对Qwen2.5-14B 进行QLoRA 微调。</p></div><div class="modal-module"><h4>测试集搭建与评估</h4><p>设计并实现自动化的金融打分模型测试集构建，开发模型指标评估工具链，对比训练模型与基础模型在306 个样本上的表现；训练后模型在高分段(≥7 分) 召回率从66.1% 提升至78.6%，精确率达到80.0%。</p></div></div><div class="modal-section-title">📊 评测框架图</div><div style="width:100%;margin:16px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(200,190,175,.2)"><img src="CNN+發料容影式韓法.png" alt="评测框架图" class="image-zoomable" onclick="openImageModal(this.src)" style="width:100%;height:auto;display:block"></div><div style="margin:24px 0;display:flex;gap:12px"><a href="financial-scoring.html" target="_blank" rel="noopener noreferrer" style="flex:1;padding:14px 20px;background:linear-gradient(135deg,#d4a824 0%,#c4930a 100%);color:#fff;text-align:center;border-radius:10px;text-decoration:none;font-family:'Nunito','Noto Serif SC',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;transition:transform .2s,box-shadow .2s;border:none;cursor:pointer;display:inline-block" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">📊 查看金融打分模型项目详情</a></div></div></div>
+
+<div class="modal-overlay" id="modal-project"><div class="modal-glass"><button class="modal-close" onclick="closeModal('project')">✕</button><div class="modal-title">AI 驱动的多智能体医疗诊断分析平台</div><div class="modal-subtitle">多智能体架构 · AI 医疗助手系统</div><div class="modal-desc">基于多智能体架构的 AI 医疗助手系统，集成影像分析、知识检索与专业问答。</div><div class="modal-section-title"> 产品全景图</div><div style="width:100%;margin:16px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(200,190,175,.2)"><img src="image.png" alt="产品全景思维导图" class="image-zoomable" onclick="openImageModal(this.src)" style="width:100%;height:auto;display:block"></div><div style="margin:24px 0;display:flex;gap:12px"><a href="http://localhost:8899/figma-design.html" target="_blank" rel="noopener noreferrer" style="flex:1;padding:14px 20px;background:linear-gradient(135deg,#a8c8b8 0%,#8ab8a0 100%);color:#fff;text-align:center;border-radius:10px;text-decoration:none;font-family:'Nunito','Noto Serif SC',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;transition:transform .2s,box-shadow .2s;border:none;cursor:pointer;display:inline-block" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">📄 查看产品设计文档</a></div><div style="padding:16px;background:rgba(255,255,255,.3);border-radius:10px;border:1px solid rgba(200,190,175,.15)"><p style="font-family:'Noto Serif SC',serif;font-size:13px;color:#777;line-height:1.7">基于多智能体架构的医疗诊断系统，包含工作流设计、RAG 功能规划、检索链路优化、安全合规与产品交付等核心模块。点击上方链接查看完整的设计文档、系统架构与交互原型。</p></div></div></div>
+
+<div class="modal-overlay" id="modal-education"><div class="modal-glass"><button class="modal-close" onclick="closeModal('education')">✕</button><div class="modal-title">🎓 教育背景</div><div class="modal-subtitle" style="margin-bottom:16px">学术足迹与成长轨迹</div><div class="edu-item"><div class="edu-icon">🏛</div><div class="edu-details"><h4>香港城市大学</h4><div class="edu-meta">计算机科学硕士 · 2025.09 – 2026.10</div></div></div><div class="edu-item"><div class="edu-icon">⚡</div><div class="edu-details"><h4>华北电力大学</h4><div class="edu-meta">信息管理与信息系统本科 · 2021.09 – 2025.06</div></div></div><div class="edu-honors"><h4>🏆 荣誉与成就</h4><p>二级奖学金 · 科技创新优秀奖学金 · 校三好学生 · 国家级大创项目队长（良好） · 本科"百篇"优秀毕业设计</p></div></div></div>
+
+<script>
+const CONFIG={world:{width:960,height:700},tileSize:40,catSpeed:2.8,interactionRadius:85,gridSpacing:40,gridColor:'rgba(200,190,175,.18)',bgColor:'#f5f0e8',pathColor:'rgba(210,195,175,.35)',forestMargin:72};
+
+const LANDMARKS=[
+{id:'education',x:430,y:350,width:220,height:170,label:'🎓 教育背景',sublabel:'华北电力大学 · 香港城市大学',color:'#c8d4e0',borderColor:'#a8b8c8',accentColor:'#8aa8c0',modalId:'modal-education'},
+{id:'internship',x:280,y:170,width:200,height:150,label:'💼 实习经历',sublabel:'北源创智 · 大模型产品评测',color:'#c8e0d4',borderColor:'#a8c8b8',accentColor:'#8ab8a0',modalId:'modal-internship'},
+{id:'project',x:280,y:530,width:200,height:150,label:'🔬 项目',sublabel:'多智能体医疗诊断平台',color:'#d4cce0',borderColor:'#b8b0c8',accentColor:'#9a8eb0',modalId:'modal-project'}
+];
+
+// Patrol route: NCEPU → CityU → Internship → Project
+// Contact info shadow at cat's start position (华北电力大学)
+const SHADOW_X=720,SHADOW_Y=350;
+
+const paths=[
+{x1:720,y1:350,x2:280,y2:350},
+{x1:280,y1:170,x2:280,y2:530}
+];
+
+const forestTrees=[];
+const fm=CONFIG.forestMargin,sp=30;
+for(let x=0;x<CONFIG.world.width;x+=sp)for(let y=0;y<fm;y+=sp)forestTrees.push({x:x+(Math.random()-.5)*6,y:y+(Math.random()-.5)*6,size:14+Math.random()*8});
+for(let x=0;x<CONFIG.world.width;x+=sp)for(let y=CONFIG.world.height-fm;y<CONFIG.world.height;y+=sp)forestTrees.push({x:x+(Math.random()-.5)*6,y:y+(Math.random()-.5)*6,size:14+Math.random()*8});
+for(let y=fm;y<CONFIG.world.height-fm;y+=sp)for(let x=0;x<fm;x+=sp)forestTrees.push({x:x+(Math.random()-.5)*6,y:y+(Math.random()-.5)*6,size:14+Math.random()*8});
+for(let y=fm;y<CONFIG.world.height-fm;y+=sp)for(let x=CONFIG.world.width-fm;x<CONFIG.world.width;x+=sp)forestTrees.push({x:x+(Math.random()-.5)*6,y:y+(Math.random()-.5)*6,size:14+Math.random()*8});
+for(let i=0;i<60;i++){const c=Math.floor(Math.random()*4);let cx,cy;switch(c){case 0:cx=Math.random()*fm*1.2,cy=Math.random()*fm*1.2;break;case 1:cx=CONFIG.world.width-Math.random()*fm*1.2,cy=Math.random()*fm*1.2;break;case 2:cx=Math.random()*fm*1.2,cy=CONFIG.world.height-Math.random()*fm*1.2;break;case 3:cx=CONFIG.world.width-Math.random()*fm*1.2,cy=CONFIG.world.height-Math.random()*fm*1.2;break}forestTrees.push({x:cx,y:cy,size:12+Math.random()*10})}
+
+const meadowFlowers=[
+{x:390,y:170,color:'#f0c0c0'},{x:420,y:190,color:'#f0d0b0'},{x:540,y:160,color:'#d0e0c0'},{x:590,y:180,color:'#f0c0c0'},
+{x:340,y:280,color:'#c0d8f0'},{x:380,y:300,color:'#f0d0b0'},{x:560,y:280,color:'#f0c0c0'},{x:600,y:310,color:'#d0e0c0'},
+{x:340,y:440,color:'#f0d0b0'},{x:380,y:470,color:'#c0d8f0'},{x:560,y:430,color:'#f0c0c0'},{x:610,y:460,color:'#d0e0c0'},
+{x:420,y:500,color:'#f0c0c0'},{x:500,y:520,color:'#f0d0b0'},{x:700,y:280,color:'#c0d8f0'},{x:730,y:310,color:'#f0c0c0'},
+{x:680,y:430,color:'#f0d0b0'},{x:720,y:460,color:'#d0e0c0'},{x:430,y:130,color:'#f0c0c0'},{x:480,y:120,color:'#c0d8f0'}
+];
+const meadowTrees=[
+{x:440,y:140},{x:530,y:130},{x:680,y:140},{x:760,y:130},{x:140,y:330},{x:130,y:420},
+{x:440,y:590},{x:530,y:600},{x:680,y:560},{x:760,y:580},{x:140,y:570},{x:130,y:620},
+{x:820,y:270},{x:840,y:340},{x:820,y:480},{x:840,y:550}
+];
+
+const cat={x:720,y:350,dir:'right',moving:false,frame:0,frameTimer:0,walkCycle:0,blinkTimer:0,blinkState:false};
+
+const input={up:false,down:false,left:false,right:false,interact:false};
+
+const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+let canvasW,canvasH,dpr;
+function resizeCanvas(){dpr=window.devicePixelRatio||1;canvasW=window.innerWidth;canvasH=window.innerHeight;canvas.width=canvasW*dpr;canvas.height=canvasH*dpr;canvas.style.width=canvasW+'px';canvas.style.height=canvasH+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
+window.addEventListener('resize',resizeCanvas);resizeCanvas();
+
+const camera={x:0,y:0};
+function updateCamera(){const ox=Math.max(0,(canvasW-CONFIG.world.width)/2),oy=Math.max(0,(canvasH-CONFIG.world.height)/2);camera.x=-ox;camera.y=-oy}
+
+function isCloseToLandmark(cx,cy,lm){const dx=cx-lm.x,dy=cy-lm.y;return Math.sqrt(dx*dx+dy*dy)<CONFIG.interactionRadius}
+
+function drawBackground(){ctx.fillStyle=CONFIG.bgColor;ctx.fillRect(0,0,canvasW,canvasH)}
+function drawGrid(){const gs=CONFIG.gridSpacing,sx=-camera.x%gs,sy=-camera.y%gs;ctx.strokeStyle=CONFIG.gridColor;ctx.lineWidth=.5;ctx.beginPath();for(let x=sx;x<canvasW;x+=gs){ctx.moveTo(x,0);ctx.lineTo(x,canvasH)}for(let y=sy;y<canvasH;y+=gs){ctx.moveTo(0,y);ctx.lineTo(canvasW,y)}ctx.stroke()}
+function drawForest(){for(const t of forestTrees){const sx=t.x-camera.x,sy=t.y-camera.y;if(sx<-40||sx>canvasW+40||sy<-40||sy>canvasH+40)continue;const sz=t.size||16;ctx.fillStyle='rgba(0,0,0,.03)';ctx.beginPath();ctx.arc(sx+2,sy+3,sz*.8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#a08a72';ctx.fillRect(sx-2.5,sy,5,14);ctx.fillStyle='#6a8a5a';ctx.beginPath();ctx.arc(sx,sy-6,sz,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7a9a6a';ctx.beginPath();ctx.arc(sx+sz*.35,sy-sz*.4,sz*.75,0,Math.PI*2);ctx.fill();ctx.fillStyle='#5a7a4a';ctx.beginPath();ctx.arc(sx-sz*.3,sy-sz*.3,sz*.7,0,Math.PI*2);ctx.fill()}}
+function drawPaths(){ctx.strokeStyle=CONFIG.pathColor;ctx.lineWidth=18;ctx.lineCap='round';ctx.beginPath();for(const p of paths){ctx.moveTo(p.x1-camera.x,p.y1-camera.y);ctx.lineTo(p.x2-camera.x,p.y2-camera.y)}ctx.stroke();ctx.strokeStyle='rgba(200,185,165,.12)';ctx.lineWidth=6;ctx.setLineDash([8,12]);ctx.beginPath();for(const p of paths){ctx.moveTo(p.x1-camera.x,p.y1-camera.y);ctx.lineTo(p.x2-camera.x,p.y2-camera.y)}ctx.stroke();ctx.setLineDash([])}
+function drawMeadowTrees(){for(const t of meadowTrees){const sx=t.x-camera.x,sy=t.y-camera.y;if(sx<-40||sx>canvasW+40||sy<-40||sy>canvasH+40)continue;ctx.fillStyle='#b8a088';ctx.fillRect(sx-3,sy-2,6,18);ctx.fillStyle='#a8c8a0';ctx.beginPath();ctx.arc(sx,sy-4,16,0,Math.PI*2);ctx.fill();ctx.fillStyle='#b8d8b0';ctx.beginPath();ctx.arc(sx+6,sy-10,11,0,Math.PI*2);ctx.fill();ctx.fillStyle='#98b890';ctx.beginPath();ctx.arc(sx-5,sy-8,10,0,Math.PI*2);ctx.fill()}}
+function drawFlowers(){for(const f of meadowFlowers){const sx=f.x-camera.x,sy=f.y-camera.y;if(sx<-10||sx>canvasW+10||sy<-10||sy>canvasH+10)continue;ctx.fillStyle=f.color;ctx.beginPath();ctx.arc(sx,sy,4+Math.sin(Date.now()/1e3+f.x)*.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(180,160,120,.2)';ctx.fillRect(sx-.5,sy+2,1,6)}}
+function drawLandmarks(){for(const lm of LANDMARKS){const sx=lm.x-camera.x,sy=lm.y-camera.y,hw=lm.width/2,hh=lm.height/2;if(sx+hw<-20||sx-hw>canvasW+20||sy+hh<-20||sy-hh>canvasH+20)continue;ctx.fillStyle='rgba(0,0,0,.03)';ctx.beginPath();rr(ctx,sx-hw+4,sy-hh+4,lm.width,lm.height,16);ctx.fill();ctx.fillStyle=lm.color;ctx.beginPath();rr(ctx,sx-hw,sy-hh,lm.width,lm.height,14);ctx.fill();ctx.strokeStyle=lm.borderColor;ctx.lineWidth=1.5;ctx.beginPath();rr(ctx,sx-hw,sy-hh,lm.width,lm.height,14);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.2)';ctx.beginPath();rr(ctx,sx-hw+3,sy-hh+3,lm.width-6,lm.height*.4,12);ctx.fill();ctx.fillStyle='#4a4a4a';ctx.font='600 18px "Noto Serif SC",serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(lm.label,sx,sy-6);ctx.fillStyle='#888';ctx.font='12px "Noto Serif SC",serif';ctx.fillText(lm.sublabel,sx,sy+28);ctx.fillStyle=lm.accentColor;ctx.beginPath();ctx.arc(sx,sy-hh+12,3,0,Math.PI*2);ctx.fill()}}
+function rr(ctx,x,y,w,h,r){ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
+
+/* ============================
+   CONTACT INFO SHADOW — bigger, bolder, italic, like stamped on ground
+   ============================ */
+function drawContactShadow(){
+const sx=SHADOW_X-camera.x,sy=SHADOW_Y-camera.y;
+ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+// Email — big, bold, italic, semi-transparent shadow
+ctx.fillStyle='rgba(80,80,90,.13)';
+ctx.font='italic 700 20px "Nunito","Noto Serif SC",sans-serif';
+ctx.fillText('📧 w13687211767@163.com',sx,sy-42);
+// GitHub
+ctx.fillStyle='rgba(80,80,90,.13)';
+ctx.font='italic 700 20px "Nunito","Noto Serif SC",sans-serif';
+ctx.fillText('🐙 github.com/wjy-2003',sx,sy-16);
+// Decorative underline dots
+ctx.fillStyle='rgba(120,120,130,.08)';
+for(let i=-40;i<=40;i+=6){ctx.beginPath();ctx.arc(sx+i,sy+10,1.5,0,Math.PI*2);ctx.fill()}
+ctx.restore()}
+
+/* ============================
+   CAT DRAWING
+   ============================ */
+function drawCat(){
+const sx=cat.x-camera.x,sy=cat.y-camera.y;
+ctx.save();ctx.translate(sx,sy);
+if(cat.dir==='left'||cat.dir==='right')ctx.scale(cat.dir==='left'?-1:1,1);
+const wb=cat.moving?Math.sin(cat.walkCycle*.15)*1.5:0;
+ctx.fillStyle='rgba(0,0,0,.04)';ctx.beginPath();ctx.ellipse(0,20+(cat.moving?2:0),22,6,0,0,Math.PI*2);ctx.fill();
+ctx.strokeStyle='#d47a5a';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-14,8);ctx.quadraticCurveTo(-28+Math.sin(Date.now()*.003)*4,-6,-20+Math.sin(Date.now()*.005)*2,-16+Math.sin(Date.now()*.003)*2);ctx.stroke();
+ctx.fillStyle='#f0b090';ctx.beginPath();ctx.arc(-20+Math.sin(Date.now()*.005)*2,-16+Math.sin(Date.now()*.003)*2,4,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#e8845c';ctx.beginPath();ctx.ellipse(0,6+wb*.3,16,12,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='rgba(255,255,255,.1)';ctx.beginPath();ctx.ellipse(-4,2+wb*.3,8,8,-.2,0,Math.PI*2);ctx.fill();
+const la=cat.moving?Math.sin(cat.walkCycle*.15):0;ctx.fillStyle='#d47a5a';
+[-8,-3,3,8].forEach((p,i)=>{const ph=i<2?la:-la;ctx.fillRect(p-2.5,14+ph*2,5,8+(cat.moving?2:0));ctx.fillStyle='#f0b090';ctx.beginPath();ctx.ellipse(p,22+ph*2,3.5,2.5,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#d47a5a'});
+ctx.fillStyle='#e8845c';ctx.beginPath();ctx.arc(0,-10+wb*.5,15,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.moveTo(-13,-18+wb*.5);ctx.lineTo(-8,-32+wb*.5);ctx.lineTo(-3,-18+wb*.5);ctx.closePath();ctx.fill();
+ctx.beginPath();ctx.moveTo(3,-18+wb*.5);ctx.lineTo(8,-32+wb*.5);ctx.lineTo(13,-18+wb*.5);ctx.closePath();ctx.fill();
+ctx.fillStyle='#f0b090';
+ctx.beginPath();ctx.moveTo(-11,-19+wb*.5);ctx.lineTo(-8,-28+wb*.5);ctx.lineTo(-5,-19+wb*.5);ctx.closePath();ctx.fill();
+ctx.beginPath();ctx.moveTo(5,-19+wb*.5);ctx.lineTo(8,-28+wb*.5);ctx.lineTo(11,-19+wb*.5);ctx.closePath();ctx.fill();
+const bk=cat.blinkState;
+ctx.fillStyle='rgba(255,150,150,.12)';ctx.beginPath();ctx.ellipse(-10,-6+wb*.5,6,4,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(10,-6+wb*.5,6,4,0,0,Math.PI*2);ctx.fill();
+if(bk){ctx.strokeStyle='#555';ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-9,-10+wb*.5);ctx.lineTo(-5,-10+wb*.5);ctx.stroke();ctx.beginPath();ctx.moveTo(5,-10+wb*.5);ctx.lineTo(9,-10+wb*.5);ctx.stroke()}else{ctx.fillStyle='#555';ctx.beginPath();ctx.ellipse(-7,-10+wb*.5,2.5,3.2,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(7,-10+wb*.5,2.5,3.2,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-6,-11.5+wb*.5,1,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(8,-11.5+wb*.5,1,0,Math.PI*2);ctx.fill()}
+ctx.fillStyle='#f0a0a0';ctx.beginPath();ctx.moveTo(0,-7+wb*.5);ctx.lineTo(-2.5,-4.5+wb*.5);ctx.lineTo(2.5,-4.5+wb*.5);ctx.closePath();ctx.fill();
+ctx.strokeStyle='#cc8a8a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-3,-3+wb*.5);ctx.quadraticCurveTo(0,-1+wb*.5,3,-3+wb*.5);ctx.stroke();
+ctx.strokeStyle='#aaa';ctx.lineWidth=1;
+ctx.beginPath();ctx.moveTo(-10,-6+wb*.5);ctx.lineTo(-24,-10+wb*.5);ctx.stroke();ctx.beginPath();ctx.moveTo(-10,-5+wb*.5);ctx.lineTo(-24,-4+wb*.5);ctx.stroke();ctx.beginPath();ctx.moveTo(-10,-4+wb*.5);ctx.lineTo(-24,2+wb*.5);ctx.stroke();
+ctx.beginPath();ctx.moveTo(10,-6+wb*.5);ctx.lineTo(24,-10+wb*.5);ctx.stroke();ctx.beginPath();ctx.moveTo(10,-5+wb*.5);ctx.lineTo(24,-4+wb*.5);ctx.stroke();ctx.beginPath();ctx.moveTo(10,-4+wb*.5);ctx.lineTo(24,2+wb*.5);ctx.stroke();
+ctx.restore()}
+
+/* ============================
+   INTERACTION
+   ============================ */
+let activeLandmark=null;const promptEl=document.getElementById('interactionPrompt');
+function updateInteraction(){let closest=null,closestDist=Infinity;for(const lm of LANDMARKS){const d=Math.sqrt((cat.x-lm.x)**2+(cat.y-lm.y)**2);if(d<CONFIG.interactionRadius&&d<closestDist){closest=lm;closestDist=d}}activeLandmark=closest;if(closest){const sx=cat.x-camera.x,sy=cat.y-camera.y-50;promptEl.style.left=sx+'px';promptEl.style.top=sy+'px';promptEl.classList.add('visible');const te=promptEl.querySelector('.prompt-text');const lb={'education':'查看教育背景','internship':'查看实习经历','project':'查看项目详情'};te.textContent=lb[closest.id]||'打开'}else{promptEl.classList.remove('visible')}}
+function interactWithLandmark(){if(!activeLandmark)return;openModal(activeLandmark.modalId)}
+
+function openModal(id){const o=document.getElementById(id);if(o){o.classList.add('open');document.body.classList.add('modal-open')}}
+function closeModal(id){const o=document.getElementById('modal-'+id);if(o){o.classList.remove('open');document.body.classList.remove('modal-open')}}
+function openImageModal(src){const modal=document.createElement('div');modal.className='image-modal-overlay open';modal.innerHTML='<div class="image-modal-content"><button class="image-modal-close" onclick="this.closest(\'.image-modal-overlay\').remove()">✕</button><img src="'+src+'" alt="放大图片"></div>';modal.addEventListener('click',e=>{if(e.target===modal){modal.remove()}});document.body.appendChild(modal)}
+document.querySelectorAll('.modal-overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el){el.classList.remove('open');document.body.classList.remove('modal-open')}})});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal-overlay.open').forEach(el=>{el.classList.remove('open');document.body.classList.remove('modal-open')})}});
+
+document.addEventListener('keydown',e=>{switch(e.key){case'w':case'W':case'ArrowUp':input.up=true;e.preventDefault();break;case's':case'S':case'ArrowDown':input.down=true;e.preventDefault();break;case'a':case'A':case'ArrowLeft':input.left=true;e.preventDefault();break;case'd':case'D':case'ArrowRight':input.right=true;e.preventDefault();break;case'e':case'E':interactWithLandmark();break}});
+document.addEventListener('keyup',e=>{switch(e.key){case'w':case'W':case'ArrowUp':input.up=false;e.preventDefault();break;case's':case'S':case'ArrowDown':input.down=false;e.preventDefault();break;case'a':case'A':case'ArrowLeft':input.left=false;e.preventDefault();break;case'd':case'D':case'ArrowRight':input.right=false;e.preventDefault();break}});
+
+document.querySelectorAll('.dpad-btn').forEach(btn=>{const dir=btn.dataset.dir;function act(e){e.preventDefault();input[dir]=true;btn.classList.add('active')}function deact(e){e.preventDefault();input[dir]=false;btn.classList.remove('active')}btn.addEventListener('touchstart',act,{passive:false});btn.addEventListener('touchend',deact,{passive:false});btn.addEventListener('touchcancel',deact,{passive:false});btn.addEventListener('mousedown',act);btn.addEventListener('mouseup',deact);btn.addEventListener('mouseleave',deact)});
+promptEl.addEventListener('click',()=>interactWithLandmark());promptEl.addEventListener('touchend',e=>{e.preventDefault();interactWithLandmark()});
+
+/* ============================
+   UPDATE
+   ============================ */
+function updateCat(){
+let dx=0,dy=0,userInput=false;
+if(input.up){dy-=1;userInput=true}
+if(input.down){dy+=1;userInput=true}
+if(input.left){dx-=1;userInput=true}
+if(input.right){dx+=1;userInput=true}
+
+if(dx!==0&&dy!==0){const l=Math.sqrt(dx*dx+dy*dy);dx/=l;dy/=l}
+cat.moving=!(dx===0&&dy===0);
+
+if(cat.moving){cat.x+=dx*CONFIG.catSpeed;cat.y+=dy*CONFIG.catSpeed;cat.walkCycle+=Math.sqrt(dx*dx+dy*dy)*CONFIG.catSpeed;if(Math.abs(dx)>Math.abs(dy))cat.dir=dx>0?'right':'left';else cat.dir=dy>0?'down':'up'}
+const mg=CONFIG.forestMargin;cat.x=Math.max(mg,Math.min(CONFIG.world.width-mg,cat.x));cat.y=Math.max(mg,Math.min(CONFIG.world.height-mg,cat.y));
+cat.blinkTimer++;if(cat.blinkTimer>180+Math.random()*120){cat.blinkState=!cat.blinkState;cat.blinkTimer=0;if(cat.blinkState)setTimeout(()=>{cat.blinkState=false;cat.blinkTimer=0},120)}
+}
+
+function gameLoop(){updateCat();updateCamera();updateInteraction();ctx.clearRect(0,0,canvasW,canvasH);drawBackground();drawGrid();drawForest();drawPaths();drawMeadowTrees();drawFlowers();drawContactShadow();drawLandmarks();drawCat();requestAnimationFrame(gameLoop)}
+
+resizeCanvas();gameLoop();
+setTimeout(()=>{const h=document.getElementById('hudHint');if(h)h.style.opacity='0'},5e3);
+console.log('🐱 王佳怡 · 逻辑建构者地图已启动！');
+console.log('📌 使用 WASD / 方向键探索地图，接近地标后按 E 或点击提示交互。');
+</script>
+</body>
+</html>

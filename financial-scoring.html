@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>金融数据打分模型 · 王佳怡</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Urbanist:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════
+   DESIGN SYSTEM - 金融数据打分模型
+   暖金色主题
+   ═══════════════════════════════════════ */
+
+/* ── Reset & Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Warm Gold Palette */
+  --gold-900:#3d2b00;
+  --gold-800:#5c4400;
+  --gold-700:#7d5d00;
+  --gold-600:#9e7600;
+  --gold-500:#c4930a;
+  --gold-400:#d4a824;
+  --gold-300:#e2c060;
+  --gold-200:#efd99a;
+  --gold-100:#f7edcc;
+  --gold-50:#fdf8ed;
+
+  /* Deep Amber Accent */
+  --amber-500:#b87a00;
+  --amber-400:#cc8f1a;
+  --amber-300:#e0a840;
+  --amber-100:#f5e0b0;
+
+  /* Slate Palette */
+  --slate-900:#0f1724;
+  --slate-800:#1e293b;
+  --slate-700:#334155;
+  --slate-600:#475569;
+  --slate-500:#64748b;
+  --slate-400:#94a3b8;
+  --slate-300:#cbd5e1;
+  --slate-200:#e2e8f0;
+  --slate-100:#f1f5f9;
+  --slate-50:#f8fafc;
+
+  /* Warm Background */
+  --warm-bg:#faf8f3;
+  --warm-card-bg:#ffffff;
+
+  /* Semantic Colors */
+  --success:#10b981;
+  --warning:#f59e0b;
+  --error:#ef4444;
+
+  /* Radius */
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:20px;
+  --radius-xl:28px;
+
+  /* Shadows */
+  --shadow-card:0 2px 16px rgba(0,0,0,0.06),0 8px 32px rgba(0,0,0,0.04);
+  --shadow-elevated:0 8px 40px rgba(0,0,0,0.10),0 2px 8px rgba(0,0,0,0.06);
+  --shadow-glow:0 4px 24px rgba(196,147,10,0.15);
+
+  /* Fonts */
+  --font-display:'Outfit',sans-serif;
+  --font-body:'Urbanist',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+
+html{scroll-behavior:smooth;}
+
+body{
+  font-family:var(--font-body);
+  background:var(--warm-bg);
+  color:var(--slate-900);
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  font-size:17px;
+}
+
+/* ── Canvas Container ── */
+.canvas{
+  max-width:1200px;
+  margin:0 auto;
+  padding:0 40px;
+}
+
+/* ── Top Bar ── */
+.top-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 40px;
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--gold-200);
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+
+.top-bar-logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logo-icon{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,var(--gold-500),var(--gold-700));
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:16px;
+}
+
+.logo-text{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:18px;
+  color:var(--slate-900);
+}
+
+.logo-text span{color:var(--gold-600);}
+
+.top-bar-badge{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;
+  background:var(--gold-50);
+  border:1px solid var(--gold-200);
+  border-radius:20px;
+  font-size:13px;
+  font-weight:500;
+  color:var(--gold-700);
+}
+
+.top-bar-badge::before{
+  content:'';display:block;
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--gold-500);
+}
+
+/* ── Navigation Dot ── */
+.nav-dots{
+  display:flex;
+  gap:6px;
+}
+
+.nav-dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--slate-300);
+  transition:background 0.3s,transform 0.3s;
+}
+
+.nav-dot.active{background:var(--gold-500);transform:scale(1.3);}
+
+/* ── Hero Section ── */
+.hero{
+  padding:100px 0 80px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+
+.hero::before{
+  content:'';
+  position:absolute;
+  top:-50%;
+  left:-50%;
+  width:200%;
+  height:200%;
+  background:radial-gradient(ellipse at 50% 0%, rgba(196,147,10,0.06) 0%, transparent 60%);
+  pointer-events:none;
+}
+
+.hero .tag{
+  display:inline-block;
+  padding:6px 20px;
+  background:var(--gold-50);
+  border:1px solid var(--gold-200);
+  border-radius:20px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--gold-700);
+  letter-spacing:0.3px;
+  margin-bottom:20px;
+}
+
+.hero h1{
+  font-family:var(--font-display);
+  font-size:56px;
+  font-weight:800;
+  color:var(--slate-900);
+  letter-spacing:-1px;
+  line-height:1.1;
+  margin-bottom:16px;
+}
+
+.hero h1 span{
+  background:linear-gradient(135deg,var(--gold-600),var(--gold-400));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.hero p{
+  font-size:20px;
+  color:var(--slate-500);
+  max-width:680px;
+  margin:0 auto 32px;
+  line-height:1.6;
+}
+
+.hero-metrics{
+  display:flex;
+  justify-content:center;
+  gap:48px;
+  margin-top:16px;
+}
+
+.hero-metric{
+  text-align:center;
+}
+
+.hero-metric .num{
+  font-family:var(--font-display);
+  font-size:32px;
+  font-weight:700;
+  color:var(--gold-600);
+}
+
+.hero-metric .label{
+  font-size:14px;
+  color:var(--slate-400);
+  margin-top:2px;
+}
+
+.hero-scroll{
+  margin-top:48px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  color:var(--slate-400);
+  font-size:13px;
+  animation:bounce 2s infinite;
+}
+
+@keyframes bounce{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(8px)}
+}
+
+/* ── Section ── */
+.section{
+  padding:72px 0;
+}
+
+.section-header{
+  text-align:center;
+  margin-bottom:48px;
+}
+
+.section-header .tag{
+  display:inline-block;
+  padding:4px 16px;
+  background:var(--gold-50);
+  border:1px solid var(--gold-200);
+  border-radius:20px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--gold-700);
+  letter-spacing:0.3px;
+  margin-bottom:12px;
+}
+
+.section-header h2{
+  font-family:var(--font-display);
+  font-size:40px;
+  font-weight:700;
+  color:var(--slate-900);
+  letter-spacing:-0.5px;
+  line-height:1.2;
+}
+
+.section-header p{
+  font-size:18px;
+  color:var(--slate-500);
+  margin-top:8px;
+  max-width:600px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* ── Divider ── */
+.divider{
+  height:1px;
+  background:linear-gradient(to right,transparent,var(--gold-200),transparent);
+  margin:0;
+}
+
+/* ══════════════════════════════════
+   COMPONENTS
+   ══════════════════════════════════ */
+
+/* ── Grid Layouts ── */
+.grid-2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:32px;
+}
+
+.grid-3{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:24px;
+}
+
+.grid-4{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 1fr;
+  gap:20px;
+}
+
+.grid-golden{
+  display:grid;
+  grid-template-columns:1.2fr 0.8fr;
+  gap:40px;
+  align-items:center;
+}
+
+/* ── Cards ── */
+.card{
+  background:var(--warm-card-bg);
+  border-radius:var(--radius-lg);
+  padding:28px 32px;
+  box-shadow:var(--shadow-card);
+  border:1px solid var(--slate-100);
+  transition:transform 0.2s,box-shadow 0.2s;
+}
+
+.card:hover{
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-elevated);
+}
+
+.card-gold{
+  background:var(--warm-card-bg);
+  border-radius:var(--radius-lg);
+  padding:28px 32px;
+  box-shadow:var(--shadow-card);
+  border:1px solid var(--gold-200);
+  transition:transform 0.2s,box-shadow 0.2s, border-color 0.2s;
+}
+
+.card-gold:hover{
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-glow);
+  border-color:var(--gold-300);
+}
+
+.card-icon{
+  width:44px;height:44px;
+  border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+  margin-bottom:16px;
+  background:var(--gold-100);
+  color:var(--gold-600);
+}
+
+.card h3{
+  font-family:var(--font-display);
+  font-size:18px;
+  font-weight:700;
+  color:var(--slate-800);
+  margin-bottom:12px;
+  line-height:1.3;
+}
+
+.card h4{
+  font-family:var(--font-display);
+  font-size:15px;
+  font-weight:600;
+  color:var(--slate-700);
+  margin-bottom:8px;
+}
+
+.card p, .card li{
+  font-size:15px;
+  color:var(--slate-600);
+  line-height:1.7;
+}
+
+.card ul{
+  list-style:none;
+  padding:0;
+}
+
+.card ul li{
+  padding:4px 0;
+  padding-left:20px;
+  position:relative;
+}
+
+.card ul li::before{
+  content:'';
+  position:absolute;
+  left:0;
+  top:12px;
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--gold-400);
+}
+
+/* ── Pain Points ── */
+.pain-point{
+  padding-left:24px;
+  position:relative;
+  color:var(--slate-700);
+  font-size:16px;
+  line-height:1.6;
+  margin-bottom:12px;
+}
+
+.pain-point::before{
+  content:'!';
+  position:absolute;
+  left:0;
+  top:0;
+  width:18px;height:18px;
+  border-radius:50%;
+  background:var(--amber-500);
+  color:#fff;
+  font-size:12px;
+  font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ── Impact Tag ── */
+.impact-tag{
+  display:inline-block;
+  padding:4px 12px;
+  background:linear-gradient(135deg,var(--gold-50),var(--gold-100));
+  border:1px solid var(--gold-200);
+  border-radius:12px;
+  font-size:12px;
+  font-weight:600;
+  color:var(--gold-700);
+  margin-top:12px;
+}
+
+.impact-block{
+  background:var(--gold-50);
+  border:1px solid var(--gold-200);
+  border-radius:var(--radius-md);
+  padding:16px 20px;
+  margin-top:16px;
+}
+
+.impact-block .title{
+  font-size:13px;
+  font-weight:700;
+  color:var(--gold-700);
+  margin-bottom:6px;
+  display:flex;align-items:center;gap:6px;
+}
+
+.impact-block p{
+  font-size:14px;
+  color:var(--slate-700);
+  line-height:1.7;
+}
+
+/* ── Phase Card ── */
+.phase-card{
+  background:var(--warm-card-bg);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  border:1px solid var(--slate-100);
+  overflow:hidden;
+  margin-bottom:32px;
+}
+
+.phase-card:last-child{margin-bottom:0;}
+
+.phase-header{
+  padding:24px 32px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  cursor:pointer;
+  user-select:none;
+  transition:background 0.2s;
+}
+
+.phase-header:hover{background:var(--gold-50);}
+
+.phase-number{
+  width:40px;height:40px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--gold-500),var(--gold-700));
+  color:#fff;
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+
+.phase-info{
+  flex:1;
+}
+
+.phase-info h3{
+  font-family:var(--font-display);
+  font-size:17px;
+  font-weight:700;
+  color:var(--slate-800);
+}
+
+.phase-info .sub{
+  font-size:13px;
+  color:var(--slate-400);
+  margin-top:2px;
+}
+
+.phase-arrow{
+  font-size:18px;
+  color:var(--slate-300);
+  transition:transform 0.3s;
+}
+
+.phase-body{
+  padding:0 32px 28px;
+  border-top:1px solid var(--slate-100);
+  padding-top:24px;
+}
+
+.phase-body .action-label{
+  font-size:12px;
+  font-weight:600;
+  color:var(--gold-600);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:8px;
+}
+
+.phase-body p{
+  font-size:15px;
+  color:var(--slate-600);
+  line-height:1.7;
+  margin-bottom:12px;
+}
+
+.phase-body .detail-steps{
+  list-style:none;
+  padding:0;
+  margin:12px 0;
+}
+
+.phase-body .detail-steps li{
+  font-size:14px;
+  color:var(--slate-600);
+  padding:6px 0;
+  padding-left:20px;
+  position:relative;
+  line-height:1.6;
+}
+
+.phase-body .detail-steps li::before{
+  content:'→';
+  position:absolute;
+  left:0;
+  color:var(--gold-400);
+  font-weight:600;
+}
+
+/* ── Architecture Diagram ── */
+.pipeline{
+  display:flex;
+  align-items:flex-start;
+  gap:0;
+  padding:32px 0;
+  position:relative;
+}
+
+.pipeline-step{
+  flex:1;
+  text-align:center;
+  position:relative;
+}
+
+.pipeline-step .step-node{
+  width:56px;height:56px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--gold-400),var(--gold-600));
+  color:#fff;
+  font-weight:700;
+  font-size:20px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;
+  box-shadow:var(--shadow-glow);
+  position:relative;
+  z-index:2;
+}
+
+.pipeline-step .step-label{
+  font-family:var(--font-display);
+  font-size:13px;
+  font-weight:600;
+  color:var(--slate-700);
+  max-width:120px;
+  margin:0 auto;
+  line-height:1.4;
+}
+
+.pipeline-step .step-sub{
+  font-size:11px;
+  color:var(--slate-400);
+  margin-top:4px;
+}
+
+.pipeline-connector{
+  flex:0 0 48px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding-top:28px;
+  position:relative;
+  z-index:1;
+}
+
+.pipeline-connector::before{
+  content:'';
+  position:absolute;
+  top:44px;
+  left:0;
+  right:0;
+  height:3px;
+  background:linear-gradient(to right,var(--gold-300),var(--gold-400));
+  z-index:0;
+}
+
+.pipeline-connector .arrow-icon{
+  position:relative;
+  z-index:2;
+  width:28px;height:28px;
+  border-radius:50%;
+  background:var(--warm-card-bg);
+  border:2px solid var(--gold-300);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold-500);
+  font-size:14px;
+}
+
+/* ── Case Study ── */
+.case-study{
+  background:var(--warm-card-bg);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  border:1px solid var(--slate-100);
+  overflow:hidden;
+}
+
+.case-study .case-header{
+  padding:24px 32px;
+  background:var(--gold-50);
+  border-bottom:1px solid var(--gold-200);
+}
+
+.case-study .case-header h3{
+  font-family:var(--font-display);
+  font-size:18px;
+  font-weight:700;
+  color:var(--slate-800);
+  margin-bottom:4px;
+}
+
+.case-study .case-header .case-company{
+  font-size:14px;
+  color:var(--gold-700);
+  font-weight:500;
+}
+
+.case-study .case-content{
+  padding:24px 32px;
+}
+
+.case-study .case-content h4{
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:600;
+  color:var(--slate-500);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:10px;
+}
+
+.score-comparison{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:16px;
+  margin:16px 0;
+}
+
+.score-box{
+  text-align:center;
+  padding:20px 16px;
+  border-radius:var(--radius-md);
+  border:1px solid var(--slate-200);
+}
+
+.score-box.baseline{border-color:var(--slate-300);background:var(--slate-50);}
+.score-box.issue{border-color:var(--amber-200);background:var(--amber-100);}
+.score-box.fixed{border-color:var(--success);background:#ecfdf5;}
+
+.score-box .score-label{
+  font-size:12px;
+  font-weight:600;
+  color:var(--slate-500);
+  margin-bottom:8px;
+}
+
+.score-box .score-num{
+  font-family:var(--font-display);
+  font-size:36px;
+  font-weight:700;
+}
+
+.score-box.baseline .score-num{color:var(--slate-400);}
+.score-box.issue .score-num{color:var(--amber-500);}
+.score-box.fixed .score-num{color:var(--success);}
+
+.score-box .score-note{
+  font-size:11px;
+  color:var(--slate-400);
+  margin-top:6px;
+}
+
+.case-prompt{
+  background:var(--slate-50);
+  border:1px solid var(--slate-200);
+  border-radius:var(--radius-md);
+  padding:16px 20px;
+  font-family:var(--font-mono);
+  font-size:13px;
+  line-height:1.6;
+  color:var(--slate-700);
+  margin:12px 0;
+  white-space:pre-wrap;
+  max-height:200px;
+  overflow-y:auto;
+}
+
+.code-block{
+  background:var(--slate-900);
+  border-radius:var(--radius-md);
+  padding:16px 20px;
+  font-family:var(--font-mono);
+  font-size:13px;
+  line-height:1.7;
+  color:#e2e8f0;
+  margin:12px 0;
+  white-space:pre-wrap;
+  overflow-x:auto;
+}
+
+.code-block .highlight{color:var(--gold-300);}
+.code-block .comment{color:var(--slate-500);}
+
+/* ── Philosophy Block ── */
+.philosophy-block{
+  background:var(--warm-card-bg);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  border:1px solid var(--gold-200);
+  padding:32px;
+}
+
+.philosophy-block blockquote{
+  font-size:18px;
+  font-weight:500;
+  color:var(--slate-700);
+  line-height:1.7;
+  padding:16px 24px;
+  border-left:4px solid var(--gold-500);
+  margin:16px 0;
+  background:var(--gold-50);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.philosophy-block blockquote cite{
+  display:block;
+  font-size:14px;
+  font-weight:600;
+  color:var(--gold-600);
+  margin-top:8px;
+  font-style:normal;
+}
+
+/* ── Key Insight ── */
+.key-insight{
+  display:flex;
+  gap:16px;
+  align-items:flex-start;
+  background:var(--gold-50);
+  border:1px solid var(--gold-200);
+  border-radius:var(--radius-md);
+  padding:20px 24px;
+  margin:16px 0;
+}
+
+.key-insight .icon{
+  width:28px;height:28px;
+  border-radius:50%;
+  background:var(--gold-500);
+  color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;
+  flex-shrink:0;
+  margin-top:2px;
+}
+
+.key-insight .content{
+  font-size:15px;
+  color:var(--slate-700);
+  line-height:1.7;
+}
+
+.key-insight .content strong{
+  color:var(--gold-700);
+}
+
+/* ── Metrics Grid ── */
+.metrics-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+}
+
+.metric-card{
+  text-align:center;
+  padding:24px 16px;
+  background:var(--warm-card-bg);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-card);
+  border:1px solid var(--slate-100);
+}
+
+.metric-card .icon{
+  font-size:28px;
+  margin-bottom:8px;
+}
+
+.metric-card .value{
+  font-family:var(--font-display);
+  font-size:28px;
+  font-weight:700;
+  color:var(--gold-600);
+}
+
+.metric-card .label{
+  font-size:13px;
+  color:var(--slate-500);
+  margin-top:4px;
+}
+
+/* ── Footer ── */
+.footer{
+  text-align:center;
+  padding:40px;
+  color:var(--slate-400);
+  font-size:14px;
+  border-top:1px solid var(--gold-200);
+}
+
+/* ══════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════ */
+
+@media(max-width:768px){
+  .canvas{padding:0 20px;}
+  .top-bar{padding:14px 20px;}
+  .section{padding:48px 0;}
+  .section-header h2{font-size:28px;}
+  .section-header p{font-size:16px;}
+  .hero{padding:60px 0 48px;}
+  .hero h1{font-size:34px;}
+  .hero p{font-size:17px;}
+  .hero-metrics{flex-direction:column;gap:16px;}
+
+  .grid-2,.grid-3,.grid-4,.grid-golden{grid-template-columns:1fr;gap:20px;}
+  .metrics-grid{grid-template-columns:repeat(2,1fr);gap:12px;}
+
+  .pipeline{flex-direction:column;align-items:center;gap:0;padding:16px 0;}
+  .pipeline-connector{flex:none;padding:0;height:32px;width:auto;transform:rotate(90deg);}
+  .pipeline-connector::before{top:50%;left:0;right:0;height:3px;width:100%;}
+  .pipeline-step .step-label{max-width:160px;}
+
+  .phase-header{padding:16px 20px;}
+  .phase-body{padding:0 20px 20px;}
+
+  .case-study .case-header{padding:16px 20px;}
+  .case-study .case-content{padding:16px 20px;}
+  .score-comparison{grid-template-columns:1fr;gap:12px;}
+
+  .philosophy-block{padding:24px;}
+  .philosophy-block blockquote{font-size:16px;padding:12px 16px;}
+
+  .top-bar-badge{display:none;}
+}
+
+/* ── Smooth fade-in on scroll ── */
+.fade-in{
+  opacity:0;
+  transform:translateY(20px);
+  transition:opacity 0.6s ease,transform 0.6s ease;
+}
+
+.fade-in.visible{
+  opacity:1;
+  transform:translateY(0);
+}
+
+/* ── Data flow labels ── */
+.data-flow-label{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:4px;
+  background:var(--slate-100);
+  color:var(--slate-500);
+  margin:0 2px;
+}
+
+/* ── List styling inside cards ── */
+.styled-list{
+  list-style:none;
+  padding:0;
+}
+
+.styled-list li{
+  font-size:15px;
+  color:var(--slate-600);
+  padding:6px 0;
+  padding-left:24px;
+  position:relative;
+  line-height:1.6;
+}
+
+.styled-list li::before{
+  content:'';
+  position:absolute;
+  left:0;
+  top:14px;
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--gold-300);
+}
+
+.styled-list.list-check li::before{
+  content:'✓';
+  width:auto;height:auto;
+  background:transparent;
+  color:var(--success);
+  font-weight:700;
+  font-size:14px;
+  top:6px;
+}
+
+.styled-list.list-arrow li::before{
+  content:'›';
+  width:auto;height:auto;
+  background:transparent;
+  color:var(--gold-500);
+  font-size:18px;
+  font-weight:700;
+  top:3px;
+}
+
+/* ── Tag label ── */
+.tag-label{
+  display:inline-block;
+  padding:2px 10px;
+  border-radius:12px;
+  font-size:11px;
+  font-weight:600;
+  margin-right:6px;
+  margin-bottom:6px;
+}
+
+.tag-label.gold{
+  background:var(--gold-100);
+  color:var(--gold-700);
+}
+
+.tag-label.slate{
+  background:var(--slate-100);
+  color:var(--slate-500);
+}
+
+/* ── Timeline connector ── */
+.timeline-dot{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.timeline-dot .dot{
+  width:12px;height:12px;
+  border-radius:50%;
+  background:var(--gold-500);
+  flex-shrink:0;
+  box-shadow:0 0 0 4px var(--gold-100);
+}
+
+.timeline-dot .line-content{
+  font-size:15px;
+  color:var(--slate-700);
+  line-height:1.6;
+}
+
+/* ── Tooltip for scroll progress ── */
+.scroll-progress{
+  position:fixed;
+  top:0;
+  left:0;
+  height:3px;
+  background:linear-gradient(to right,var(--gold-400),var(--gold-600));
+  z-index:101;
+  transition:width 0.1s;
+  width:0%;
+}
+
+/* ── Float citation ── */
+.data-callout{
+  display:inline-block;
+  padding:2px 8px;
+  background:var(--gold-100);
+  border-radius:6px;
+  font-family:var(--font-mono);
+  font-size:13px;
+  font-weight:500;
+  color:var(--gold-700);
+}
+</style>
+</head>
+<body>
+
+<!-- Scroll Progress -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- ═══ Top Bar ═══ -->
+<header class="top-bar">
+  <div class="top-bar-logo">
+    <div class="logo-icon">F</div>
+    <div class="logo-text">金融数据<span>打分模型</span></div>
+  </div>
+  <div class="top-bar-badge">王佳怡 · 实习项目</div>
+</header>
+
+<div class="divider"></div>
+
+<!-- ═══ Hero ═══ -->
+<section class="hero">
+  <div class="canvas">
+    <div class="tag">Internship Project · 2026</div>
+    <h1>金融新闻<span>影响范围</span>自动化评估</h1>
+    <p>基于 Qwen2.5-14B 的轻量化微调方案，端到端解决大模型在金融领域<br>业务定义模糊、边界混淆的核心痛点</p>
+    <div class="hero-metrics">
+      <div class="hero-metric">
+        <div class="num">5</div>
+        <div class="label">核心管线阶段</div>
+      </div>
+      <div class="hero-metric">
+        <div class="num">306</div>
+        <div class="label">黄金测试样本</div>
+      </div>
+      <div class="hero-metric">
+        <div class="num">14B</div>
+        <div class="label">QLoRA 微调</div>
+      </div>
+      <div class="hero-metric">
+        <div class="num">72B</div>
+        <div class="label">教师模型蒸馏</div>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <span>往下滚动了解项目全貌</span>
+      <span style="font-size:20px;">↓</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 背景与挑战 ═══ -->
+<section class="section" id="background">
+  <div class="canvas">
+    <div class="section-header fade-in">
+      <div class="tag">Background & Challenge</div>
+      <h2>背景与挑战</h2>
+      <p>业务需求与核心痛点</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card fade-in">
+        <div class="card-icon">🎯</div>
+        <h3>业务目标</h3>
+        <p>自动化完成"新闻影响范围评估"—— 给定新闻与公司，系统需自动判断事件相关性，并输出 1-10 的影响范围分数。</p>
+        <div style="margin-top:16px;">
+          <div class="tag-label gold">区域性 · 地理跨度</div>
+          <div class="tag-label gold">头部企业 · 企业层级</div>
+          <div class="tag-label gold">权威政策 · 行政级别</div>
+        </div>
+      </div>
+
+      <div class="card fade-in">
+        <div class="card-icon" style="background:var(--amber-100);color:var(--amber-500);">⚠</div>
+        <h3>核心痛点</h3>
+        <div class="pain-point">大模型不理解金融领域的业务定义，无法准确区分"影响较小"与"重大影响"的边界</div>
+        <div class="pain-point">边界模糊与概念混淆——高分段政策新闻极易被误判为公司重大影响，产生虚假误报</div>
+        <div class="pain-point">规则堆叠式 Prompt 压迫 14B 模型语义空间，4-6 分段模糊 Gap 被进一步放大</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 技术路线总览 ═══ -->
+<section class="section" id="pipeline">
+  <div class="canvas">
+    <div class="section-header fade-in">
+      <div class="tag">Technical Pipeline</div>
+      <h2>技术路线总览</h2>
+      <p>五阶段端到端管线，从数据到评估的闭环迭代</p>
+    </div>
+
+    <div class="card-gold fade-in" style="padding:32px 40px;">
+      <div class="pipeline">
+        <div class="pipeline-step">
+          <div class="step-node">S</div>
+          <div class="step-label">样本选择<br>& 数据处理</div>
+          <div class="step-sub">Semhash 去重</div>
+        </div>
+        <div class="pipeline-connector"><div class="arrow-icon">→</div></div>
+        <div class="pipeline-step">
+          <div class="step-node">T</div>
+          <div class="step-label">教师模型<br>& 标注</div>
+          <div class="step-sub">CoT + 千问 72B</div>
+        </div>
+        <div class="pipeline-connector"><div class="arrow-icon">→</div></div>
+        <div class="pipeline-step">
+          <div class="step-node">D</div>
+          <div class="step-label">测试集构建</div>
+          <div class="step-sub">Semhash 隔离</div>
+        </div>
+        <div class="pipeline-connector"><div class="arrow-icon">→</div></div>
+        <div class="pipeline-step">
+          <div class="step-node">F</div>
+          <div class="step-label">框架微调</div>
+          <div class="step-sub">XTuner + QLoRA</div>
+        </div>
+        <div class="pipeline-connector"><div class="arrow-icon">→</div></div>
+        <div class="pipeline-step">
+          <div class="step-node">E</div>
+          <div class="step-label">业务指标<br>& 评估</div>
+          <div class="step-sub">政策/公司型拆分</div>
+        </div>
+      </div>
+    </div>
+
+    
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 阶段详解 ═══ -->
+<section class="section" id="details">
+  <div class="canvas">
+    <div class="section-header fade-in">
+      <div class="tag">Phase Details</div>
+      <h2>各阶段详解</h2>
+      <p>我的核心策略与对指标的直接影响</p>
+    </div>
+
+    <!-- Phase 1 -->
+    <div class="phase-card fade-in">
+      <div class="phase-header">
+        <div class="phase-number">1</div>
+        <div class="phase-info">
+          <h3>样本选择与数据处理</h3>
+          <div class="sub">Sample Selection · Semhash 隔离防污染</div>
+        </div>
+        <div class="phase-arrow">↓</div>
+      </div>
+      <div class="phase-body">
+        <div class="action-label">我的策略</div>
+        <ul class="detail-steps">
+          <li>读取爬虫全阶段（<span class="data-flow-label">recall</span> / <span class="data-flow-label">rerank</span> / <span class="data-flow-label">filter</span> 等）原始数据，统一转化为标准 <span class="data-flow-label">Alpaca</span> 格式（instruction, input, output）</li>
+          <li>提取训练集中的 <span class="data-flow-label">instruction</span> 作为全局底库，利用 <strong>semhash</strong> 对新格式化数据进行比对，剔除高相似度数据</li>
+        </ul>
+
+        <div class="impact-block">
+          <div class="title">▲ 核心影响</div>
+          <p>实现测试集与训练集的<strong>"物理隔离"</strong>，消除了由于训练数据泄露给测试集而导致的模型过拟合。确保了 <strong>306 个样本</strong>测试集能够百分之百反映模型在全市场未知事件上的<strong>泛化精确度</strong>。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase-card fade-in">
+      <div class="phase-header">
+        <div class="phase-number">2</div>
+        <div class="phase-info">
+          <h3>教师模型与标注</h3>
+          <div class="sub">Teacher Model · CoT 思维链重构打分边界</div>
+        </div>
+        <div class="phase-arrow">↓</div>
+      </div>
+      <div class="phase-body">
+        <div class="action-label">我的策略</div>
+        <ul class="detail-steps">
+          <li><strong>重构问题定义与打分边界</strong>：将最终极简 Prompt 中的四段式业务范围（业务线、区域、整体经营、生存发展）作为顶层分类框架</li>
+          <li><strong>自动化 CoT 与打分生成管线</strong>：将重构后的边界知识转化为强约束系统 Prompt，调用<strong>千问 72B 教师模型</strong>。强制其在 <span class="data-flow-label">&lt;think&gt;</span> 内生成金融传导思维链，在 <span class="data-flow-label">&lt;answer&gt;</span> 内输出打分，流水线式自动回填至样本 output</li>
+        </ul>
+
+        <div class="impact-block">
+          <div class="title">▲ 核心影响</div>
+          <p>由于重构打分边界，使原本因为多维度累加模糊而被漏报、低估的<strong>重大金融事件</strong>（如高影响力处罚或战略变革）能够被精准判定并赋予高分；同时强制模型在输出分数前执行 CoT 推理，直接拉升了系统的<strong>高分段召回率</strong>。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase-card fade-in">
+      <div class="phase-header">
+        <div class="phase-number">3</div>
+        <div class="phase-info">
+          <h3>框架微调</h3>
+          <div class="sub">Fine-tuning · XTuner + Qwen2.5-14B QLoRA</div>
+        </div>
+        <div class="phase-arrow">↓</div>
+      </div>
+      <div class="phase-body">
+        <div class="action-label">我的策略</div>
+        <ul class="detail-steps">
+          <li>使用 <strong>XTuner 框架</strong>对 <strong>Qwen2.5-14B</strong> 进行 <strong>QLoRA</strong> 轻量化微调</li>
+          <li>准备身份认知数据集 → 选定模型并软链接 → 在 XTuner 配置中选择匹配的配置文件 → 配置 Settings / Model & Tokenizer / Dataset & Dataloader 三部分参数</li>
+        </ul>
+
+        <div class="impact-block">
+          <div class="title">▲ 核心影响</div>
+          <p><strong>14B 模型</strong>以极低的计算和线上推理成本，成功学到了重构后的金融推理边界，完美继承并泛化了教师模型在策略改善后的<strong>高召回、高精确表现</strong>。显著增强了模型在金融场景下的<strong>指令遵循与文本生成稳定性</strong>。</p>
+        </div>
+
+        <div style="margin-top:12px;">
+          <div class="tag-label slate">配置三要素</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px;">
+            <div style="background:var(--slate-50);padding:12px 16px;border-radius:8px;border:1px solid var(--slate-200);font-size:13px;color:var(--slate-600);">
+              <strong style="color:var(--slate-800);">PART 1</strong><br>
+              Settings<br>
+              模型设置 · 批大小 · 学习率
+            </div>
+            <div style="background:var(--slate-50);padding:12px 16px;border-radius:8px;border:1px solid var(--slate-200);font-size:13px;color:var(--slate-600);">
+              <strong style="color:var(--slate-800);">PART 2</strong><br>
+              Model & Tokenizer<br>
+              预训练模型路径 · 分词器配置
+            </div>
+            <div style="background:var(--slate-50);padding:12px 16px;border-radius:8px;border:1px solid var(--slate-200);font-size:13px;color:var(--slate-600);">
+              <strong style="color:var(--slate-800);">PART 3</strong><br>
+              Dataset & Dataloader<br>
+              数据加载 · 预处理 · 批处理
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+        <!-- Phase 4 -->
+    <div class="phase-card fade-in">
+      <div class="phase-header">
+        <div class="phase-number">4</div>
+        <div class="phase-info">
+          <h3>金融测试集构建</h3>
+          <div class="sub">Test Set Construction · 端到端数据管线设计</div>
+        </div>
+        <div class="phase-arrow">↓</div>
+      </div>
+      <div class="phase-body">
+        <div class="action-label">我的策略</div>
+        <ul class="detail-steps">
+          <li><strong>原始数据读取与格式化</strong>：读取爬虫全阶段数据（recall / rerank / filter），统一转化为严格 Alpaca 格式（instruction / input / output），按阶段产文件</li>
+          <li><strong>Semhash 物理隔离</strong>：提取训练集 instruction 作为全局底库，对测试候选数据进行相似度比对，剔除高相似度数据，从源头杜绝训练数据泄露</li>
+          <li><strong>多维分层科学抽样</strong>：从去重后的安全数据池中，按不同分数段设定比例进行分层抽取，构建覆盖全分值区间的黄金测试集</li>
+          <li><strong>教师模型推理填充</strong>：调用 72B 教师模型对测试集进行 CoT 推理，自动生成并填充 output 真值标签</li>
+        </ul>
+
+        <div class="impact-block">
+          <div class="title">▲ 核心影响</div>
+          <p>构建 <strong>306 个样本黄金测试集</strong>，通过 semhash 物理隔离彻底消除训练数据泄露风险，确保验证结果真实反映模型在全市场未知事件上的<strong>泛化精确度</strong>。分层抽样策略保证各分数段均有充足样本，为后续评估与迭代提供可靠基准。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="phase-card fade-in">
+      <div class="phase-header">
+        <div class="phase-number">5</div>
+        <div class="phase-info">
+          <h3>业务指标评估</h3>
+          <div class="sub">Evaluation & QA · 工具链构建 + 政策/公司型拆分</div>
+        </div>
+        <div class="phase-arrow">↓</div>
+      </div>
+      <div class="phase-body">
+        <div class="action-label">我的策略</div>
+        <ul class="detail-steps">
+          <li><strong>测试集多维分层科学抽样</strong>：从去重后的安全数据池中，按照设定不同分数段比例进行抽取，构建 <strong>306 个样本的黄金测试集</strong></li>
+          <li><strong>评估工具链开发</strong>：实现自动化测试集推理、结构化标签抽取</li>
+          <li>创新性地将新闻拆分为<strong>"政策型"</strong>和<strong>"公司型"</strong>进行独立指标计算，解决高分段政策误判痛点</li>
+          <li><strong>Gap 误差分布分析</strong>：工具链支持自动输出不同分段的误差均值、标准差和比例分布情况</li>
+        </ul>
+
+        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;padding:16px;">
+            <div style="font-size:13px;font-weight:600;color:var(--gold-700);margin-bottom:6px;">Recall（高分段）</div>
+            <div style="font-size:14px;color:var(--slate-600);line-height:1.6;">
+              预测为相关的且实际相关的 / 全市场实际存在的所有相关信息
+            </div>
+          </div>
+          <div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;padding:16px;">
+            <div style="font-size:13px;font-weight:600;color:var(--gold-700);margin-bottom:6px;">Precision（高分段）</div>
+            <div style="font-size:14px;color:var(--slate-600);line-height:1.6;">
+              预测为相关且实际相关数量 / 所有被系统预测为相关的总数
+            </div>
+          </div>
+        </div>
+
+        <div class="impact-block">
+          <div class="title">▲ 核心影响</div>
+          <p>区分<strong>"政策/公司型"</strong>能快速捕捉高分段的虚假误报；<strong>Gap 误差均值与标准差</strong>能精准定位 4-6 分段模糊的底层成因。通过指标暴露瓶颈，反哺前序阶段的策略迭代与样本订正，在后续轮次中实现了<strong>召回率与精确度的闭环持续拉升</strong>。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ Prompt 设计哲学 ═══ -->
+<section class="section" id="philosophy">
+  <div class="canvas">
+    <div class="section-header fade-in">
+      <div class="tag">Design Philosophy</div>
+      <h2>Prompt 设计</h2>
+      
+    </div>
+
+    <div class="philosophy-block fade-in">
+      <p style="font-size:15px;color:var(--slate-600);line-height:1.7;">
+        最终用于 XTuner 微调的系统 Prompt 非常精简，仅包含基础的四段式分值定义与严格的结构化格式约束。
+      </p>
+
+      <blockquote style="font-size:15px;font-weight:400;padding:0;margin:16px 0;color:var(--slate-600);">
+        在项目初期，我们也尝试过把"银行场景的细分"、"国外新闻的降噪处理"、"权威政策的基础分加权"等几十条具体的业务规则用长篇大论硬塞进 Prompt。但实验评估显示，过于具体的提示词限制，会严重压迫 14B 模型的语义空间，导致模型不仅在长序列上面临内存瓶颈，还会因为规则混淆产生负迁移，使 4-6 分段的模糊 Gap 进一步放大。
+      </blockquote>
+
+      <h4 style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--slate-800);margin-top:24px;margin-bottom:12px;">我的解法：</h4>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div style="width:24px;height:24px;border-radius:50%;background:var(--gold-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">①</div>
+            <strong style="font-size:14px;color:var(--slate-800);">格式硬遵循</strong>
+          </div>
+          <p style="font-size:14px;color:var(--slate-600);line-height:1.6;">
+            通过强约束模型必须遵循 <span class="data-flow-label">&lt;think&gt;</span> 和 <span class="data-flow-label">&lt;answer&gt;</span> 结构，利用 CoT 强行拉高模型的金融推理逻辑，大幅度优化了高分段的<strong>语义指令遵循率</strong>。
+          </p>
+        </div>
+        <div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div style="width:24px;height:24px;border-radius:50%;background:var(--gold-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">②</div>
+            <strong style="font-size:14px;color:var(--slate-800);">规则内化于样本</strong>
+          </div>
+          <p style="font-size:14px;color:var(--slate-600);line-height:1.6;">
+            将复杂业务规则完全解耦并内化在自动化数据集构建的真值（Ground Truth）中。通过 72B 教师模型精准控制输出的思维链分布，让 14B 模型<strong>"潜移默化"</strong>地继承高阶打分边界。
+          </p>
+        </div>
+      </div>
+
+      <blockquote style="margin-top:20px;">
+        Prompt 越纯粹，模型的泛化能力就越强。我们把业务的复杂性交给了背后的数据清洗（Semhash 去重）、教师模型真值控制、以及模型指标评估工具链（区分政策/公司型），从而用最轻量级的提示词，跑出了最高的召回率和精确度。
+        
+      </blockquote>
+
+      <div style="margin-top:24px;">
+        <h4 style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--slate-800);margin-bottom:16px;">评估标准 Prompt展示</h4>
+        <div style="background:var(--slate-50);border-radius:12px;padding:20px;font-size:15px;color:var(--slate-700);line-height:1.6;font-family:monospace;">
+评估标准<br>
+首先判断新闻是否与该公司相关：<br>
+ 如果新闻完全不涉及该公司、其业务、或其所在行业，输出：无关<br>
+ 如果相关，请输出一个1-10的分数，表示事件对该公司的影响范围：<br>
+ 1-3分：影响较小<br>
+ 新闻中仅简单提及该公司<br>
+ 影响范围局限于公司某个小业务<br>
+ 例如：公司普通业务新闻、日常运营信息<br>
+ 4-6分：影响中等<br>
+ 涉及公司重要业务或产品<br>
+ 可能影响公司某业务线或区域<br>
+ 例如：新产品发布、区域性业务调整<br>
+ 7-8分：影响较大<br>
+ 涉及公司核心业务或战略<br>
+ 可能影响公司整体经营<br>
+ 例如：重大战略调整、重要人事变动、关键业务突破<br>
+ 9-10分：影响极大<br>
+ 可能对公司产生根本性影响<br>
+ 涉及公司生存发展的重大事件<br>
+ 例如：并购重组、重大监管处罚、行业颠覆性变革<br>
+ 输出格式<br>
+ &lt;think&gt;（简要说明判断理由）&lt;/think&gt;&lt;answer&gt;（只输出"无关"或一个数字分数）&lt;/answer&gt;<br>
+ 示例：<br>
+ 输入<br>
+ 公司名称： 腾讯 新闻标题： 2024中国互联网企业100强榜单发布 新闻内容： 中国互联网协会今日发布2024年中国互联网企业100强榜单，腾讯控股位列第二，阿里巴巴位列第一，美团、京东、拼多多等也进入前十。榜单根据企业营收、创新能力、社会责任等指标综合评定。<br>
+ 输出<br>
+ &lt;think&gt;新闻明确提及公司新产品发布，涉及核心产品线，可能提升市场份额，影响较大。&lt;/think&gt; &lt;answer&gt;8&lt;/answer&gt;
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 案例分析 ═══ -->
+<section class="section" id="case">
+  <div class="canvas">
+    <div class="section-header fade-in">
+      <div class="tag">Case Study</div>
+      <h2>点睛案例</h2>
+      <p>重庆农商行 · 从误判到精准的典型对比</p>
+    </div>
+
+    <div class="case-study fade-in">
+      <div class="case-header">
+        <h3>重庆农商行合川分行被罚款 80 万元</h3>
+        <div class="case-company">重庆农商银行 · 因内控管理失效等违规</div>
+      </div>
+      <div class="case-content">
+        <h4>分数对比</h4>
+        <div class="score-comparison">
+          <div class="score-box baseline">
+            <div class="score-label">真值（人工）</div>
+            <div class="score-num">7</div>
+            <div class="score-note">Ground Truth</div>
+          </div>
+          <div class="score-box issue">
+            <div class="score-label">基础模型（误判）</div>
+            <div class="score-num">9</div>
+            <div class="score-note">过估 · 误判为重大影响</div>
+          </div>
+          <div class="score-box fixed">
+            <div class="score-label">微调模型（纠正）</div>
+            <div class="score-num">7</div>
+            <div class="score-note">精准匹配真值</div>
+          </div>
+        </div>
+
+        <h4>基础模型推理（过高估计）</h4>
+        <div class="code-block"><span class="comment">&lt;think&gt;</span>
+新闻直接提到重庆农商银行及其下属分支机构的具体违规行为和处罚措施……
+考虑到这是由于内部控制失灵导致的重大行政处罚，可能会对整个银行的形象造成负面影响，进而影响客户的信任度和未来的业务发展……
+这反映了事件的严重性和广泛的社会关注。
+<span class="comment">&lt;/think&gt; &lt;answer&gt;</span>9<span class="comment">&lt;/answer&gt;</span></div>
+
+        <h4>微调后模型推理（精准匹配）</h4>
+        <div class="code-block"><span class="comment">&lt;think&gt;</span>
+新闻直接提到重庆农商银行及其下属分支机构的具体违规行为和处罚措施，且涉及到内部控制管理和贷款审批问题，这些问题直接影响到公司的声誉和合规性。因此，该新闻不仅高度相关，而且可能对公司的整体经营造成一定负面影响。
+<span class="comment">&lt;/think&gt; &lt;answer&gt;</span>7<span class="comment">&lt;/answer&gt;</span></div>
+
+        <div class="key-insight" style="margin-top:16px;">
+          <div class="icon">📊</div>
+          <div class="content">
+            基础模型将内控处罚 <strong>误判为 9 分</strong>（重大影响），而微调后模型精准输出 <strong>7 分</strong>—— 理解到这是"对公司整体经营造成一定负面影响"，但不是生存级别的冲击。误差从 +2 收窄至 <strong>0</strong>。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 核心成果 ═══ -->
+<section class="section" id="results">
+  <div class="canvas">
+    <div class="section-header fade-in">
+      <div class="tag">Results</div>
+      <h2>核心成果</h2>
+      <p>设计决策驱动的可量化改善</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card-gold fade-in">
+        <div class="card-icon" style="background:var(--gold-100);color:var(--gold-600);">🔄</div>
+        <h3>闭环迭代机制</h3>
+        <p>评估工具链暴露的 Gap 误差反哺样本订正与策略迭代，实现召回率与精确度的闭环持续拉升。区分政策/公司型指标能快速捕捉高分段虚假误报，Gap 均值与标准差精准定位 4-6 分段模糊成因。</p>
+      </div>
+
+      <div class="card-gold fade-in">
+        <div class="card-icon" style="background:var(--gold-100);color:var(--gold-600);">🎯</div>
+        <h3>零泄露泛化验证</h3>
+        <p>306 个样本黄金测试集通过 semhash 物理隔离，彻底消除训练数据泄露风险，确保验证结果真实反映模型在全市场未知事件上的泛化精确度。</p>
+      </div>
+
+      <div class="card-gold fade-in">
+        <div class="card-icon" style="background:var(--gold-100);color:var(--gold-600);">⚡</div>
+        <h3>轻量化高精度</h3>
+        <p>14B 模型 + QLoRA 微调，以极低计算和推理成本继承 72B 教师模型的金融推理边界，在高分段召回率和精确度上实现超越基础模型的表现。</p>
+      </div>
+
+      <div class="card-gold fade-in">
+        <div class="card-icon" style="background:var(--gold-100);color:var(--gold-600);">🧩</div>
+        <h3>工程解耦范式</h3>
+        <p>将业务规则从 Prompt 解耦，把复杂性交给数据清洗、教师模型控制、评估工具链三个独立环节，用最轻量级的 Prompt 达到最优性能。</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ═══ Footer ═══ -->
+<footer class="footer">
+  <div class="canvas">
+    <p>金融数据打分模型 · 王佳怡实习项目</p>
+   
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════
+   JavaScript
+   ══════════════════════════════════ -->
+<script>
+// ── Scroll-based progress bar ──
+window.addEventListener('scroll', function(){
+  const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+  const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  const progress = (scrollTop / scrollHeight) * 100;
+  document.getElementById('scrollProgress').style.width = progress + '%';
+});
+
+// ── Fade-in on scroll (Intersection Observer) ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── Smooth scroll for all anchor clicks ──
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e){
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
+</script>
+
+</body>
+</html>

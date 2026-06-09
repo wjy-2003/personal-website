@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多智能体医疗助手 — 设计系统规范</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700;800&family=Urbanist:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal-900:#0d2b2b;
+  --teal-800:#134b4b;
+  --teal-700:#1a6b6b;
+  --teal-600:#208b8b;
+  --teal-500:#26abab;
+  --teal-400:#51bcbc;
+  --teal-300:#7dcfcf;
+  --teal-200:#b3e5e5;
+  --teal-100:#d9f2f2;
+  --teal-50:#effafa;
+
+  --coral-500:#ff6b6b;
+  --coral-400:#ff8e8e;
+  --coral-300:#ffb1b1;
+  --coral-100:#ffe5e5;
+
+  --slate-900:#0f1724;
+  --slate-800:#1e293b;
+  --slate-700:#334155;
+  --slate-600:#475569;
+  --slate-500:#64748b;
+  --slate-400:#94a3b8;
+  --slate-300:#cbd5e1;
+  --slate-200:#e2e8f0;
+  --slate-100:#f1f5f9;
+  --slate-50:#f8fafc;
+
+  --amber-400:#fbbf24;
+  --amber-500:#f59e0b;
+
+  --emerald-400:#34d399;
+  --emerald-500:#10b981;
+
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:20px;
+  --radius-xl:28px;
+  --shadow-card:0 2px 16px rgba(0,0,0,0.06),0 8px 32px rgba(0,0,0,0.04);
+  --shadow-elevated:0 8px 40px rgba(0,0,0,0.10),0 2px 8px rgba(0,0,0,0.06);
+  --font-display:'Outfit',sans-serif;
+  --font-body:'Urbanist',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+body{
+  font-family:var(--font-body);
+  background:var(--slate-100);
+  color:var(--slate-900);
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  font-size:17px;
+}
+
+/* ── Canvas ── */
+.canvas{
+  max-width:1440px;
+  margin:0 auto;
+  padding:0 40px;
+}
+
+/* ── Top Bar ── */
+.top-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:20px 40px;
+  background:#fff;
+  border-bottom:1px solid var(--slate-200);
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+.top-bar-logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.logo-icon{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,var(--teal-500),var(--teal-700));
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:18px;
+}
+.logo-text{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:18px;
+  color:var(--slate-900);
+}
+.logo-text span{color:var(--teal-600);}
+.top-bar-badge{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;
+  background:var(--teal-50);
+  border:1px solid var(--teal-200);
+  border-radius:20px;
+  font-size:13px;
+  font-weight:500;
+  color:var(--teal-700);
+}
+.top-bar-badge::before{
+  content:'';display:block;
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--teal-500);
+}
+
+/* ── Section ── */
+.section{
+  padding:60px 0;
+}
+.section-header{
+  text-align:center;
+  margin-bottom:48px;
+}
+.section-header .tag{
+  display:inline-block;
+  padding:4px 16px;
+  background:var(--teal-50);
+  border:1px solid var(--teal-200);
+  border-radius:20px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--teal-700);
+  letter-spacing:0.3px;
+  margin-bottom:12px;
+}
+.section-header h2{
+  font-family:var(--font-display);
+  font-size:44px;
+  font-weight:700;
+  color:var(--slate-900);
+  letter-spacing:-0.5px;
+  line-height:1.2;
+}
+.section-header p{
+  font-size:18px;
+  color:var(--slate-500);
+  margin-top:8px;
+}
+
+/* ── Divider ── */
+.divider{
+  height:1px;
+  background:linear-gradient(to right,transparent,var(--slate-200),transparent);
+  margin:0;
+}
+
+/* ══════════════════════════════════
+   DESIGN SYSTEM
+   ══════════════════════════════════ */
+.ds-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:40px;
+}
+.ds-card{
+  background:#fff;
+  border-radius:var(--radius-lg);
+  padding:32px;
+  box-shadow:var(--shadow-card);
+  border:1px solid var(--slate-100);
+}
+.ds-card h3{
+  font-family:var(--font-display);
+  font-size:16px;
+  font-weight:600;
+  color:var(--slate-600);
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+  margin-bottom:20px;
+}
+.color-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:12px;
+}
+.color-swatch{
+  text-align:center;
+}
+.color-swatch .swatch{
+  width:100%;
+  aspect-ratio:1;
+  border-radius:var(--radius-sm);
+  margin-bottom:6px;
+  border:1px solid rgba(0,0,0,0.04);
+}
+.color-swatch .label{
+  font-size:11px;
+  font-weight:500;
+  color:var(--slate-500);
+}
+.typo-sample{
+  margin-bottom:16px;
+}
+.typo-sample .name{
+  font-size:12px;
+  font-weight:600;
+  color:var(--slate-400);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:4px;
+}
+.typo-sample .display{font-family:var(--font-display);font-weight:700;font-size:32px;}
+.typo-sample .body{font-family:var(--font-body);font-size:16px;color:var(--slate-700);}
+.typo-sample .mono{font-family:var(--font-mono);font-size:14px;color:var(--slate-600);}
+
+/* ══════════════════════════════════
+   FRAME (Figma Screen)
+   ══════════════════════════════════ */
+.frame-wrapper{
+  display:flex;
+  gap:32px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.frame{
+  width:420px;
+  background:#fff;
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-elevated);
+  overflow:hidden;
+  border:1px solid var(--slate-200);
+  flex-shrink:0;
+  transition:transform 0.2s,box-shadow 0.2s;
+}
+.frame:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 48px rgba(0,0,0,0.12);
+}
+.frame-header{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:14px 20px;
+  background:var(--slate-50);
+  border-bottom:1px solid var(--slate-200);
+}
+.frame-header .dots{display:flex;gap:6px;}
+.frame-header .dot{width:10px;height:10px;border-radius:50%;}
+.frame-header .dot.r{background:#ff5f56;}
+.frame-header .dot.y{background:#ffbd2e;}
+.frame-header .dot.g{background:#27c93f;}
+.frame-header .title{
+  font-size:12px;
+  font-weight:500;
+  color:var(--slate-400);
+  flex:1;
+  text-align:center;
+  letter-spacing:0.3px;
+}
+.frame-body{
+  padding:0;
+  position:relative;
+}
+.frame-label{
+  position:absolute;
+  top:12px;
+  left:12px;
+  padding:4px 10px;
+  background:rgba(15,23,36,0.75);
+  backdrop-filter:blur(8px);
+  border-radius:6px;
+  font-size:11px;
+  font-weight:600;
+  color:#fff;
+  letter-spacing:0.5px;
+  z-index:10;
+}
+
+/* ── Frame 1: Chat Interface ── */
+.chat-ui{padding:20px;}
+.chat-ui .chat-header-ui{
+  text-align:center;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--slate-100);
+  margin-bottom:16px;
+}
+.chat-ui .chat-header-ui h4{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:16px;
+  color:var(--teal-700);
+}
+.chat-ui .chat-header-ui p{
+  font-size:12px;
+  color:var(--slate-400);
+}
+.chat-ui .msg{
+  display:flex;
+  gap:10px;
+  margin-bottom:14px;
+  align-items:flex-start;
+}
+.chat-ui .msg.assistant{flex-direction:row;}
+.chat-ui .msg.user{flex-direction:row-reverse;}
+.chat-ui .msg .avatar{
+  width:32px;height:32px;
+  border-radius:50%;
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;
+}
+.chat-ui .msg.assistant .avatar{background:var(--teal-100);color:var(--teal-600);}
+.chat-ui .msg.user .avatar{background:var(--coral-100);color:var(--coral-500);}
+.chat-ui .msg .bubble{
+  padding:10px 14px;
+  border-radius:14px;
+  max-width:80%;
+  font-size:13px;
+  line-height:1.5;
+}
+.chat-ui .msg.assistant .bubble{
+  background:var(--slate-100);
+  border-bottom-left-radius:4px;
+  color:var(--slate-700);
+}
+.chat-ui .msg.user .bubble{
+  background:var(--teal-500);
+  color:#fff;
+  border-bottom-right-radius:4px;
+}
+.chat-ui .msg .tag{
+  display:inline-block;
+  padding:1px 8px;
+  background:var(--teal-50);
+  border-radius:4px;
+  font-size:10px;
+  font-weight:600;
+  color:var(--teal-600);
+  margin-bottom:4px;
+}
+.chat-ui .input-bar{
+  display:flex;
+  gap:8px;
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid var(--slate-100);
+}
+.chat-ui .input-bar input{
+  flex:1;
+  padding:10px 16px;
+  border:1px solid var(--slate-200);
+  border-radius:20px;
+  font-size:13px;
+  outline:none;
+  font-family:var(--font-body);
+}
+.chat-ui .input-bar input:focus{border-color:var(--teal-400);}
+.chat-ui .input-bar .btn-send{
+  width:40px;height:40px;
+  border-radius:50%;
+  border:none;
+  background:var(--teal-500);
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.chat-ui .input-bar .btn-file{
+  width:40px;height:40px;
+  border-radius:50%;
+  border:1px dashed var(--slate-300);
+  background:transparent;
+  color:var(--slate-400);
+  font-size:16px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ── Frame 2: Image Analysis ── */
+.image-analysis{padding:0;}
+.image-analysis .image-preview{
+  width:100%;
+  height:200px;
+  background:linear-gradient(135deg,var(--slate-900),var(--slate-700));
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.image-analysis .image-preview .placeholder{
+  text-align:center;
+  color:rgba(255,255,255,0.5);
+}
+.image-analysis .image-preview .placeholder .icon{font-size:40px;margin-bottom:8px;}
+.image-analysis .image-preview .placeholder p{font-size:13px;}
+.image-analysis .analysis-results{
+  padding:20px;
+}
+.image-analysis .analysis-results .result-row{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid var(--slate-100);
+  font-size:13px;
+}
+.image-analysis .analysis-results .result-row .label{color:var(--slate-500);}
+.image-analysis .analysis-results .result-row .value{font-weight:600;}
+.image-analysis .analysis-results .result-row .value.positive{color:var(--coral-500);}
+.image-analysis .analysis-results .result-row .value.negative{color:var(--emerald-500);}
+.image-analysis .heatmap-bar{
+  height:4px;
+  background:var(--slate-200);
+  border-radius:2px;
+  margin:12px 0;
+  overflow:hidden;
+}
+.image-analysis .heatmap-bar .fill{
+  height:100%;
+  border-radius:2px;
+  background:linear-gradient(to right,var(--emerald-400),var(--amber-400),var(--coral-500));
+  width:72%;
+}
+.image-analysis .confidence-label{
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:var(--slate-400);
+}
+
+/* ── Frame 3: Validation ── */
+.validation-ui{padding:20px;}
+.validation-ui .v-header{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:16px;
+  padding:10px 14px;
+  background:var(--amber-400);
+  border-radius:var(--radius-sm);
+  font-size:13px;
+  font-weight:600;
+  color:#fff;
+}
+.validation-ui .v-card{
+  background:var(--slate-50);
+  border-radius:var(--radius-md);
+  padding:16px;
+  margin-bottom:14px;
+}
+.validation-ui .v-card h5{
+  font-size:13px;
+  font-weight:600;
+  color:var(--slate-600);
+  margin-bottom:6px;
+}
+.validation-ui .v-card p{
+  font-size:13px;
+  color:var(--slate-700);
+  line-height:1.5;
+}
+.validation-ui .v-actions{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+}
+.validation-ui .v-actions button{
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:var(--radius-sm);
+  font-weight:600;
+  font-size:13px;
+  cursor:pointer;
+  font-family:var(--font-body);
+}
+.validation-ui .v-actions .btn-approve{
+  background:var(--emerald-500);
+  color:#fff;
+}
+.validation-ui .v-actions .btn-reject{
+  background:var(--coral-500);
+  color:#fff;
+}
+
+/* ── Frame 4: RAG / Web Search ── */
+.rag-ui{padding:20px;}
+.rag-ui .rag-header{
+  font-size:13px;
+  font-weight:600;
+  color:var(--teal-700);
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.rag-ui .rag-header::before{
+  content:'📚';
+}
+.rag-ui .source-item{
+  display:flex;
+  gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid var(--slate-100);
+}
+.rag-ui .source-item .num{
+  width:22px;height:22px;
+  border-radius:50%;
+  background:var(--teal-100);
+  color:var(--teal-600);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;
+  flex-shrink:0;
+}
+.rag-ui .source-item .detail{font-size:12px;}
+.rag-ui .source-item .detail .title{font-weight:600;color:var(--slate-700);}
+.rag-ui .source-item .detail .source{color:var(--slate-400);}
+.rag-ui .source-item .confidence-dot{
+  display:inline-block;
+  width:8px;height:8px;
+  border-radius:50%;
+  margin-right:4px;
+}
+.rag-ui .source-item .confidence-dot.high{background:var(--emerald-500);}
+.rag-ui .source-item .confidence-dot.medium{background:var(--amber-400);}
+
+/* ══════════════════════════════════
+   ARCHITECTURE DIAGRAM
+   ══════════════════════════════════ */
+.arch-container{
+  background:#fff;
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-card);
+  padding:48px;
+  border:1px solid var(--slate-100);
+  overflow:auto;
+}
+.arch-container .arch-title{
+  text-align:center;
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:20px;
+  color:var(--slate-700);
+  margin-bottom:32px;
+}
+.arch-grid{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1px;
+}
+.arch-layer{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  padding:6px 0;
+  position:relative;
+}
+.arch-layer-label{
+  width:100%;
+  text-align:center;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--slate-400);
+  margin-bottom:8px;
+}
+.arch-node{
+  padding:10px 16px;
+  border-radius:var(--radius-md);
+  font-size:13px;
+  font-weight:600;
+  text-align:center;
+  position:relative;
+  border:2px solid transparent;
+  min-width:120px;
+  transition:transform 0.15s;
+}
+.arch-node:hover{transform:scale(1.04);}
+.arch-node.input{background:var(--slate-100);border-color:var(--slate-300);color:var(--slate-700);}
+.arch-node.process{background:var(--teal-50);border-color:var(--teal-200);color:var(--teal-700);}
+.arch-node.agent{background:linear-gradient(135deg,#effafa,#d9f2f2);border-color:var(--teal-300);color:var(--teal-800);}
+.arch-node.vision{background:var(--coral-100);border-color:var(--coral-300);color:#c0392b;}
+.arch-node.rag{background:#f0f4ff;border-color:#b3c9f0;color:#2c5282;}
+.arch-node.search{background:#f5f0ff;border-color:#d4c4f0;color:#553388;}
+.arch-node.guard{background:#fff8e1;border-color:#ffe082;color:#8d6e00;}
+.arch-node.output{background:var(--emerald-50);border-color:var(--emerald-200);color:var(--emerald-700);}
+.arch-node .node-icon{display:block;font-size:20px;margin-bottom:4px;}
+.arch-arrow{
+  color:var(--slate-300);
+  font-size:14px;
+  writing-mode:vertical-lr;
+  text-align:center;
+  line-height:1;
+  padding:1px 0;
+}
+.arch-arrow.horizontal{
+  writing-mode:horizontal-tb;
+  display:inline-block;
+}
+.arch-arrow-center{
+  display:flex;
+  justify-content:center;
+  writing-mode:horizontal-tb;
+  padding:8px 0;
+}
+.arch-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+/* ── User Flow ── */
+.flow-diagram{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:32px;
+  background:#fff;
+  border-radius:var(--radius-lg);
+  border:1px solid var(--slate-100);
+  box-shadow:var(--shadow-card);
+}
+.flow-step{
+  padding:10px 18px;
+  border-radius:var(--radius-sm);
+  font-size:12px;
+  font-weight:500;
+  text-align:center;
+  min-width:80px;
+}
+.flow-step.start{background:var(--teal-500);color:#fff;}
+.flow-step.process{background:var(--slate-100);color:var(--slate-700);border:1px solid var(--slate-200);}
+.flow-step.decision{background:var(--amber-400);color:#fff;}
+.flow-step.end{background:var(--emerald-500);color:#fff;}
+.flow-arrow{color:var(--slate-300);font-size:18px;}
+
+/* ── Metrics / Stats ── */
+.metrics-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
+}
+.metric-card{
+  background:#fff;
+  border-radius:var(--radius-md);
+  padding:24px;
+  text-align:center;
+  box-shadow:var(--shadow-card);
+  border:1px solid var(--slate-100);
+}
+.metric-card .num{
+  font-family:var(--font-display);
+  font-size:40px;
+  font-weight:800;
+  color:var(--teal-600);
+  letter-spacing:-1px;
+}
+.metric-card .label{
+  font-size:15px;
+  color:var(--slate-500);
+  margin-top:4px;
+}
+.metric-card .sub{
+  font-size:13px;
+  color:var(--slate-400);
+  margin-top:2px;
+}
+
+/* ── Component Showcase ── */
+.comp-showcase{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:24px;
+}
+.comp-item{
+  background:#fff;
+  border-radius:var(--radius-md);
+  padding:24px;
+  box-shadow:var(--shadow-card);
+  border:1px solid var(--slate-100);
+  text-align:center;
+}
+.comp-item .comp-label{
+  font-size:11px;
+  font-weight:600;
+  color:var(--slate-400);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:16px;
+}
+.btn-demo{
+  padding:10px 24px;
+  border:none;
+  border-radius:var(--radius-sm);
+  font-weight:600;
+  font-size:14px;
+  cursor:pointer;
+  font-family:var(--font-body);
+}
+.btn-demo.primary{background:var(--teal-500);color:#fff;}
+.btn-demo.secondary{background:var(--slate-100);color:var(--slate-700);border:1px solid var(--slate-200);}
+.btn-demo.outline{background:transparent;color:var(--teal-600);border:2px solid var(--teal-300);}
+.btn-demo.danger{background:var(--coral-500);color:#fff;}
+.badge-demo{
+  display:inline-block;
+  padding:4px 12px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+}
+.badge-demo.agent{background:var(--teal-100);color:var(--teal-700);}
+.badge-demo.confidence{background:var(--emerald-100);color:var(--emerald-700);}
+.badge-demo.warning{background:var(--amber-100);color:#8d6e00;}
+.badge-demo.error{background:var(--coral-100);color:var(--coral-500);}
+
+/* ── Responsive ── */
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.metric-card, .ds-card, .comp-item, .frame, .arch-layer, .flow-step {
+  animation: fadeInUp 0.5s ease-out both;
+}
+.metric-card:nth-child(1) { animation-delay: 0.1s; }
+.metric-card:nth-child(2) { animation-delay: 0.2s; }
+.metric-card:nth-child(3) { animation-delay: 0.3s; }
+.metric-card:nth-child(4) { animation-delay: 0.4s; }
+.arch-node:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  transition: all 0.3s ease;
+}
+.arch-node {
+  transition: all 0.3s ease;
+}
+.btn-demo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+.top-bar-badge::before {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@media(max-width:1024px){
+  .ds-grid,.metrics-grid,.comp-showcase{grid-template-columns:1fr 1fr;}
+  .frame{width:100%;max-width:420px;}
+}
+@media(max-width:640px){
+  .ds-grid,.metrics-grid,.comp-showcase{grid-template-columns:1fr;}
+  .canvas{padding:0 20px;}
+  .section{padding:40px 0;}
+  .section-header h2{font-size:32px;}
+  .color-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP BAR ═══ -->
+<header class="top-bar">
+  <div class="top-bar-logo">
+    <div class="logo-icon">⚕</div>
+    <div class="logo-text">Med<span>AI</span> · 设计系统</div>
+  </div>
+  <div class="top-bar-badge">产品设计 · v2.1</div>
+</header>
+
+<div class="canvas">
+
+<!-- ═══ 0. OVERVIEW ═══ -->
+<section class="section">
+  <div class="section-header">
+    <div class="tag">设计系统规范</div>
+    <h2>多智能体医疗助手</h2>
+    <p>基于 AI 多智能体的医疗诊断辅助系统 — 产品设计文档</p>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="num">6</div>
+      <div class="label">专业 Agent</div>
+      <div class="sub">LLM · RAG · Vision · Web Search · Guardrails · Voice</div>
+    </div>
+    <div class="metric-card">
+      <div class="num">3</div>
+      <div class="label">医学视觉流水线</div>
+      <div class="sub">Chest X-Ray · Brain MRI · Skin Lesion</div>
+    </div>
+    <div class="metric-card">
+      <div class="num">4</div>
+      <div class="label">交互模式</div>
+      <div class="sub">Text · Voice · Image · Web Search</div>
+    </div>
+    <div class="metric-card">
+      <div class="num">✓</div>
+      <div class="label">人工审核机制</div>
+      <div class="sub">所有影像诊断结果需人工审核</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 1. DESIGN SYSTEM ═══ -->
+<section class="section">
+  <div class="section-header">
+    <div class="tag">01 · 设计基础</div>
+    <h2>设计系统</h2>
+    <p>色彩 · 排版 · 组件规范</p>
+  </div>
+
+  <div class="ds-grid">
+    <!-- Colors -->
+    <div class="ds-card">
+      <h3>色彩系统</h3>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="swatch" style="background:var(--teal-600)"></div>
+          <div class="label">Teal 600</div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch" style="background:var(--teal-500)"></div>
+          <div class="label">Teal 500</div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch" style="background:var(--teal-400)"></div>
+          <div class="label">Teal 400</div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch" style="background:var(--teal-100)"></div>
+          <div class="label">Teal 100</div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch" style="background:var(--teal-50)"></div>
+          <div class="label">Teal 50</div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch" style="background:var(--coral-500)"></div>
+          <div class="label">Coral 500</div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch" style="background:var(--coral-400)"></div>
+          <div class="label">Coral 400</div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch" style="background:var(--coral-100)"></div>
+          <div class="label">Coral 100</div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch" style="background:var(--amber-400)"></div>
+          <div class="label">Amber 400</div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch" style="background:var(--emerald-500)"></div>
+          <div class="label">Emerald 500</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;font-size:12px;color:var(--slate-400)">
+        Teal = 主品牌色 · Coral = 警报/风险 · Amber = 警告/验证 · Emerald = 成功
+      </div>
+    </div>
+
+    <!-- Typography -->
+    <div class="ds-card">
+      <h3>字体排版</h3>
+      <div class="typo-sample">
+        <div class="name">Display · Outfit Bold 32px</div>
+        <div class="display">MedAI Assistant</div>
+      </div>
+      <div class="typo-sample">
+        <div class="name">Body · Urbanist Regular 16px</div>
+        <div class="body">Multi-Agent Medical Assistant powered by LangGraph, RAG, and Computer Vision.</div>
+      </div>
+      <div class="typo-sample">
+        <div class="name">Mono · DM Mono 14px</div>
+        <div class="mono">agent_decision.py → route_query()</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 2. COMPONENT SHOWCASE ═══ -->
+<section class="section">
+  <div class="section-header">
+    <div class="tag">02 · UI 组件</div>
+    <h2>组件库</h2>
+    <p>复用组件规范</p>
+  </div>
+
+  <div class="comp-showcase">
+    <div class="comp-item">
+      <div class="comp-label">按钮</div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <button class="btn-demo primary">发送查询</button>
+        <button class="btn-demo secondary">取消</button>
+        <button class="btn-demo outline">上传图片</button>
+        <button class="btn-demo danger">拒绝</button>
+      </div>
+    </div>
+    <div class="comp-item">
+      <div class="comp-label">徽章</div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <span class="badge-demo agent">RAG Agent</span>
+        <span class="badge-demo confidence">置信度: 94%</span>
+        <span class="badge-demo warning">待审核</span>
+        <span class="badge-demo error">低置信度</span>
+      </div>
+    </div>
+    <div class="comp-item">
+      <div class="comp-label">Agent 标签</div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <span class="badge-demo agent" style="background:var(--teal-100);color:var(--teal-700)">🧠 Brain Tumor Agent</span>
+        <span class="badge-demo agent" style="background:var(--coral-100);color:var(--coral-500)">🫁 Chest X-Ray Agent</span>
+        <span class="badge-demo agent" style="background:#f0f4ff;color:#2c5282">🔬 Skin Lesion Agent</span>
+        <span class="badge-demo agent" style="background:#f5f0ff;color:#553388">🌐 Web Search Agent</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 3. SCREEN MOCKUPS ═══ -->
+<section class="section">
+  <div class="section-header">
+    <div class="tag">03 · 关键界面</div>
+    <h2>界面设计稿</h2>
+    <p>核心用户界面 · Figma 高保真原型</p>
+  </div>
+
+  <div class="frame-wrapper">
+    <!-- Screen 1: Chat Interface -->
+    <div class="frame">
+      <div class="frame-header">
+        <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <div class="title">聊天界面</div>
+      </div>
+      <div class="frame-body">
+        <div class="frame-label">💬 主聊天</div>
+        <div class="chat-ui">
+          <div class="chat-header-ui">
+            <h4>⚕️ MedAI 助手</h4>
+            <p>多智能体医疗诊断系统</p>
+          </div>
+          <div class="msg assistant">
+            <div class="avatar">🤖</div>
+            <div class="bubble">
+              <div class="tag">系统</div>
+              你好！我是你的 AI 医疗助手。我可以帮助你：<br>
+              • 基于 RAG 的医学问答<br>
+              • 影像分析（X 光、MRI、皮肤病变）<br>
+              • 实时网络搜索最新研究
+            </div>
+          </div>
+          <div class="msg user">
+            <div class="avatar">👤</div>
+            <div class="bubble">请帮我分析这张胸部 X 光片是否有 COVID-19 迹象</div>
+          </div>
+          <div class="msg assistant">
+            <div class="avatar">🤖</div>
+            <div class="bubble">
+              <div class="tag">🫁 胸部 X 光 Agent</div>
+              已检测到图片，正在通过视觉流水线进行分析……
+            </div>
+          </div>
+          <div class="input-bar">
+            <button class="btn-file">📎</button>
+            <input type="text" placeholder="输入医学问题..." value="已上传 chest_xray.jpg">
+            <button class="btn-send">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Image Analysis -->
+    <div class="frame">
+      <div class="frame-header">
+        <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <div class="title">影像分析</div>
+      </div>
+      <div class="frame-body">
+        <div class="frame-label">🫁 胸部 X 光分析</div>
+        <div class="image-analysis">
+          <div class="image-preview">
+            <div class="placeholder">
+              <div class="icon">🫁</div>
+              <p>chest_xray_covid19_sample.jpg</p>
+              <p style="font-size:11px;opacity:0.6">Posterior-Anterior View</p>
+            </div>
+          </div>
+          <div class="analysis-results">
+            <div class="result-row">
+              <span class="label">Detection</span>
+              <span class="value positive">COVID-19 Patterns Detected</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Confidence</span>
+              <span class="value">87.3%</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Bilateral Opacities</span>
+              <span class="value positive">Present</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Peripheral Distribution</span>
+              <span class="value positive">Present</span>
+            </div>
+            <div class="heatmap-bar">
+              <div class="fill"></div>
+            </div>
+            <div class="confidence-label">
+              <span>Low Risk</span>
+              <span>High Risk → 72%</span>
+            </div>
+            <div style="margin-top:12px;padding:10px;background:var(--amber-100);border-radius:8px;font-size:12px;color:#8d6e00;font-weight:500">
+              ⚠️ Pending human validation — results require review
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Human Validation -->
+    <div class="frame">
+      <div class="frame-header">
+        <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <div class="title">人工审核</div>
+      </div>
+      <div class="frame-body">
+        <div class="frame-label">👨‍⚕️ 人工审核</div>
+        <div class="validation-ui">
+          <div class="v-header">🔍 需要审核 — 胸部 X 光诊断</div>
+          <div class="v-card">
+            <h5>AI 检测结果</h5>
+            <p><strong>Finding:</strong> Bilateral ground-glass opacities with peripheral distribution</p>
+            <p><strong>AI Diagnosis:</strong> COVID-19 pneumonia (87.3% confidence)</p>
+            <p><strong>Differential:</strong> Viral pneumonia, organizing pneumonia</p>
+          </div>
+          <div class="v-card">
+            <h5>📋 审核指南</h5>
+            <p>• 确认双侧阴影的存在<br>
+            • 建议评估临床相关性<br>
+            • 考虑 RT-PCR 确认</p>
+          </div>
+          <div class="v-actions">
+            <button class="btn-approve">✓ 批准</button>
+            <button class="btn-reject">✗ 拒绝并要求修改</button>
+          </div>
+          <div style="margin-top:8px;text-align:center;font-size:11px;color:var(--slate-400)">
+            审核人：待定 · 最后更新：刚刚
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: RAG + Web Search -->
+    <div class="frame">
+      <div class="frame-header">
+        <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <div class="title">RAG + 网络搜索</div>
+      </div>
+      <div class="frame-body">
+        <div class="frame-label">📚 医学知识</div>
+        <div class="rag-ui">
+          <div class="rag-header">检索来源 — "脑肿瘤 MRI 检测"</div>
+          <div class="source-item">
+            <div class="num">1</div>
+            <div class="detail">
+              <div class="title">MRI-based brain tumor detection using deep learning</div>
+              <div class="source">BMC Med Inform Decis Mak, 2023 · <span class="confidence-dot high"></span> 96% match</div>
+            </div>
+          </div>
+          <div class="source-item">
+            <div class="num">2</div>
+            <div class="detail">
+              <div class="title">Detection and classification of brain tumor using hybrid DL models</div>
+              <div class="source">Scientific Reports, 2023 · <span class="confidence-dot high"></span> 92% match</div>
+            </div>
+          </div>
+          <div class="source-item">
+            <div class="num">3</div>
+            <div class="detail">
+              <div class="title">Brain tumor detection — comparison with transfer learning methods</div>
+              <div class="source">Scientific Reports, 2024 · <span class="confidence-dot medium"></span> 78% match</div>
+            </div>
+          </div>
+          <div class="source-item" style="border:none">
+            <div style="width:22px;flex-shrink:0;font-size:14px">🌐</div>
+            <div class="detail">
+              <div class="title">网络搜索降级</div>
+              <div class="source">置信度低于阈值 → 路由到 Tavily 网络搜索</div>
+            </div>
+          </div>
+          <div style="margin-top:12px;padding:10px 14px;background:var(--teal-50);border-radius:8px;font-size:12px;color:var(--teal-700);display:flex;gap:6px;align-items:center">
+            <span>🧠</span>
+            <span>RAG 响应 + 3 条引用来源已生成</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 4. SYSTEM ARCHITECTURE ═══ -->
+<section class="section">
+  <div class="section-header">
+    <div class="tag">04 · 系统设计</div>
+    <h2>System Architecture</h2>
+    <p>多智能体系统架构 · LangGraph 编排</p>
+  </div>
+
+  <div class="arch-container">
+    <div class="arch-title">⚕️ 多智能体医疗助手 — 系统架构总览</div>
+    
+    <!-- Layer 1: Input -->
+    <div class="arch-layer">
+      <div class="arch-layer-label">输入层</div>
+      <div class="arch-row">
+        <div class="arch-node input"><span class="node-icon">💬</span>文本输入</div>
+        <div class="arch-arrow horizontal">—</div>
+        <div class="arch-node input"><span class="node-icon">🎤</span>语音输入</div>
+        <div class="arch-arrow horizontal">→</div>
+        <div class="arch-node input"><span class="node-icon">🖼️</span>图片上传</div>
+      </div>
+    </div>
+
+    <div class="arch-arrow arch-arrow-center">↓ 语音转文字 (Eleven Labs)</div>
+
+    <!-- Layer 2: Guardrails -->
+    <div class="arch-layer">
+      <div class="arch-layer-label">安全层</div>
+      <div class="arch-row">
+        <div class="arch-node guard"><span class="node-icon">🛡️</span>Input Guardrails</div>
+        <div class="arch-arrow horizontal">→</div>
+        <div class="arch-node guard"><span class="node-icon">🛡️</span>Output Guardrails</div>
+      </div>
+    </div>
+
+    <div class="arch-arrow">↓</div>
+
+    <!-- Layer 3: Orchestrator -->
+    <div class="arch-layer">
+      <div class="arch-layer-label">编排层 · LangGraph</div>
+      <div class="arch-row">
+        <div class="arch-node process"><span class="node-icon">⚙️</span>Agent 决策<br><span style="font-size:11px;font-weight:400">agent_decision.py</span></div>
+      </div>
+    </div>
+
+    <div class="arch-arrow arch-arrow-center">↓ 按查询类型路由</div>
+
+    <!-- Layer 4: Agents -->
+    <div class="arch-layer">
+      <div class="arch-layer-label">专业 Agent 层</div>
+      <div class="arch-row">
+        <div class="arch-node vision"><span class="node-icon">🫁</span>Chest X-Ray<br><span style="font-size:11px;font-weight:400">COVID-19 Detection</span></div>
+        <div class="arch-node vision"><span class="node-icon">🧠</span>Brain Tumor<br><span style="font-size:11px;font-weight:400">MRI Segmentation</span></div>
+        <div class="arch-node vision"><span class="node-icon">🔬</span>Skin Lesion<br><span style="font-size:11px;font-weight:400">Melanoma Detection</span></div>
+        <div class="arch-node rag"><span class="node-icon">📚</span>Medical RAG<br><span style="font-size:11px;font-weight:400">Qdrant + BM25 + Dense</span></div>
+        <div class="arch-node search"><span class="node-icon">🌐</span>Web Search<br><span style="font-size:11px;font-weight:400">Tavily + PubMed</span></div>
+      </div>
+    </div>
+
+    <div class="arch-arrow arch-arrow-center">↓ 人工审核验证</div>
+
+    <!-- Layer 5: Validation -->
+    <div class="arch-layer">
+      <div class="arch-layer-label">验证层</div>
+      <div class="arch-row">
+        <div class="arch-node guard" style="background:#fff8e1;border-color:#ffe082;color:#8d6e00">
+          <span class="node-icon">👨‍⚕️</span>人工审核<br><span style="font-size:11px;font-weight:400">LangGraph NodeInterrupt</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-arrow">↓</div>
+
+    <!-- Layer 6: Output -->
+    <div class="arch-layer">
+      <div class="arch-layer-label">输出层</div>
+      <div class="arch-row">
+        <div class="arch-node output"><span class="node-icon">💻</span>Web UI<br><span style="font-size:11px;font-weight:400">FastAPI + Jinja2</span></div>
+        <div class="arch-arrow horizontal">—</div>
+        <div class="arch-node output"><span class="node-icon">🔊</span>Voice Output<br><span style="font-size:11px;font-weight:400">Eleven Labs TTS</span></div>
+        <div class="arch-arrow horizontal">—</div>
+        <div class="arch-node output"><span class="node-icon">📄</span>RAG Citations<br><span style="font-size:11px;font-weight:400">Source References</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 5. USER FLOW ═══ -->
+<section class="section">
+  <div class="section-header">
+    <div class="tag">05 · 用户流程</div>
+    <h2>用户流程设计</h2>
+    <p>端到端交互流程</p>
+  </div>
+
+  <div class="flow-diagram">
+    <div class="flow-step start">用户输入</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step process">安全审查</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step decision">Agent<br>决策</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step process">专业<br>Agent</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step decision">置信度<br>≥85%?</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step process">人工<br>审核</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step end">响应</div>
+  </div>
+
+  <div style="margin-top:20px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+    <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--slate-500)">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--teal-500)"></span> 开始/结束
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--slate-500)">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--slate-100);border:1px solid var(--slate-200)"></span> 处理
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--slate-500)">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--amber-400)"></span> 决策点
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 6. DETAILED DESIGN NOTES ═══ -->
+<section class="section">
+  <div class="section-header">
+    <div class="tag">06 · 设计理念</div>
+    <h2>设计说明</h2>
+    <p>作为 AI 产品经理的设计决策</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+    <div style="background:#fff;border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-card);border:1px solid var(--slate-100)">
+      <h4 style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--slate-700);margin-bottom:12px">🎯 产品定位</h4>
+      <ul style="list-style:none;font-size:14px;color:var(--slate-600);line-height:2">
+        <li>• <strong>目标用户</strong>：轻症患者、慢病随访者和体检人群</li>
+        <li>• <strong>核心价值</strong>：多智能体协作降低误诊率，加速诊断流程</li>
+        <li>• <strong>差异化</strong>：人类在环验证 + 多模态诊断 + RAG 知识库</li>
+        <li>• <strong>技术壁垒</strong>：LangGraph 编排 + 置信度路由 + 混合检索</li>
+      </ul>
+    </div>
+    <div style="background:#fff;border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-card);border:1px solid var(--slate-100)">
+      <h4 style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--slate-700);margin-bottom:12px">🧩 Agent 决策逻辑</h4>
+      <ul style="list-style:none;font-size:14px;color:var(--slate-600);line-height:2">
+        <li>• <strong>有图片 → Vision Agent</strong>（根据图片类型路由）</li>
+        <li>• <strong>医学知识 → RAG Agent</strong>（Qdrant 向量检索）</li>
+        <li>• <strong>最新资讯 → Web Search Agent</strong>（Tavily + PubMed）</li>
+        <li>• <strong>低置信度 → Web Search Fallback</strong>（Confidence < 85%）</li>
+        <li>• <strong>Vision 结果 → Human-in-the-Loop</strong>（强制审核）</li>
+      </ul>
+    </div>
+    <div style="background:#fff;border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-card);border:1px solid var(--slate-100)">
+      <h4 style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--slate-700);margin-bottom:12px">🎨 设计系统决策</h4>
+      <ul style="list-style:none;font-size:14px;color:var(--slate-600);line-height:2">
+        <li>• <strong>主色 Teal</strong>：医疗行业的信任感 + 科技感</li>
+        <li>• <strong>强调色 Coral</strong>：风险/警告/需要注意的结果</li>
+        <li>• <strong>字体 Outfit</strong>：现代几何感，在医疗严肃性中注入亲和力</li>
+        <li>• <strong>圆角设计</strong>：降低医疗产品的冷峻感</li>
+      </ul>
+    </div>
+    <div style="background:#fff;border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-card);border:1px solid var(--slate-100)">
+      <h4 style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--slate-700);margin-bottom:12px">🔒 安全与合规</h4>
+      <ul style="list-style:none;font-size:14px;color:var(--slate-600);line-height:2">
+        <li>• <strong>Input Guardrails</strong>：过滤不当输入</li>
+        <li>• <strong>Output Guardrails</strong>：确保输出安全合规</li>
+        <li>• <strong>Human-in-the-Loop</strong>：所有影像诊断均需人工审核</li>
+        <li>• <strong>置信度阈值</strong>：低置信度结果自动触发 Web Search</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ 7. TECH STACK ═══ -->
+<section class="section">
+  <div class="section-header">
+    <div class="tag">07 · 技术栈</div>
+    <h2>技术架构</h2>
+    <p>技术选型与数据流</p>
+  </div>
+
+  <div style="background:#fff;border-radius:var(--radius-xl);padding:40px;box-shadow:var(--shadow-card);border:1px solid var(--slate-100)">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+      <div>
+        <h5 style="font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--teal-600);margin-bottom:10px">框架</h5>
+        <ul style="list-style:none;font-size:13px;color:var(--slate-600);line-height:2.2">
+          <li>• LangGraph 0.3+</li>
+          <li>• LangChain 0.3+</li>
+          <li>• FastAPI 0.115+</li>
+          <li>• Pydantic 2.10+</li>
+        </ul>
+      </div>
+      <div>
+        <h5 style="font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--teal-600);margin-bottom:10px">AI / ML</h5>
+        <ul style="list-style:none;font-size:13px;color:var(--slate-600);line-height:2.2">
+          <li>• GPT-4o (Decision/Vision)</li>
+          <li>• YOLO (OCR)</li>
+          <li>• ResNet (Chest X-Ray)</li>
+          <li>• U-Net (Skin Lesion)</li>
+        </ul>
+      </div>
+      <div>
+        <h5 style="font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--teal-600);margin-bottom:10px">数据 / 存储</h5>
+        <ul style="list-style:none;font-size:13px;color:var(--slate-600);line-height:2.2">
+          <li>• Qdrant Vector DB</li>
+          <li>• BM25 + Dense Hybrid</li>
+          <li>• Cross-Encoder Reranker</li>
+          <li>• Docling Parser</li>
+        </ul>
+      </div>
+      <div>
+        <h5 style="font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--teal-600);margin-bottom:10px">外部 API</h5>
+        <ul style="list-style:none;font-size:13px;color:var(--slate-600);line-height:2.2">
+          <li>• Eleven Labs (Voice)</li>
+          <li>• Tavily Search</li>
+          <li>• PubMed API</li>
+          <li>• OpenAI API</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══ XMIND: PRODUCT PANORAMA ═══ -->
+<section class="section">
+  <div class="section-header">
+    <div class="tag">🧠 XMind 全景思维导图</div>
+    <h2>产品全景图</h2>
+    <p>XMind 思维导图 — 产品架构、功能模块与路线图总览</p>
+  </div>
+
+  <div style="background:#fff;border-radius:var(--radius-xl);padding:40px;box-shadow:var(--shadow-card);border:2px dashed var(--slate-300);text-align:center;min-height:320px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <div style="font-size:48px;margin-bottom:16px;opacity:0.4">🧠</div>
+    <img src="image.png" alt="产品全景思维导图" style="width:100%;max-width:1000px">
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer style="padding:32px 0;text-align:center;border-top:1px solid var(--slate-200);margin-top:20px">
+  <p style="font-size:13px;color:var(--slate-400)">
+    多智能体医疗助手 · 设计系统 · 
+    AI 产品经理设计 · 
+    <a href="https://github.com/souvikmajumder26/Multi-Agent-Medical-Assistant" style="color:var(--teal-600);text-decoration:none">GitHub</a> · 
+    <a href="https://deepwiki.com/souvikmajumder26/Multi-Agent-Medical-Assistant" style="color:var(--teal-600);text-decoration:none">DeepWiki</a>
+  </p>
+  <p style="font-size:11px;color:var(--slate-400);margin-top:4px">
+    Reference: souvikmajumder26/Multi-Agent-Medical-Assistant · Apache-2.0 License
+  </p>
+</footer>
+
+</div><!-- .canvas -->
+
+<script>
+// Scroll animation using Intersection Observer
+document.addEventListener("DOMContentLoaded", function() {
+  const sections = document.querySelectorAll(".section");
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+      }
+    });
+  }, { threshold: 0.15 });
+  sections.forEach(s => observer.observe(s));
+});
+</script>
+
+</body>
+</html>
