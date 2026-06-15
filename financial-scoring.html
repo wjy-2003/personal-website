@@ -1150,21 +1150,21 @@ body{
     </div>
 
     <div class="card-gold fade-in" style="padding:32px 40px;">
-      <div class="pipeline">
+            <div class="pipeline">
         <div class="pipeline-step">
-          <div class="step-node">S</div>
-          <div class="step-label">样本选择<br>& 数据处理</div>
-          <div class="step-sub">Semhash 去重</div>
-        </div>
-        <div class="pipeline-connector"><div class="arrow-icon">→</div></div>
-        <div class="pipeline-step">
-          <div class="step-node">T</div>
-          <div class="step-label">教师模型<br>& 标注</div>
-          <div class="step-sub">CoT + 千问 72B</div>
+          <div class="step-node">P</div>
+          <div class="step-label">Prompt 设计</div>
+          <div class="step-sub">四段式分值框架</div>
         </div>
         <div class="pipeline-connector"><div class="arrow-icon">→</div></div>
         <div class="pipeline-step">
           <div class="step-node">D</div>
+          <div class="step-label">训练集构建</div>
+          <div class="step-sub">CoT + 千问 72B</div>
+        </div>
+        <div class="pipeline-connector"><div class="arrow-icon">→</div></div>
+        <div class="pipeline-step">
+          <div class="step-node">T</div>
           <div class="step-label">测试集构建</div>
           <div class="step-sub">Semhash 隔离</div>
         </div>
@@ -1180,6 +1180,7 @@ body{
           <div class="step-label">业务指标<br>& 评估</div>
           <div class="step-sub">政策/公司型拆分</div>
         </div>
+      </div>
       </div>
     </div>
 
@@ -1197,26 +1198,91 @@ body{
       <p>我的核心策略与对指标的直接影响</p>
     </div>
 
-    <!-- Phase 1 -->
+            <!-- Phase 1 -->
     <div class="phase-card fade-in">
       <div class="phase-header">
         <div class="phase-number">1</div>
         <div class="phase-info">
-          <h3>样本选择与数据处理</h3>
-          <div class="sub">Sample Selection · Semhash 隔离防污染</div>
+          <h3>Prompt 设计</h3>
+          <div class="sub">四段式分值框架 · 极简 Prompt 哲学</div>
         </div>
         <div class="phase-arrow">↓</div>
       </div>
       <div class="phase-body">
         <div class="action-label">我的策略</div>
         <ul class="detail-steps">
-          <li>读取爬虫全阶段（<span class="data-flow-label">recall</span> / <span class="data-flow-label">rerank</span> / <span class="data-flow-label">filter</span> 等）原始数据，统一转化为标准 <span class="data-flow-label">Alpaca</span> 格式（instruction, input, output）</li>
-          <li>提取训练集中的 <span class="data-flow-label">instruction</span> 作为全局底库，利用 <strong>semhash</strong> 对新格式化数据进行比对，剔除高相似度数据</li>
+          <li>设计四段式业务范围框架（业务线 → 区域 → 整体经营 → 生存发展），将 1-10 分映射为有金融语义的递进阶梯</li>
+          <li>通过强约束 <span class="data-flow-label">&lt;think&gt;</span> / <span class="data-flow-label">&lt;answer&gt;</span> 结构化输出，利用 CoT 强行拉高模型的金融推理逻辑，优化高分段语义指令遵循率</li>
+          <li>将复杂业务规则完全解耦并内化在训练数据真值中，让 14B 模型“潜移默化”地继承高阶打分边界</li>
         </ul>
 
         <div class="impact-block">
           <div class="title">▲ 核心影响</div>
-          <p>实现测试集与训练集的<strong>"物理隔离"</strong>，消除了由于训练数据泄露给测试集而导致的模型过拟合。确保了 <strong>306 个样本</strong>测试集能够百分之百反映模型在全市场未知事件上的<strong>泛化精确度</strong>。</p>
+          <p>以极简 Prompt 达到最优性能——业务规则不堆在 Prompt 里，而是交给数据清洗、教师模型控制、评估工具链三个独立环节，避免长序列压迫 14B 模型语义空间。</p>
+        </div>
+
+        <div style="margin-top:24px;padding:16px 20px;background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;">
+          <p style="font-size:14px;color:var(--slate-600);line-height:1.7;margin:0;">
+            <strong style="color:var(--slate-800);">踩坑经历：</strong>在项目初期，我们也尝试过把“银行场景的细分”、“国外新闻的降噪处理”、“权威政策的基础分加权”等几十条具体的业务规则用长篇大论硬塞进 Prompt。但实验评估显示，过于具体的提示词限制，会严重压迫 14B 模型的语义空间，导致模型不仅在长序列上面临内存瓶颈，还会因为规则混淆产生负迁移，使 4-6 分段的模糊 Gap 进一步放大。
+          </p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+          <div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;padding:16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--gold-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">①</div>
+              <strong style="font-size:14px;color:var(--slate-800);">格式硬遵循</strong>
+            </div>
+            <p style="font-size:14px;color:var(--slate-600);line-height:1.6;margin:0;">
+              通过强约束模型必须遵循 <span class="data-flow-label">&lt;think&gt;</span> 和 <span class="data-flow-label">&lt;answer&gt;</span> 结构，利用 CoT 强行拉高模型的金融推理逻辑，大幅度优化了高分段的<strong>语义指令遵循率</strong>。
+            </p>
+          </div>
+          <div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;padding:16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--gold-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">②</div>
+              <strong style="font-size:14px;color:var(--slate-800);">规则内化于样本</strong>
+            </div>
+            <p style="font-size:14px;color:var(--slate-600);line-height:1.6;margin:0;">
+              将复杂业务规则完全解耦并内化在自动化数据集构建的真值（Ground Truth）中。通过 72B 教师模型精准控制输出的思维链分布，让 14B 模型<strong>“潜移默化”</strong>地继承高阶打分边界。
+            </p>
+          </div>
+        </div>
+
+        <blockquote style="margin-top:16px;padding:12px 16px;background:var(--warm-bg);border-left:3px solid var(--gold-400);border-radius:0 8px 8px 0;font-size:14px;color:var(--slate-600);line-height:1.6;">
+          Prompt 越纯粹，模型的泛化能力就越强。我们把业务的复杂性交给了背后的数据清洗、教师模型真值控制、以及模型指标评估工具链，从而用最轻量级的提示词，跑出了最高的召回率和精确度。
+        </blockquote>
+
+        <div style="margin-top:24px;">
+          <h4 style="font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--slate-800);margin-bottom:12px;">评估标准 Prompt展示</h4>
+          <div style="background:var(--slate-50);border-radius:12px;padding:20px;font-size:14px;color:var(--slate-700);line-height:1.6;font-family:monospace;">
+评估标准<br>
+首先判断新闻是否与该公司相关：<br>
+ 如果新闻完全不涉及该公司、其业务、或其所在行业，输出：无关<br>
+ 如果相关，请输出一个1-10的分数，表示事件对该公司的影响范围：<br>
+ 1-3分：影响较小<br>
+ 新闻中仅简单提及该公司<br>
+ 影响范围局限于公司某个小业务<br>
+ 例如：公司普通业务新闻、日常运营信息<br>
+ 4-6分：影响中等<br>
+ 涉及公司重要业务或产品<br>
+ 可能影响公司某业务线或区域<br>
+ 例如：新产品发布、区域性业务调整<br>
+ 7-8分：影响较大<br>
+ 涉及公司核心业务或战略<br>
+ 可能影响公司整体经营<br>
+ 例如：重大战略调整、重要人事变动、关键业务突破<br>
+ 9-10分：影响极大<br>
+ 可能对公司产生根本性影响<br>
+ 涉及公司生存发展的重大事件<br>
+ 例如：并购重组、重大监管处罚、行业颠覆性变革<br>
+ 输出格式<br>
+ &lt;think&gt;（简要说明判断理由）&lt;/think&gt;&lt;answer&gt;（只输出"无关"或一个数字分数）&lt;/answer&gt;<br>
+ 示例：<br>
+ 输入<br>
+ 公司名称： 腾讯 新闻标题： 2024中国互联网企业100强榜单发布 新闻内容： 中国互联网协会今日发布2024年中国互联网企业100强榜单，腾讯控股位列第二，阿里巴巴位列第一，美团、京东、拼多多等也进入前十。榜单根据企业营收、创新能力、社会责任等指标综合评定。<br>
+ 输出<br>
+ &lt;think&gt;新闻明确提及公司新产品发布，涉及核心产品线，可能提升市场份额，影响较大。&lt;/think&gt; &lt;answer&gt;8&lt;/answer&gt;
+          </div>
         </div>
       </div>
     </div>
@@ -1226,21 +1292,22 @@ body{
       <div class="phase-header">
         <div class="phase-number">2</div>
         <div class="phase-info">
-          <h3>教师模型与标注</h3>
-          <div class="sub">Teacher Model · CoT 思维链重构打分边界</div>
+          <h3>训练集构建</h3>
+          <div class="sub">Training Set Construction · 72B 教师模型 CoT 自动化标注</div>
         </div>
         <div class="phase-arrow">↓</div>
       </div>
       <div class="phase-body">
         <div class="action-label">我的策略</div>
         <ul class="detail-steps">
-          <li><strong>重构问题定义与打分边界</strong>：将最终极简 Prompt 中的四段式业务范围（业务线、区域、整体经营、生存发展）作为顶层分类框架</li>
-          <li><strong>自动化 CoT 与打分生成管线</strong>：将重构后的边界知识转化为强约束系统 Prompt，调用<strong>千问 72B 教师模型</strong>。强制其在 <span class="data-flow-label">&lt;think&gt;</span> 内生成金融传导思维链，在 <span class="data-flow-label">&lt;answer&gt;</span> 内输出打分，流水线式自动回填至样本 output</li>
+          <li>训练集已提前构建完成（instruction + input 已就绪），但 output 需要填充</li>
+          <li>将重构后的四段式打分边界转化为强约束系统 Prompt，调用千问 72B 教师模型，强制其在 <span class="data-flow-label">&lt;think&gt;</span> 内生成金融传导思维链，在 <span class="data-flow-label">&lt;answer&gt;</span> 内输出分数</li>
+          <li>流水线式自动回填至样本 output，为整个训练集批量注入高质量 CoT 标注</li>
         </ul>
 
         <div class="impact-block">
           <div class="title">▲ 核心影响</div>
-          <p>由于重构打分边界，使原本因为多维度累加模糊而被漏报、低估的<strong>重大金融事件</strong>（如高影响力处罚或战略变革）能够被精准判定并赋予高分；同时强制模型在输出分数前执行 CoT 推理，直接拉升了系统的<strong>高分段召回率</strong>。</p>
+          <p>利用 72B 教师模型的金融推理能力，为训练集批量注入高质量 CoT 标注，确保 14B 学生模型从高质量的思维链中学习打分边界。</p>
         </div>
       </div>
     </div>
@@ -1353,90 +1420,6 @@ body{
         <div class="impact-block">
           <div class="title">▲ 核心影响</div>
           <p>区分<strong>"政策/公司型"</strong>能快速捕捉高分段的虚假误报；<strong>Gap 误差均值与标准差</strong>能精准定位 4-6 分段模糊的底层成因。通过指标暴露瓶颈，反哺前序阶段的策略迭代与样本订正，在后续轮次中实现了<strong>召回率与精确度的闭环持续拉升</strong>。</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="divider"></div>
-
-<!-- ═══ Prompt 设计哲学 ═══ -->
-<section class="section" id="philosophy">
-  <div class="canvas">
-    <div class="section-header fade-in">
-      <div class="tag">Design Philosophy</div>
-      <h2>Prompt 设计</h2>
-      
-    </div>
-
-    <div class="philosophy-block fade-in">
-      <p style="font-size:15px;color:var(--slate-600);line-height:1.7;">
-        最终用于 XTuner 微调的系统 Prompt 非常精简，仅包含基础的四段式分值定义与严格的结构化格式约束。
-      </p>
-
-      <blockquote style="font-size:15px;font-weight:400;padding:0;margin:16px 0;color:var(--slate-600);">
-        在项目初期，我们也尝试过把"银行场景的细分"、"国外新闻的降噪处理"、"权威政策的基础分加权"等几十条具体的业务规则用长篇大论硬塞进 Prompt。但实验评估显示，过于具体的提示词限制，会严重压迫 14B 模型的语义空间，导致模型不仅在长序列上面临内存瓶颈，还会因为规则混淆产生负迁移，使 4-6 分段的模糊 Gap 进一步放大。
-      </blockquote>
-
-      <h4 style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--slate-800);margin-top:24px;margin-bottom:12px;">我的解法：</h4>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-        <div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;padding:20px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <div style="width:24px;height:24px;border-radius:50%;background:var(--gold-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">①</div>
-            <strong style="font-size:14px;color:var(--slate-800);">格式硬遵循</strong>
-          </div>
-          <p style="font-size:14px;color:var(--slate-600);line-height:1.6;">
-            通过强约束模型必须遵循 <span class="data-flow-label">&lt;think&gt;</span> 和 <span class="data-flow-label">&lt;answer&gt;</span> 结构，利用 CoT 强行拉高模型的金融推理逻辑，大幅度优化了高分段的<strong>语义指令遵循率</strong>。
-          </p>
-        </div>
-        <div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;padding:20px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <div style="width:24px;height:24px;border-radius:50%;background:var(--gold-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">②</div>
-            <strong style="font-size:14px;color:var(--slate-800);">规则内化于样本</strong>
-          </div>
-          <p style="font-size:14px;color:var(--slate-600);line-height:1.6;">
-            将复杂业务规则完全解耦并内化在自动化数据集构建的真值（Ground Truth）中。通过 72B 教师模型精准控制输出的思维链分布，让 14B 模型<strong>"潜移默化"</strong>地继承高阶打分边界。
-          </p>
-        </div>
-      </div>
-
-      <blockquote style="margin-top:20px;">
-        Prompt 越纯粹，模型的泛化能力就越强。我们把业务的复杂性交给了背后的数据清洗（Semhash 去重）、教师模型真值控制、以及模型指标评估工具链（区分政策/公司型），从而用最轻量级的提示词，跑出了最高的召回率和精确度。
-        
-      </blockquote>
-
-      <div style="margin-top:24px;">
-        <h4 style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--slate-800);margin-bottom:16px;">评估标准 Prompt展示</h4>
-        <div style="background:var(--slate-50);border-radius:12px;padding:20px;font-size:15px;color:var(--slate-700);line-height:1.6;font-family:monospace;">
-评估标准<br>
-首先判断新闻是否与该公司相关：<br>
- 如果新闻完全不涉及该公司、其业务、或其所在行业，输出：无关<br>
- 如果相关，请输出一个1-10的分数，表示事件对该公司的影响范围：<br>
- 1-3分：影响较小<br>
- 新闻中仅简单提及该公司<br>
- 影响范围局限于公司某个小业务<br>
- 例如：公司普通业务新闻、日常运营信息<br>
- 4-6分：影响中等<br>
- 涉及公司重要业务或产品<br>
- 可能影响公司某业务线或区域<br>
- 例如：新产品发布、区域性业务调整<br>
- 7-8分：影响较大<br>
- 涉及公司核心业务或战略<br>
- 可能影响公司整体经营<br>
- 例如：重大战略调整、重要人事变动、关键业务突破<br>
- 9-10分：影响极大<br>
- 可能对公司产生根本性影响<br>
- 涉及公司生存发展的重大事件<br>
- 例如：并购重组、重大监管处罚、行业颠覆性变革<br>
- 输出格式<br>
- &lt;think&gt;（简要说明判断理由）&lt;/think&gt;&lt;answer&gt;（只输出"无关"或一个数字分数）&lt;/answer&gt;<br>
- 示例：<br>
- 输入<br>
- 公司名称： 腾讯 新闻标题： 2024中国互联网企业100强榜单发布 新闻内容： 中国互联网协会今日发布2024年中国互联网企业100强榜单，腾讯控股位列第二，阿里巴巴位列第一，美团、京东、拼多多等也进入前十。榜单根据企业营收、创新能力、社会责任等指标综合评定。<br>
- 输出<br>
- &lt;think&gt;新闻明确提及公司新产品发布，涉及核心产品线，可能提升市场份额，影响较大。&lt;/think&gt; &lt;answer&gt;8&lt;/answer&gt;
         </div>
       </div>
     </div>
