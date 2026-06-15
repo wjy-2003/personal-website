@@ -1344,7 +1344,7 @@ body{
         <ul class="detail-steps">
           <li><strong>原始数据读取与格式化</strong>：读取爬虫全阶段数据（recall / rerank / filter），统一转化为严格 Alpaca 格式（instruction / input / output），按阶段产文件</li>
           <li><strong>Semhash 物理隔离</strong>：提取训练集 instruction 作为全局底库，对测试候选数据进行相似度比对，剔除高相似度数据，从源头杜绝训练数据泄露</li>
-          <li><strong>多维分层科学抽样</strong>：从去重后的安全数据池中，按不同分数段设定比例进行分层抽取，构建覆盖全分值区间的黄金测试集</li>
+          <li><strong>多维分层科学抽样</strong>：从去重后的安全数据池中，按教师模型打分后的不同分数段设定比例进行分层抽取，构建覆盖全分值区间的黄金测试集</li>
           <li><strong>教师模型推理填充</strong>：调用 72B 教师模型对测试集进行 CoT 推理，自动生成并填充 output 真值标签</li>
         </ul>
 
