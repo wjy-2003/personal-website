@@ -1208,7 +1208,13 @@ body{
         </div>
         <div class="phase-arrow">↓</div>
       </div>
-      <div class="phase-body">
+            <div class="phase-body">
+        <div style="margin-bottom:24px;padding:16px 20px;background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;">
+          <p style="font-size:14px;color:var(--slate-600);line-height:1.7;margin:0;">
+            在项目初期，我们也尝试过把“银行场景的细分”、“国外新闻的降噪处理”、“权威政策的基础分加权”等几十条具体的业务规则用长篇大论硬塞进 Prompt。但实验评估显示，过于具体的提示词限制，会严重压迫 14B 模型的语义空间，导致模型不仅在长序列上面临内存瓶颈，还会因为规则混淆产生负迁移，使 4-6 分段的模糊 Gap 进一步放大。
+          </p>
+        </div>
+
         <div class="action-label">我的策略</div>
         <ul class="detail-steps">
           <li>设计四段式业务范围框架（业务线 → 区域 → 整体经营 → 生存发展），将 1-10 分映射为有金融语义的递进阶梯</li>
@@ -1216,44 +1222,11 @@ body{
           <li>将复杂业务规则完全解耦并内化在训练数据真值中，让 14B 模型“潜移默化”地继承高阶打分边界</li>
         </ul>
 
-        <div class="impact-block">
-          <div class="title">▲ 核心影响</div>
-          <p>以极简 Prompt 达到最优性能——业务规则不堆在 Prompt 里，而是交给数据清洗、教师模型控制、评估工具链三个独立环节，避免长序列压迫 14B 模型语义空间。</p>
-        </div>
-
-        <div style="margin-top:24px;padding:16px 20px;background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;">
-          <p style="font-size:14px;color:var(--slate-600);line-height:1.7;margin:0;">
-            <strong style="color:var(--slate-800);">踩坑经历：</strong>在项目初期，我们也尝试过把“银行场景的细分”、“国外新闻的降噪处理”、“权威政策的基础分加权”等几十条具体的业务规则用长篇大论硬塞进 Prompt。但实验评估显示，过于具体的提示词限制，会严重压迫 14B 模型的语义空间，导致模型不仅在长序列上面临内存瓶颈，还会因为规则混淆产生负迁移，使 4-6 分段的模糊 Gap 进一步放大。
-          </p>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
-          <div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;padding:16px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <div style="width:24px;height:24px;border-radius:50%;background:var(--gold-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">①</div>
-              <strong style="font-size:14px;color:var(--slate-800);">格式硬遵循</strong>
-            </div>
-            <p style="font-size:14px;color:var(--slate-600);line-height:1.6;margin:0;">
-              通过强约束模型必须遵循 <span class="data-flow-label">&lt;think&gt;</span> 和 <span class="data-flow-label">&lt;answer&gt;</span> 结构，利用 CoT 强行拉高模型的金融推理逻辑，大幅度优化了高分段的<strong>语义指令遵循率</strong>。
-            </p>
-          </div>
-          <div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:12px;padding:16px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <div style="width:24px;height:24px;border-radius:50%;background:var(--gold-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">②</div>
-              <strong style="font-size:14px;color:var(--slate-800);">规则内化于样本</strong>
-            </div>
-            <p style="font-size:14px;color:var(--slate-600);line-height:1.6;margin:0;">
-              将复杂业务规则完全解耦并内化在自动化数据集构建的真值（Ground Truth）中。通过 72B 教师模型精准控制输出的思维链分布，让 14B 模型<strong>“潜移默化”</strong>地继承高阶打分边界。
-            </p>
-          </div>
-        </div>
-
         <blockquote style="margin-top:16px;padding:12px 16px;background:var(--warm-bg);border-left:3px solid var(--gold-400);border-radius:0 8px 8px 0;font-size:14px;color:var(--slate-600);line-height:1.6;">
           Prompt 越纯粹，模型的泛化能力就越强。我们把业务的复杂性交给了背后的数据清洗、教师模型真值控制、以及模型指标评估工具链，从而用最轻量级的提示词，跑出了最高的召回率和精确度。
         </blockquote>
 
-        <div style="margin-top:24px;">
-          <h4 style="font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--slate-800);margin-bottom:12px;">评估标准 Prompt展示</h4>
+        <div style="margin-top:24px;"><h4 style="font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--slate-800);margin-bottom:12px;">评估标准 Prompt展示</h4>
           <div style="background:var(--slate-50);border-radius:12px;padding:20px;font-size:14px;color:var(--slate-700);line-height:1.6;font-family:monospace;">
 评估标准<br>
 首先判断新闻是否与该公司相关：<br>
@@ -1284,11 +1257,11 @@ body{
  &lt;think&gt;新闻明确提及公司新产品发布，涉及核心产品线，可能提升市场份额，影响较大。&lt;/think&gt; &lt;answer&gt;8&lt;/answer&gt;
           </div>
         </div>
+      
       </div>
     </div>
 
-    <!-- Phase 2 -->
-    <div class="phase-card fade-in">
+    <!-- Phase 2 --><div class="phase-card fade-in">
       <div class="phase-header">
         <div class="phase-number">2</div>
         <div class="phase-info">
