@@ -1326,7 +1326,6 @@ body{
         <div class="action-label">我的策略</div>
         <ul class="detail-steps">
           <li>使用 <strong>XTuner 框架</strong>对 <strong>Qwen2.5-14B</strong> 进行 <strong>QLoRA</strong> 轻量化微调</li>
-          <li>准备身份认知数据集 → 选定模型并软链接 → 在 XTuner 配置中选择匹配的配置文件 → 配置 Settings / Model & Tokenizer / Dataset & Dataloader 三部分参数</li>
         </ul>
 
         <div class="impact-block">
@@ -1487,43 +1486,6 @@ body{
 
 <div class="divider"></div>
 
-<!-- ═══ 核心成果 ═══ -->
-<section class="section" id="results">
-  <div class="canvas">
-    <div class="section-header fade-in">
-      <div class="tag">Results</div>
-      <h2>核心成果</h2>
-      <p>设计决策驱动的可量化改善</p>
-    </div>
-
-    <div class="grid-2">
-      <div class="card-gold fade-in">
-        <div class="card-icon" style="background:var(--gold-100);color:var(--gold-600);">🔄</div>
-        <h3>闭环迭代机制</h3>
-        <p>评估工具链暴露的 Gap 误差反哺样本订正与策略迭代，实现召回率与精确度的闭环持续拉升。区分政策/公司型指标能快速捕捉高分段虚假误报，Gap 均值与标准差精准定位 4-6 分段模糊成因。</p>
-      </div>
-
-      <div class="card-gold fade-in">
-        <div class="card-icon" style="background:var(--gold-100);color:var(--gold-600);">🎯</div>
-        <h3>零泄露泛化验证</h3>
-        <p>306 个样本黄金测试集通过 semhash 物理隔离，彻底消除训练数据泄露风险，确保验证结果真实反映模型在全市场未知事件上的泛化精确度。</p>
-      </div>
-
-      <div class="card-gold fade-in">
-        <div class="card-icon" style="background:var(--gold-100);color:var(--gold-600);">⚡</div>
-        <h3>轻量化高精度</h3>
-        <p>14B 模型 + QLoRA 微调，以极低计算和推理成本继承 72B 教师模型的金融推理边界，在高分段召回率和精确度上实现超越基础模型的表现。</p>
-      </div>
-
-      <div class="card-gold fade-in">
-        <div class="card-icon" style="background:var(--gold-100);color:var(--gold-600);">🧩</div>
-        <h3>工程解耦范式</h3>
-        <p>将业务规则从 Prompt 解耦，把复杂性交给数据清洗、教师模型控制、评估工具链三个独立环节，用最轻量级的 Prompt 达到最优性能。</p>
-      </div>
-    </div>
-  </div>
-</section>
-<!-- ═══ Footer ═══ -->
 <footer class="footer">
   <div class="canvas">
     <p>金融数据打分模型 · 王佳怡实习项目</p>
