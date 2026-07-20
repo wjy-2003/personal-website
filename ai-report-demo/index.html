@@ -830,21 +830,43 @@ function setupDropZone() {
     body.classList.remove('wb-drop-active');
     
     if (!_draggedData) return;
-    
-    // Add dropped content as new section
     if (!window._reportParagraphs) window._reportParagraphs = [];
-    var p = window._reportParagraphs.length;
     
-    var title = _draggedData.content;
-    var content = _draggedData.type === 'outline'
-      ? '基于「' + _draggedData.content + '」的章节内容，来源于历史报告分析。'
-      : '基于核心观点：' + _draggedData.content + '。来源于历史报告数据。';
-    window._reportParagraphs.push({
-      title: title,
-      content: content,
-      source: _draggedData.report ? (historicalReports.find(function(r){return r.id==_draggedData.report;}) || {}).source || '历史报告' : '历史报告',
-      edited: false
-    });
+    var srcName = '';
+    if (_draggedData.report) {
+      var found = historicalReports.find(function(r){return r.id==_draggedData.report;});
+      if (found) srcName = found.source;
+    }
+    
+    if (_draggedData.type === 'outline') {
+      // Outline: create new section with empty content
+      window._reportParagraphs.push({
+        title: _draggedData.content,
+        content: '',
+        source: srcName || '历史报告',
+        edited: false
+      });
+    } else {
+      // Viewpoint: append to last section's content
+      if (window._reportParagraphs.length > 0) {
+        var last = window._reportParagraphs[window._reportParagraphs.length - 1];
+        var vpLine = '• ' + _draggedData.content;
+        if (last.content) {
+          last.content += '\n' + vpLine;
+        } else {
+          last.content = vpLine;
+        }
+        last.edited = true;
+      } else {
+        // No sections yet, create a default one
+        window._reportParagraphs.push({
+          title: '核心观点',
+          content: '• ' + _draggedData.content,
+          source: srcName || '历史报告',
+          edited: false
+        });
+      }
+    }
     
     renderWorkbench();
     showWbToast('已添加「' + _draggedData.content + '」到报告', 'success');
@@ -908,7 +930,8 @@ function setupDropZone() {
       html += '<div class="wb-section-header"' + srcAttr + '>';
       html += '<span class="s-title">' + p.title + '</span>';
       html += '</div>';
-      html += '<div class="wb-section-content" id="wbC_' + pi + '" contenteditable="false" ondblclick="editWbPara(' + pi + ')">' + p.content + '</div>';
+      var dispContent = p.content || '<span style="color:#cbd5e1;">双击此处输入内容...</span>';
+      html += '<div class="wb-section-content" id="wbC_' + pi + '" contenteditable="false" ondblclick="editWbPara(' + pi + ')"' + srcAttr + '>' + dispContent + '</div>';
       html += '</div>';
     }
     
