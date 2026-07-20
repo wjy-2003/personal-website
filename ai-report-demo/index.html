@@ -362,8 +362,7 @@ function renderInsightCards(candidates) {
     const cls = s.confidence >= 0.8 ? 'high' : 'medium';
     const confLabel = s.confidence >= 0.8 ? '高' : '中';
     var sourceTip = s.source ? '<div class="source-tip" title="来源: ' + (s.source || '') + '">📎 ' + s.source + '</div>' : '';
-    var safeTitle = (s.title || '').replace(/'/g, '\\'');
-    return '<div class="signal-card draggable-item" id="sig_' + s.id + '" draggable="true" data-type="viewpoint" data-report="" data-content="' + safeTitle + '" title="拖拽到工作台">' +
+    return '<div class="signal-card draggable-item" id="sig_' + s.id + '" draggable="true" data-type="viewpoint" data-report="" data-content="' + (s.title || '').replace(/'/g, '') + '" title="拖拽到工作台">' +
       '<div class="title">' + s.title + sourceTip + '</div>' +
       '<div class="evidence">' + s.evidence + '</div>' +
       '<span class="confidence ' + cls + '">' + confLabel + '置信度 (' + Math.round(s.confidence*100) + '%)</span>' +
