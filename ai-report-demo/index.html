@@ -1032,51 +1032,7 @@ function setupDropZone() {
 
 </script>
 
-<!-- Workbench Panel (replaces chat area) -->
-  <div class="workbench-panel" id="workbenchPanel">
-    <div class="wb-topbar">
-      <div class="wb-topbar-left">
-        <span class="wb-title">📝 报告编辑工作台</span>
-      </div>
-      <div class="wb-topbar-right">
-        <button class="wb-btn" onclick="saveWB()">💾 保存版本</button>
-        <button class="wb-btn wb-btn-primary" onclick="exportDoc()">📄 导出文档</button>
-        <button class="wb-back-btn" onclick="closeWorkbench()">← 返回</button>
-      </div>
-    </div>
-    <!-- Formatting Toolbar -->
-    <div class="wb-format-toolbar" id="wbFormatToolbar">
-      <button class="fmt-btn" onclick="fmtCmd('bold')" title="加粗"><b>B</b></button>
-      <button class="fmt-btn" onclick="fmtCmd('italic')" title="斜体"><i>I</i></button>
-      <button class="fmt-btn" onclick="fmtCmd('underline')" title="下划线"><u>U</u></button>
-      <span class="fmt-sep"></span>
-      <select class="fmt-select" id="fmtFontSize" onchange="fmtCmd('fontSize', this.value)">
-        <option value="3">小</option>
-        <option value="4" selected>标准</option>
-        <option value="5">大</option>
-        <option value="6">特大</option>
-      </select>
-      <span class="fmt-sep"></span>
-      <button class="fmt-btn" onclick="fmtCmd('justifyLeft')" title="左对齐">≡</button>
-      <button class="fmt-btn" onclick="fmtCmd('justifyCenter')" title="居中">≡</button>
-      <button class="fmt-btn" onclick="fmtCmd('justifyRight')" title="右对齐">≡</button>
-      <button class="fmt-btn" onclick="fmtCmd('insertUnorderedList')" title="列表">☰</button>
-      <span class="fmt-sep"></span>
-      <button class="fmt-btn" onclick="toggleWBVersion()" title="版本历史">🕐 历史版本 <span id="vbArrow">▼</span></button>
-    </div>
-    <div class="wb-version-list" id="wbVersionList" style="display:none;"></div>
-    <div class="wb-body-full" id="wbBody"></div>
-    <!-- Workbench Chat Input -->
-    <div class="wb-chat-area">
-      <div class="wb-chat-input-wrap">
-        <textarea class="wb-chat-input" id="wbChatInput" rows="1" placeholder="输入指令，继续修改报告内容..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWbChat()}"></textarea>
-        <button class="wb-chat-send" onclick="sendWbChat()">➤</button>
-      </div>
-    </div>
-  </div>
-  <div class="wb-toast" id="wbToast"></div>
-
-  <!-- Workbench Panel (replaces main area) -->
+<!-- Workbench Panel (replaces main area) -->
   <div class="workbench-panel" id="workbenchPanel">
     <div class="wb-topbar">
       <div class="wb-topbar-left">
