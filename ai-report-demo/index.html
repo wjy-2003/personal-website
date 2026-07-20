@@ -835,17 +835,14 @@ function setupDropZone() {
     if (!window._reportParagraphs) window._reportParagraphs = [];
     var p = window._reportParagraphs.length;
     
-    var title = _draggedData.type === 'outline' ? '章节: ' + _draggedData.content : '观点: ' + _draggedData.content;
-    var content = _draggedData.type === 'outline' 
+    var title = _draggedData.content;
+    var content = _draggedData.type === 'outline'
       ? '基于「' + _draggedData.content + '」的章节内容，来源于历史报告分析。'
       : '基于核心观点：' + _draggedData.content + '。来源于历史报告数据。';
-    
     window._reportParagraphs.push({
       title: title,
       content: content,
-      source: '来源于历史报告',
-      tags: [_draggedData.type === 'outline' ? '大纲' : '观点'],
-      time: '刚刚',
+      source: _draggedData.report ? (historicalReports.find(function(r){return r.id==_draggedData.report;}) || {}).source || '历史报告' : '历史报告',
       edited: false
     });
     
@@ -880,8 +877,7 @@ function setupDropZone() {
     const adopted = insightCandidates.filter(function(c) { return c.adopted; });
     
     if (adopted.length === 0 && !window._reportParagraphs) {
-      body.innerHTML = '<div class="wb-empty"><div class="icon">📝</div><p>暂无报告内容<br>请先在对话中完成数据分析并采纳核心观点，报告段落将自动出现在这里。</p></div>';
-      // Update version list to empty
+      body.innerHTML = '<div class="wb-empty"><div class="icon">📝</div><p>暂无报告内容<br>从左侧拖拽历史报告大纲或观点来搭建报告，或在对话中完成数据分析并采纳观点。</p></div>';
       var vl = document.getElementById('wbVersionList');
       if (vl) vl.innerHTML = '';
       return;
@@ -907,23 +903,13 @@ function setupDropZone() {
     var html = '';
     for (var pi = 0; pi < paragraphs.length; pi++) {
       var p = paragraphs[pi];
+      var srcAttr = p.source ? ' title="来源: ' + p.source + '"' : '';
       html += '<div class="wb-section" id="wbSection_' + pi + '">';
-      html += '<div class="wb-section-header">';
+      html += '<div class="wb-section-header"' + srcAttr + '>';
       html += '<span class="s-title">' + p.title + '</span>';
-      html += '<span class="s-source">' + p.source + '</span>';
-      html += '<div class="s-actions">';
-      html += '<button onclick="editWbPara(' + pi + ')">✏️ 编辑</button>';
-      html += '</div></div>';
-      html += '<div class="wb-section-content" id="wbC_' + pi + '" contenteditable="true">' + p.content + '</div>';
-      html += '<div class="wb-section-footer">';
-      html += '<div class="insight-tag">';
-      for (var ti = 0; ti < p.tags.length; ti++) {
-        html += '<span>' + p.tags[ti] + '</span>';
-      }
       html += '</div>';
-      if (p.edited) html += '<span style="color:#f39c12;">✏️ 已编辑</span>';
-      else html += '<span>' + p.time + '</span>';
-      html += '</div></div>';
+      html += '<div class="wb-section-content" id="wbC_' + pi + '" contenteditable="false" ondblclick="editWbPara(' + pi + ')">' + p.content + '</div>';
+      html += '</div>';
     }
     
     html += '<div class="wb-add-section" onclick="addWbSection()">＋ 添加新段落</div>';
