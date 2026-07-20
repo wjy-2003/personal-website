@@ -102,7 +102,32 @@
   @keyframes dots { 0% { content: ''; } 33% { content: '.'; } 66% { content: '..'; } 100% { content: '...'; } }
   .thinking-bubble { max-width: 760px; margin: 0 auto 16px; padding: 12px 16px; background: #ffffff; border: 1px dashed #ccc; border-radius: 10px; font-size: 13px; color: var(--text-muted); }
 
-  /* ===== Report Workbench Styles ===== */
+  
+/* ===== WBSidebar + Drag/Drop + Tooltip Styles ===== */
+.wb-sidebar-list { flex: 1; overflow-y: auto; padding: 8px; }
+.wb-sidebar-card { background: #f0f7ff; border: 1px solid #d0e3f0; border-radius: 8px; margin-bottom: 10px; padding: 10px 12px; }
+.wb-sidebar-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.wb-sidebar-title { font-size: 12px; font-weight: 600; color: #1e293b; flex: 1; cursor: help; }
+.wb-sidebar-sim { font-size: 11px; font-weight: 600; color: #3b82f6; background: #dbeafe; padding: 1px 8px; border-radius: 8px; }
+.wb-sidebar-date { font-size: 10px; color: #94a3b8; margin-bottom: 6px; }
+.wb-sidebar-section-label { font-size: 10px; color: #6b879e; margin: 4px 0 2px; font-weight: 500; }
+.wb-sidebar-items { display: flex; flex-direction: column; gap: 2px; margin-bottom: 2px; }
+.wb-sidebar-item { font-size: 11px; padding: 4px 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; cursor: grab; color: #475569; transition: all .15s; }
+.wb-sidebar-item:hover { background: #dbeafe; border-color: #3b82f6; transform: translateX(2px); }
+.wb-sidebar-item.dragging { opacity: 0.5; }
+
+/* Data traceability tooltip */
+.source-tip { font-size: 10px; color: #94a3b8; margin-top: 2px; cursor: help; }
+[title] { position: relative; }
+.signal-card.draggable-item { cursor: grab; }
+.signal-card.draggable-item:hover { box-shadow: 0 2px 8px rgba(59,130,246,0.15); }
+
+/* Drop zone */
+.wb-body-full.wb-drop-active { background: #f0f7ff; outline: 2px dashed #3b82f6; outline-offset: -8px; }
+
+/* Modified sidebar header in workbench mode */
+.sidebar-header h1 { font-size: 14px; }
+/* ===== Report Workbench Styles ===== */
 .workbench-panel { display: none; flex: 1; min-width: 0; background: #fff; flex-direction: column; }
 .workbench-panel.active { display: flex; }
 .wb-topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 42px; border-bottom: 1px solid #d0e3f0; background: #f8fafc; flex-shrink: 0; }
@@ -317,7 +342,8 @@ function renderTable(table) {
   const rows = table.rows;
   const header = rows[0];
   const data = rows.slice(1);
-  let html = '<div class="data-table"><table><thead><tr>';
+  const source = table.source || '数据源';
+  let html = '<div class="data-table" title="来源: ' + source + '"><div style="font-size:10px;color:#94a3b8;padding:2px 0 4px;">📎 ' + source + '</div><table><thead><tr>';
   header.forEach(h => { html += '<th>' + h + '</th>'; });
   html += '</tr></thead><tbody>';
   data.forEach(row => {
@@ -335,8 +361,10 @@ function renderInsightCards(candidates) {
   return candidates.map((s, i) => {
     const cls = s.confidence >= 0.8 ? 'high' : 'medium';
     const confLabel = s.confidence >= 0.8 ? '高' : '中';
-    return '<div class="signal-card" id="sig_' + s.id + '">' +
-      '<div class="title">' + s.title + '</div>' +
+    var sourceTip = s.source ? '<div class="source-tip" title="来源: ' + (s.source || '') + '">📎 ' + s.source + '</div>' : '';
+    var safeTitle = (s.title || '').replace(/'/g, '\\'');
+    return '<div class="signal-card draggable-item" id="sig_' + s.id + '" draggable="true" data-type="viewpoint" data-report="" data-content="' + safeTitle + '" title="拖拽到工作台">' +
+      '<div class="title">' + s.title + sourceTip + '</div>' +
       '<div class="evidence">' + s.evidence + '</div>' +
       '<span class="confidence ' + cls + '">' + confLabel + '置信度 (' + Math.round(s.confidence*100) + '%)</span>' +
       '<div class="actions">' +
@@ -470,6 +498,12 @@ function handleDataResponse(data) {
   if (data.data && data.data.datasets) {
     summary += '\n已查询 ' + data.data.datasets.length + ' 个数据源';
   }
+  // Add data source traceability
+  if (data.data && data.data.tables) {
+    for (var _ti = 0; _ti < data.data.tables.length; _ti++) {
+      data.data.tables[_ti].source = data.data.tables[_ti].source || '北京NEV市场分析.docx';
+    }
+  }
   // Add insight button
   html += '<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">' +
     '<button style="padding:8px 20px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'基于这些数据分析结果，提炼核心观点\';sendMessage()">💡 提炼核心观点</button>' +
@@ -492,6 +526,10 @@ function downloadExcel(b64) {
 
 function handleInsightResponse(data) {
   if (data.insight && data.insight.candidates) {
+    // Add source traceability
+    data.insight.candidates.forEach(function(c) {
+      if (!c.source) c.source = '北京NEV市场分析.docx - 客观数据';
+    });
     const cardsHtml = renderInsightCards(data.insight.candidates);
     addMessage('ai', '💡 **核心观点提炼**\n\n基于当前数据，系统识别到以下 ' + data.insight.total + ' 条关键信号，请选择你认为有价值的观点：', cardsHtml);
   } else {
@@ -687,6 +725,137 @@ document.getElementById('sidebarSearch').addEventListener('input', function() {
     input.style.height = 'auto';
   }
   
+// ===== Historical Reports Mock Data =====
+const historicalReports = [
+  { id: 'hr_1', title: '2025年Q4北京NEV市场分析报告', date: '2025-12-15', similarity: 0.92,
+    source: '北京NEV市场分析.docx',
+    outline: ['市场概况', '用户画像分析', '竞争格局', '趋势预测'],
+    viewpoints: ['北京新能源渗透率突破45%，领先全国', '26-40岁高学历白领为核心用户群', '比亚迪/特斯拉/小米构成第一梯队'] },
+  { id: 'hr_2', title: '2026年1月中国汽车出口月报', date: '2026-02-10', similarity: 0.85,
+    source: '汽车产业国际化研究月报第12期.pdf',
+    outline: ['出口总览', '区域分析', '品牌表现', '政策影响'],
+    viewpoints: ['2025年11月出口量创历史新高', '东南亚市场增速最快', '新能源出口占比首次超40%'] },
+  { id: 'hr_3', title: '2025年度品牌监测报告', date: '2026-01-20', similarity: 0.78,
+    source: '品牌监测报告-样例.pptx',
+    outline: ['品牌声量', '用户口碑', '竞品对比', '改进建议'],
+    viewpoints: ['品牌认知度提升12个百分点', '智能化配置成用户最关注因素', '售后服务满意度有待提高'] }
+];
+
+let _savedSidebarHTML = '';
+let _draggedData = null;
+
+function renderWBSidebar() {
+  var sb = document.querySelector('.sidebar');
+  if (!sb) return;
+  _savedSidebarHTML = sb.innerHTML;
+  
+  var html = '<div class="sidebar-header" style="border-bottom-color:#3b82f6;"><h1>📚 相似历史报告</h1><p>基于当前上下文推荐的报告</p></div>';
+  html += '<div class="wb-sidebar-list">';
+  
+  for (var ri = 0; ri < historicalReports.length; ri++) {
+    var r = historicalReports[ri];
+    html += '<div class="wb-sidebar-card">';
+    html += '<div class="wb-sidebar-card-header">';
+    html += '<div class="wb-sidebar-title" title="来源: ' + r.source + '">' + r.title + '</div>';
+    html += '<span class="wb-sidebar-sim">' + Math.round(r.similarity * 100) + '%</span>';
+    html += '</div>';
+    html += '<div class="wb-sidebar-date">' + r.date + ' · ' + r.source + '</div>';
+    
+    // Outline (draggable)
+    html += '<div class="wb-sidebar-section-label">📋 大纲</div>';
+    html += '<div class="wb-sidebar-items">';
+    for (var oi = 0; oi < r.outline.length; oi++) {
+      html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="outline" data-report="' + r.id + '" data-content="' + r.outline[oi] + '" title="拖拽到工作台">📄 ' + r.outline[oi] + '</div>';
+    }
+    html += '</div>';
+    
+    // Viewpoints (draggable)
+    html += '<div class="wb-sidebar-section-label">💡 核心观点</div>';
+    html += '<div class="wb-sidebar-items">';
+    for (var vi = 0; vi < r.viewpoints.length; vi++) {
+      html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="viewpoint" data-report="' + r.id + '" data-content="' + r.viewpoints[vi] + '" title="拖拽到工作台">💡 ' + r.viewpoints[vi] + '</div>';
+    }
+    html += '</div>';
+    
+    html += '</div>';
+  }
+  
+  html += '</div>';
+  html += '<div class="sidebar-footer" style="border-top-color:#d0e3f0;"><span>📌 拖拽大纲/观点到工作台</span></div>';
+  
+  sb.innerHTML = html;
+  bindDragEvents();
+}
+
+function restoreSidebar() {
+  var sb = document.querySelector('.sidebar');
+  if (sb && _savedSidebarHTML) sb.innerHTML = _savedSidebarHTML;
+  _savedSidebarHTML = '';
+}
+
+function bindDragEvents() {
+  var items = document.querySelectorAll('.draggable-item');
+  for (var i = 0; i < items.length; i++) {
+    items[i].addEventListener('dragstart', function(e) {
+      _draggedData = {
+        type: this.getAttribute('data-type'),
+        report: this.getAttribute('data-report'),
+        content: this.getAttribute('data-content')
+      };
+      e.dataTransfer.effectAllowed = 'copy';
+      e.dataTransfer.setData('text/plain', this.getAttribute('data-content'));
+      this.classList.add('dragging');
+    });
+    items[i].addEventListener('dragend', function(e) {
+      this.classList.remove('dragging');
+    });
+  }
+}
+
+function setupDropZone() {
+  var body = document.getElementById('wbBody');
+  if (!body) return;
+  
+  body.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    body.classList.add('wb-drop-active');
+  });
+  
+  body.addEventListener('dragleave', function(e) {
+    body.classList.remove('wb-drop-active');
+  });
+  
+  body.addEventListener('drop', function(e) {
+    e.preventDefault();
+    body.classList.remove('wb-drop-active');
+    
+    if (!_draggedData) return;
+    
+    // Add dropped content as new section
+    if (!window._reportParagraphs) window._reportParagraphs = [];
+    var p = window._reportParagraphs.length;
+    
+    var title = _draggedData.type === 'outline' ? '章节: ' + _draggedData.content : '观点: ' + _draggedData.content;
+    var content = _draggedData.type === 'outline' 
+      ? '基于「' + _draggedData.content + '」的章节内容，来源于历史报告分析。'
+      : '基于核心观点：' + _draggedData.content + '。来源于历史报告数据。';
+    
+    window._reportParagraphs.push({
+      title: title,
+      content: content,
+      source: '来源于历史报告',
+      tags: [_draggedData.type === 'outline' ? '大纲' : '观点'],
+      time: '刚刚',
+      edited: false
+    });
+    
+    renderWorkbench();
+    showWbToast('已添加「' + _draggedData.content + '」到报告', 'success');
+    _draggedData = null;
+  });
+}
+
 // ===== Report Workbench =====
   let wbVersionExpanded = false;
   let wbVersionHistory = [];
@@ -695,12 +864,15 @@ document.getElementById('sidebarSearch').addEventListener('input', function() {
     document.querySelector('.main').style.display = 'none';
     document.getElementById('workbenchPanel').classList.add('active');
     document.getElementById('wbToast').style.display = 'none';
+    renderWBSidebar();
     renderWorkbench();
+    setupDropZone();
   }
   
   function closeWorkbench() {
     document.getElementById('workbenchPanel').classList.remove('active');
     document.querySelector('.main').style.display = '';
+    restoreSidebar();
   }
   
   function renderWorkbench() {
