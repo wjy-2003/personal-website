@@ -162,7 +162,7 @@
 .wb-section-header .s-actions { display: flex; gap: 4px; }
 .wb-section-header .s-actions button { padding: 2px 8px; border: 1px solid #d0e3f0; border-radius: 4px; background: #fff; cursor: pointer; font-size: 11px; color: #475569; }
 .wb-section-header .s-actions button:hover { background: #eef2f6; }
-.wb-section-content { padding: 10px 14px; font-size: 14px; line-height: 1.6; color: #1e293b; outline: none; min-height: 40px; }
+.wb-section-content { padding: 10px 14px; font-size: 14px; line-height: 1.6; color: #1e293b; outline: none; min-height: 40px; transition: background .15s; }
 .wb-section-content:focus { background: #f8faff; }
 .wb-section-footer { display: flex; align-items: center; gap: 8px; padding: 4px 14px; background: #fafafa; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; }
 .wb-section-footer .insight-tag { display: flex; gap: 4px; flex: 1; }
@@ -825,21 +825,46 @@ function setupDropZone() {
     body.classList.remove('wb-drop-active');
   });
   
-  body.addEventListener('drop', function(e) {
-    e.preventDefault();
-    body.classList.remove('wb-drop-active');
-    
+  // Also make each section content a drop target
+  document.querySelectorAll('.wb-section-content').forEach(function(el) {
+    el.setAttribute('droppable', 'true');
+    el.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
+      this.style.outline = '2px dashed #3b82f6';
+    });
+    el.addEventListener('dragleave', function(e) {
+      this.style.outline = '';
+    });
+    el.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.style.outline = '';
+      handleDropOnSection(this);
+    });
+  });
+  
+  function getSrcName(reportId) {
+    if (!reportId) return '';
+    var found = historicalReports.find(function(r){return r.id==reportId;});
+    return found ? found.source : '';
+  }
+  
+  function handleDropOnSection(sectionEl) {
     if (!_draggedData) return;
     if (!window._reportParagraphs) window._reportParagraphs = [];
     
-    var srcName = '';
-    if (_draggedData.report) {
-      var found = historicalReports.find(function(r){return r.id==_draggedData.report;});
-      if (found) srcName = found.source;
+    var sectionId = sectionEl.id;
+    var sectionIndex = -1;
+    if (sectionId && sectionId.indexOf('wbC_') === 0) {
+      sectionIndex = parseInt(sectionId.replace('wbC_', ''), 10);
     }
     
+    var srcName = getSrcName(_draggedData.report);
+    
     if (_draggedData.type === 'outline') {
-      // Outline: create new section with empty content
+      // Outline: create new section
       window._reportParagraphs.push({
         title: _draggedData.content,
         content: '',
@@ -847,18 +872,20 @@ function setupDropZone() {
         edited: false
       });
     } else {
-      // Viewpoint: append to last section's content
-      if (window._reportParagraphs.length > 0) {
+      // Viewpoint: append to the targeted section
+      if (sectionIndex >= 0 && sectionIndex < window._reportParagraphs.length) {
+        var target = window._reportParagraphs[sectionIndex];
+        var vpLine = '\n• ' + _draggedData.content;
+        target.content = (target.content || '') + vpLine;
+        target.edited = true;
+      } else if (window._reportParagraphs.length > 0) {
+        // Fallback: append to last section
         var last = window._reportParagraphs[window._reportParagraphs.length - 1];
-        var vpLine = '• ' + _draggedData.content;
-        if (last.content) {
-          last.content += '\n' + vpLine;
-        } else {
-          last.content = vpLine;
-        }
+        var vpLine = '\n• ' + _draggedData.content;
+        last.content = (last.content || '') + vpLine;
         last.edited = true;
       } else {
-        // No sections yet, create a default one
+        // No sections, create default
         window._reportParagraphs.push({
           title: '核心观点',
           content: '• ' + _draggedData.content,
@@ -869,6 +896,44 @@ function setupDropZone() {
     }
     
     renderWorkbench();
+    // Re-bind section drop targets after re-render
+    setupDropZone();
+    showWbToast('已添加「' + _draggedData.content + '」到报告', 'success');
+    _draggedData = null;
+  }
+  
+  body.addEventListener('drop', function(e) {
+    e.preventDefault();
+    body.classList.remove('wb-drop-active');
+    if (!_draggedData) return;
+    if (!window._reportParagraphs) window._reportParagraphs = [];
+    
+    var srcName = getSrcName(_draggedData.report);
+    
+    if (_draggedData.type === 'outline') {
+      window._reportParagraphs.push({
+        title: _draggedData.content,
+        content: '',
+        source: srcName || '历史报告',
+        edited: false
+      });
+    } else {
+      if (window._reportParagraphs.length > 0) {
+        var last = window._reportParagraphs[window._reportParagraphs.length - 1];
+        last.content = (last.content || '') + '\n• ' + _draggedData.content;
+        last.edited = true;
+      } else {
+        window._reportParagraphs.push({
+          title: '核心观点',
+          content: '• ' + _draggedData.content,
+          source: srcName || '历史报告',
+          edited: false
+        });
+      }
+    }
+    
+    renderWorkbench();
+    setupDropZone();
     showWbToast('已添加「' + _draggedData.content + '」到报告', 'success');
     _draggedData = null;
   });
