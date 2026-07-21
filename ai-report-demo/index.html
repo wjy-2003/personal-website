@@ -162,7 +162,7 @@
 .wb-section-header .s-actions { display: flex; gap: 4px; }
 .wb-section-header .s-actions button { padding: 2px 8px; border: 1px solid #d0e3f0; border-radius: 4px; background: #fff; cursor: pointer; font-size: 11px; color: #475569; }
 .wb-section-header .s-actions button:hover { background: #eef2f6; }
-.wb-section-content { padding: 10px 14px; font-size: 14px; line-height: 1.6; color: #1e293b; outline: none; min-height: 40px; transition: background .15s; }
+.wb-section-content { padding: 10px 14px; font-size: 14px; line-height: 1.6; color: #1e293b; outline: none; min-height: 40px; transition: background .15s; white-space: pre-wrap; }
 .wb-section-content:focus { background: #f8faff; }
 .wb-section-footer { display: flex; align-items: center; gap: 8px; padding: 4px 14px; background: #fafafa; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; }
 .wb-section-footer .insight-tag { display: flex; gap: 4px; flex: 1; }
@@ -885,13 +885,10 @@ function setupDropZone() {
         last.content = (last.content || '') + vpLine;
         last.edited = true;
       } else {
-        // No sections, create default
-        window._reportParagraphs.push({
-          title: '核心观点',
-          content: '• ' + _draggedData.content,
-          source: srcName || '历史报告',
-          edited: false
-        });
+        // No sections yet, cannot add viewpoint
+        showWbToast('请先拖拽大纲到工作台，再添加观点', 'info');
+        _draggedData = null;
+        return;
       }
     }
     
@@ -923,12 +920,9 @@ function setupDropZone() {
         last.content = (last.content || '') + '\n• ' + _draggedData.content;
         last.edited = true;
       } else {
-        window._reportParagraphs.push({
-          title: '核心观点',
-          content: '• ' + _draggedData.content,
-          source: srcName || '历史报告',
-          edited: false
-        });
+        showWbToast('请先拖拽大纲到工作台，再添加观点', 'info');
+        _draggedData = null;
+        return;
       }
     }
     
