@@ -565,8 +565,19 @@ async def chat(data: dict):
     intent = await detect_intent(text, knowledge_summary)
     
     # RAG: retrieve relevant chunks
+    # For generic commands like "提炼核心观点", use the last user query as RAG context
+    rag_query = text
+    generic_commands = ["提炼核心观点", "生成报告", "数据分析结果", "写一份", "核心观点"]
+    is_generic = any(cmd in text for cmd in generic_commands)
+    if is_generic and session.get("history"):
+        # Find the last user message that isn't a generic command
+        for msg in reversed(session["history"]):
+            if msg["role"] == "user" and not any(cmd in msg["content"] for cmd in generic_commands):
+                rag_query = msg["content"]
+                break
+    
     embedder = get_embedder()
-    q_vec = embedder.encode([text]).tolist()
+    q_vec = embedder.encode([rag_query]).tolist()
     rag_results = collection.query(query_embeddings=q_vec, n_results=5)
     retrieved = []
     if rag_results and rag_results["metadatas"] and rag_results["metadatas"][0]:
@@ -643,10 +654,12 @@ async def chat(data: dict):
             # Add conversation history for context
             chat_context = ""
             if session.get("history"):
-                recent = session["history"][-4:]  # Last 4 messages
-                chat_context = "\n".join([f'{m["role"]}: {m["content"][:200]}' for m in recent])
+                recent = session["history"][-6:]  # Last 6 messages for more context
+                chat_context = "\n".join([f'{m["role"]}: {m["content"][:300]}' for m in recent])
             if chat_context:
-                context += "\n\n对话上下文:\n" + chat_context
+                context += "\n\n以下是对话上下文（请重点关注用户最初的问题和之前的数据分析结果）：\n" + chat_context
+            # Override text for better RAG context
+            text_for_insight = rag_query  # Use the resolved RAG query instead of generic text
             sys_prompt = "根据以下内容提炼 3-5 条核心观点。返回 JSON 数组：[{\"title\":\"...\", \"evidence\":\"...\", \"confidence\":0.xx}]"
             vp_result = await call_llm(f"内容：{context}", sys_prompt, 0.3)
             try:
