@@ -4,7 +4,141 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>商企AI辅助报告撰写系统</title>
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js">
+// ========== Context Menu (Right Click) ==========
+var _contextTarget = null;
+var _contextType = null; // 'folder' or 'file'
+
+document.addEventListener('contextmenu', function(e) {
+  var folderItem = e.target.closest('.folder-item');
+  var fileItem = e.target.closest('.file-item');
+  
+  if (folderItem || fileItem) {
+    e.preventDefault();
+    _contextTarget = folderItem || fileItem;
+    _contextType = folderItem ? 'folder' : 'file';
+    
+    var menu = document.getElementById('contextMenu');
+    menu.style.display = 'block';
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+    
+    // Show/hide rename based on type
+    var items = menu.querySelectorAll('.context-menu-item');
+    items.forEach(function(item) {
+      if (item.dataset.action === 'copy') {
+        item.style.display = 'flex';
+        item.textContent = _contextType === 'folder' ? '📋 复制目录' : '📋 复制文件名';
+      }
+    });
+  } else {
+    document.getElementById('contextMenu').style.display = 'none';
+  }
+});
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.context-menu')) {
+    document.getElementById('contextMenu').style.display = 'none';
+  }
+});
+
+document.getElementById('contextMenu').addEventListener('click', async function(e) {
+  var item = e.target.closest('.context-menu-item');
+  if (!item || !_contextTarget) return;
+  
+  var action = item.dataset.action;
+  document.getElementById('contextMenu').style.display = 'none';
+  
+  if (action === 'rename') {
+    var oldName = _contextTarget.textContent.trim().replace(/^\\S+\\s*/, '').replace(/\\d+$/, '').trim();
+    var newName = prompt('请输入新名称：', oldName);
+    if (!newName || !newName.trim()) return;
+    
+    if (_contextType === 'folder') {
+      var folderId = _contextTarget.dataset.folderId;
+      if (folderId) {
+        try {
+          var r = await fetch(API_BASE + '/folders/rename', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({folder_id: folderId, name: newName.trim()})
+          });
+          var d = await r.json();
+          if (d.status === 'ok') loadFolders();
+        } catch(err) {
+          alert('重命名失败: ' + err.message);
+        }
+      }
+    } else {
+      // File rename is complex (chromadb source name), skip for now
+      alert('文件重命名功能开发中');
+    }
+  } else if (action === 'delete') {
+    if (!confirm('确定要删除"' + _contextTarget.textContent.trim() + '"吗？')) return;
+    
+    if (_contextType === 'folder') {
+      var folderId = _contextTarget.dataset.folderId;
+      if (folderId) {
+        try {
+          await fetch(API_BASE + '/folders/' + folderId, {method: 'DELETE'});
+          loadFolders();
+        } catch(err) {
+          alert('删除失败: ' + err.message);
+        }
+      }
+    } else {
+      // Delete file from knowledge base
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\\s*/, '');
+      try {
+        await fetch(API_BASE + '/knowledge/' + encodeURIComponent(fileName), {method: 'DELETE'});
+        loadFolders();
+      } catch(err) {
+        alert('删除失败: ' + err.message);
+      }
+    }
+  } else if (action === 'copy') {
+    var text = _contextTarget.textContent.trim();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch(err) {
+      // Fallback
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+  }
+});
+
+// 4. Update buildHistoricalReports to use API for real outlines
+var _origBuildReports = buildHistoricalReports;
+buildHistoricalReports = async function() {
+  await _origBuildReports();
+  
+  // Try to enrich outlines with real document structure
+  if (historicalReports.length > 0) {
+    for (var ri = 0; ri < historicalReports.length; ri++) {
+      var r = historicalReports[ri];
+      if (r.source && r.source !== 'system') {
+        try {
+          var resp = await fetch(API_BASE + '/knowledge/outline', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({source: r.source})
+          });
+          var data = await resp.json();
+          if (data.status === 'ok' && data.outline && data.outline.length > 0) {
+            r.outline = data.outline;
+          }
+        } catch(e) {
+          // Keep existing outline
+        }
+      }
+    }
+  }
+};
+
+</script>
 <style>
   :root {
     --sidebar-w: 260px; --bg: #ffffff; --sidebar-bg: #dcecf7;
@@ -182,6 +316,15 @@
 .wb-toast { display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 8px 20px; border-radius: 6px; font-size: 13px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 .wb-toast.success { background: #dcfce7; color: #166534; }
 .wb-toast.info { background: #dbeafe; color: #1e40af; }
+
+/* Context menu */
+.context-menu { position: fixed; background: #fff; border: 1px solid #d0e3f0; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 10000; min-width: 140px; padding: 4px; display: none; }
+.context-menu-item { padding: 8px 14px; font-size: 13px; color: #1e293b; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 8px; }
+.context-menu-item:hover { background: var(--primary-light); }
+.context-menu-item.danger { color: #e74c3c; }
+.context-menu-item.danger:hover { background: #fde8e8; }
+.context-menu-sep { height: 1px; background: #e2e8f0; margin: 4px 8px; }
+
 </style>
 </head>
 <body>
@@ -1437,6 +1580,140 @@ if (document.readyState === 'loading') {
 } else {
   initDemoData();
 }
+
+// ========== Context Menu (Right Click) ==========
+var _contextTarget = null;
+var _contextType = null; // 'folder' or 'file'
+
+document.addEventListener('contextmenu', function(e) {
+  var folderItem = e.target.closest('.folder-item');
+  var fileItem = e.target.closest('.file-item');
+  
+  if (folderItem || fileItem) {
+    e.preventDefault();
+    _contextTarget = folderItem || fileItem;
+    _contextType = folderItem ? 'folder' : 'file';
+    
+    var menu = document.getElementById('contextMenu');
+    menu.style.display = 'block';
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+    
+    // Show/hide rename based on type
+    var items = menu.querySelectorAll('.context-menu-item');
+    items.forEach(function(item) {
+      if (item.dataset.action === 'copy') {
+        item.style.display = 'flex';
+        item.textContent = _contextType === 'folder' ? '📋 复制目录' : '📋 复制文件名';
+      }
+    });
+  } else {
+    document.getElementById('contextMenu').style.display = 'none';
+  }
+});
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.context-menu')) {
+    document.getElementById('contextMenu').style.display = 'none';
+  }
+});
+
+document.getElementById('contextMenu').addEventListener('click', async function(e) {
+  var item = e.target.closest('.context-menu-item');
+  if (!item || !_contextTarget) return;
+  
+  var action = item.dataset.action;
+  document.getElementById('contextMenu').style.display = 'none';
+  
+  if (action === 'rename') {
+    var oldName = _contextTarget.textContent.trim().replace(/^\\S+\\s*/, '').replace(/\\d+$/, '').trim();
+    var newName = prompt('请输入新名称：', oldName);
+    if (!newName || !newName.trim()) return;
+    
+    if (_contextType === 'folder') {
+      var folderId = _contextTarget.dataset.folderId;
+      if (folderId) {
+        try {
+          var r = await fetch(API_BASE + '/folders/rename', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({folder_id: folderId, name: newName.trim()})
+          });
+          var d = await r.json();
+          if (d.status === 'ok') loadFolders();
+        } catch(err) {
+          alert('重命名失败: ' + err.message);
+        }
+      }
+    } else {
+      // File rename is complex (chromadb source name), skip for now
+      alert('文件重命名功能开发中');
+    }
+  } else if (action === 'delete') {
+    if (!confirm('确定要删除"' + _contextTarget.textContent.trim() + '"吗？')) return;
+    
+    if (_contextType === 'folder') {
+      var folderId = _contextTarget.dataset.folderId;
+      if (folderId) {
+        try {
+          await fetch(API_BASE + '/folders/' + folderId, {method: 'DELETE'});
+          loadFolders();
+        } catch(err) {
+          alert('删除失败: ' + err.message);
+        }
+      }
+    } else {
+      // Delete file from knowledge base
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\\s*/, '');
+      try {
+        await fetch(API_BASE + '/knowledge/' + encodeURIComponent(fileName), {method: 'DELETE'});
+        loadFolders();
+      } catch(err) {
+        alert('删除失败: ' + err.message);
+      }
+    }
+  } else if (action === 'copy') {
+    var text = _contextTarget.textContent.trim();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch(err) {
+      // Fallback
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+  }
+});
+
+// 4. Update buildHistoricalReports to use API for real outlines
+var _origBuildReports = buildHistoricalReports;
+buildHistoricalReports = async function() {
+  await _origBuildReports();
+  
+  // Try to enrich outlines with real document structure
+  if (historicalReports.length > 0) {
+    for (var ri = 0; ri < historicalReports.length; ri++) {
+      var r = historicalReports[ri];
+      if (r.source && r.source !== 'system') {
+        try {
+          var resp = await fetch(API_BASE + '/knowledge/outline', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({source: r.source})
+          });
+          var data = await resp.json();
+          if (data.status === 'ok' && data.outline && data.outline.length > 0) {
+            r.outline = data.outline;
+          }
+        } catch(e) {
+          // Keep existing outline
+        }
+      }
+    }
+  }
+};
+
 </script>
 
 <!-- Workbench Panel (replaces main area) -->
@@ -1480,5 +1757,12 @@ if (document.readyState === 'loading') {
     </div>
   </div>
   <div class="wb-toast" id="wbToast"></div>
+<!-- Context Menu -->
+<div class="context-menu" id="contextMenu">
+  <div class="context-menu-item" data-action="rename">✏️ 重命名</div>
+  <div class="context-menu-item" data-action="delete">🗑️ 删除</div>
+  <div class="context-menu-sep"></div>
+  <div class="context-menu-item" data-action="copy">📋 复制路径</div>
+</div>
 </body>
 </html>
