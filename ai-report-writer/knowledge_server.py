@@ -817,6 +817,87 @@ async def report_generate(data: dict):
         }
     }
 
+@app.post("/api/folders/rename")
+async def rename_folder(data: dict):
+    folder_id = data.get("folder_id", "")
+    new_name = data.get("name", "").strip()
+    if not folder_id or not new_name:
+        raise HTTPException(400, "参数不完整")
+    fdata = load_folders()
+    for f in fdata["folders"]:
+        if f["id"] == folder_id:
+            old_name = f["name"]
+            f["name"] = new_name
+            save_folders(fdata)
+            return {"status": "ok", "old_name": old_name, "new_name": new_name}
+    raise HTTPException(404, "文件夹不存在")
+
+@app.post("/api/knowledge/rename")
+async def rename_document(data: dict):
+    old_name = data.get("old_name", "").strip()
+    new_name = data.get("new_name", "").strip()
+    if not old_name or not new_name:
+        raise HTTPException(400, "参数不完整")
+    existing = collection.get(where={"source": old_name})
+    if not existing or not existing["ids"]:
+        raise HTTPException(404, f"找不到文件: {old_name}")
+    for i in range(len(existing["ids"])):
+        existing["metadatas"][i]["source"] = new_name
+    collection.delete(ids=existing["ids"])
+    if existing["documents"] and existing["embeddings"]:
+        collection.add(
+            documents=existing["documents"],
+            embeddings=existing["embeddings"],
+            metadatas=existing["metadatas"],
+            ids=[f"renamed_{i}" for i in range(len(existing["ids"]))]
+        )
+    try:
+        fdata = load_folders()
+        updated = False
+        for f in fdata["folders"]:
+            if old_name in f.get("files", []):
+                f["files"].remove(old_name)
+                f["files"].append(new_name)
+                updated = True
+        if updated:
+            save_folders(fdata)
+    except:
+        pass
+    return {"status": "ok", "old_name": old_name, "new_name": new_name}
+
+@app.get("/api/knowledge/path")
+async def get_document_path(source: str = Query("", description="文件名")):
+    if not source:
+        raise HTTPException(400, "请指定文件名")
+    for f in UPLOAD_DIR.iterdir():
+        if source in f.name:
+            return {"status": "ok", "path": str(f.absolute()), "name": source}
+    all_data = collection.get(where={"source": source})
+    if all_data and all_data["ids"]:
+        return {"status": "ok", "path": str(UPLOAD_DIR / source), "name": source, "note": "文件已在知识库中"}
+    return {"status": "error", "message": f"找不到文件: {source}"}
+
+@app.post("/api/knowledge/outline")
+async def get_document_outline(data: dict):
+    source = data.get("source", "")
+    if not source:
+        return {"status": "error", "message": "请指定文档名称"}
+    all_data = collection.get(where={"source": source})
+    if not all_data or not all_data["documents"]:
+        return {"status": "error", "message": f"找不到文档: {source}"}
+    full_text = "\n".join(all_data["documents"])
+    prompt = f"分析以下文档内容，提取文档的章节结构（大纲）。请以JSON数组格式输出：\n[\"章节1标题\", \"章节2标题\", ...]\n\n最多输出 6 个章节标题。只输出JSON数组，不要其他内容。\n\n文档内容：\n{full_text[:3000]}"
+    try:
+        result = await call_llm(prompt, temperature=0.1)
+        import json as _json, re as _re
+        arr_match = _re.search(r'\[.*?\]', result, _re.DOTALL)
+        if arr_match:
+            outline = _json.loads(arr_match.group())
+            return {"status": "ok", "outline": outline[:6]}
+    except Exception as e:
+        print(f"[WARN] Outline extraction failed: {e}")
+    return {"status": "ok", "outline": []}
+
 # ============================================================
 # Main
 # ============================================================
