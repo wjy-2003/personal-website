@@ -510,8 +510,8 @@ function handleDataResponse(data) {
   
   // Add insight and report buttons
   html += '<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">' +
-    '<button style="padding:8px 20px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById('inputBox').value='基于这些数据分析结果，提炼核心观点';sendMessage()">💡 提炼核心观点</button>' +
-    '<button style="padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById('inputBox').value='基于当前数据生成报告段落';sendMessage()">📝 生成报告</button>' +
+    '<button style="padding:8px 20px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'基于这些数据分析结果，提炼核心观点\';sendMessage()">💡 提炼核心观点</button>' +
+    '<button style="padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'基于当前数据生成报告段落\';sendMessage()">📝 生成报告</button>' +
     '</div>';
   addMessage('ai', summary, html);
 }
@@ -1244,16 +1244,19 @@ function renderFolders(folderData) {
   });
 }
 
-// Upload files
-document.getElementById('uploadBtn').addEventListener('click', function() {
-  document.getElementById('fileInput').click();
-});
-
-document.getElementById('fileInput').addEventListener('change', async function(e) {
-  const files = e.target.files;
-  if (!files.length) return;
+// Initialize UI handlers when DOM is ready
+function initUIHandlers() {
+  // Upload files
+  var uploadBtn = document.getElementById('uploadBtn');
+  if (uploadBtn) {
+    uploadBtn.addEventListener('click', function() {
+      document.getElementById('fileInput').click();
+    });
+  }
   
-  const folder = window._currentFolder || 'demo';
+  document.getElementById('fileInput').addEventListener('change', async function(e) {
+    const files = e.target.files;
+    if (!files.length) return;
   
   for (const file of files) {
     const formData = new FormData();
@@ -1284,8 +1287,10 @@ document.getElementById('fileInput').addEventListener('change', async function(e
 });
 
 // New folder
-document.getElementById('newFolderBtn').addEventListener('click', function() {
-  const name = prompt('请输入新文件夹名称：');
+  var newFolderBtn = document.getElementById('newFolderBtn');
+  if (newFolderBtn) {
+    newFolderBtn.addEventListener('click', function() {
+      const name = prompt('请输入新文件夹名称：');
   if (!name || !name.trim()) return;
   
   fetch(API_BASE + '/folders/create', {
@@ -1354,6 +1359,60 @@ function updateContextInfo() {
 }
 
 // Seed demo data on first load
+}
+
+// Close the initUIHandlers wrapper for scan button
+document.getElementById('scanFolderBtn').addEventListener('click', function() {
+  const path = prompt('请输入本地文件夹的完整路径：\n（例如：/Users/xxx/Documents/reports）');
+  if (!path || !path.trim()) return;
+  
+  addMessage('ai', '🔍 正在扫描文件夹: ' + path.trim());
+  
+  fetch(API_BASE + '/folders/scan', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({path: path.trim()})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'ok' && data.data.files.length > 0) {
+      const fileList = data.data.files.join('\n');
+      const confirmMsg = '扫描到 ' + data.data.count + ' 个文档：\n' + fileList + '\n\n是否导入这些文件到知识库？';
+      if (confirm(confirmMsg)) {
+        const folder = window._currentFolder || 'demo';
+        fetch(API_BASE + '/folders/import', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({path: path.trim(), folder_id: folder, files: data.data.files})
+        })
+        .then(r => r.json())
+        .then(result => {
+          if (result.status === 'ok') {
+            addMessage('ai', '✅ 成功导入 ' + result.count + ' 个文件到知识库！');
+            loadFolders();
+            updateContextInfo();
+          }
+        });
+      }
+    } else {
+      addMessage('ai', '📭 该文件夹中未找到支持的文档（支持格式：docx/xlsx/pdf/txt/md）');
+    }
+  })
+  .catch(err => addMessage('ai', '⚠️ 扫描失败: ' + err.message));
+});
+}
+
+// Try to init when DOM is ready (script is at bottom of body)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() {
+    initUIHandlers();
+    initDemoData();
+  });
+} else {
+  initUIHandlers();
+  initDemoData();
+}
+
 async function initDemoData() {
   try {
     const resp = await fetch(API_BASE + '/demo/seed', {method: 'POST'});
@@ -1369,9 +1428,12 @@ async function initDemoData() {
 }
 
 // Override init
-window.addEventListener('DOMContentLoaded', function() {
+// Initialize immediately (script runs at bottom of body, DOM is ready)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDemoData);
+} else {
   initDemoData();
-});
+}
 </script>
 
 <!-- Workbench Panel (replaces main area) -->
