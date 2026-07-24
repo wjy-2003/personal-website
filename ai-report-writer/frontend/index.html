@@ -730,33 +730,71 @@ let historicalReports = [];
 // Generate sidebar context from knowledge base and current session
 async function buildHistoricalReports() {
   try {
-    // Fetch knowledge base files
-    const resp = await fetch(API_BASE + '/knowledge/list');
-    const data = await resp.json();
-    const files = data.files || [];
+    // Get chat history to find last user message for context
+    var contextQuery = '';
+    var chatArea = document.getElementById('chatArea');
+    if (chatArea) {
+      var msgs = chatArea.querySelectorAll('.msg.user .bubble');
+      if (msgs.length > 0) {
+        contextQuery = msgs[msgs.length - 1].textContent.trim().substring(0, 100);
+      }
+    }
     
-    // Build reports from knowledge base files
+    // Use context-aware search if available, otherwise list all
+    var files = [];
+    if (contextQuery) {
+      try {
+        var searchResp = await fetch(API_BASE + '/knowledge/search?q=' + encodeURIComponent(contextQuery) + '&top_k=3');
+        var searchData = await searchResp.json();
+        // Group search results by source
+        var sourceMap = {};
+        (searchData.results || []).forEach(function(r) {
+          if (!sourceMap[r.source]) sourceMap[r.source] = { name: r.source, snippets: [] };
+          sourceMap[r.source].snippets.push(r.text);
+        });
+        files = Object.values(sourceMap);
+      } catch(e) {
+        console.warn('Search failed, falling back to list');
+      }
+    }
+    
+    // Fallback to full list if no context-based results
+    if (files.length === 0) {
+      var listResp = await fetch(API_BASE + '/knowledge/list');
+      var listData = await listResp.json();
+      files = (listData.files || []).map(function(f) { 
+        return { name: f.name, snippets: [] }; 
+      });
+    }
+    
+    // Build reports from files
     historicalReports = files.map(function(f, idx) {
       var name = f.name || 'untitled';
-      var ext = name.split('.').pop();
-      var title = name.replace('.' + ext, '');
+      var ext = name.lastIndexOf('.') >= 0 ? name.split('.').pop() : '';
+      var title = ext ? name.slice(0, -ext.length-1) : name;
       
-      // Generate outline from chunks count
-      var outlineCount = Math.min(f.chunks || 1, 5);
+      // Generate outline from snippets (or default)
       var outline = [];
-      for (var o = 0; o < outlineCount; o++) {
-        outline.push('第' + (o+1) + '部分');
+      if (f.snippets && f.snippets.length > 0) {
+        outline = f.snippets.slice(0, 3).map(function(s, i) {
+          return s.substring(0, 30) + (s.length > 30 ? '...' : '');
+        });
+      }
+      if (outline.length === 0) {
+        outline = ['市场概况', '用户画像分析', '竞争格局'];
       }
       
-      // Generate sample viewpoints (will be enriched by chat context)
+      // Use insight candidates from current conversation as viewpoints
       var viewpoints = [];
       if (window._lastInsightCandidates && window._lastInsightCandidates.length > 0) {
-        viewpoints = window._lastInsightCandidates.map(function(v) {
-          return v.title;
-        }).slice(0, 3);
+        viewpoints = window._lastInsightCandidates.map(function(v) { return v.title; }).slice(0, 3);
+      }
+      // Also check session viewpoint candidates
+      if (viewpoints.length === 0 && window.insightCandidates && window.insightCandidates.length > 0) {
+        viewpoints = window.insightCandidates.map(function(v) { return v.title || v.evidence; }).slice(0, 3);
       }
       if (viewpoints.length === 0) {
-        viewpoints = ['基于 "' + title + '" 的分析观点（通过对话生成）'];
+        viewpoints = ['通过对话 "数据查询" 步骤生成观点'];
       }
       
       return {
@@ -770,24 +808,18 @@ async function buildHistoricalReports() {
       };
     });
     
-    // If no files in knowledge base, show default
+    // Fallback if no files
     if (historicalReports.length === 0) {
       historicalReports = [{
-        id: 'hr_default',
-        title: '知识库为空',
-        date: new Date().toISOString().slice(0, 10),
-        similarity: 0,
-        source: 'system',
+        id: 'hr_default', title: '知识库为空', date: new Date().toISOString().slice(0, 10),
+        similarity: 0, source: 'system',
         outline: ['上传文档后自动生成大纲'],
         viewpoints: ['暂无观点，请先上传文档进行对话']
       }];
     }
     
-    // Re-render sidebar if workbench is open
     var panel = document.getElementById('workbenchPanel');
-    if (panel && panel.style.display !== 'none') {
-      renderWBSidebar();
-    }
+    if (panel && panel.style.display !== 'none') renderWBSidebar();
   } catch(e) {
     console.warn('Failed to build reports:', e);
     historicalReports = [];
