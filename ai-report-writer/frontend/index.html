@@ -837,37 +837,38 @@ function renderWBSidebar() {
   
   for (var ri = 0; ri < historicalReports.length; ri++) {
     var r = historicalReports[ri];
-    html += '<div class="wb-sidebar-card">';
-    html += '<div class="wb-sidebar-card-header">';
-    html += '<div class="wb-sidebar-title" title="来源: ' + r.source + '">' + r.title + '</div>';
-    html += '<span class="wb-sidebar-sim">' + Math.round(r.similarity * 100) + '%</span>';
-    html += '</div>';
-    html += '<div class="wb-sidebar-date">' + r.date + ' · ' + r.source + '</div>';
-    
-    // Outline (draggable) - only show if there are items
-    if (r.outline && r.outline.length > 0) {
-      html += '<div class="wb-sidebar-section-label">📋 大纲</div>';
-      html += '<div class="wb-sidebar-items">';
-      for (var oi = 0; oi < r.outline.length; oi++) {
-        html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="outline" data-report="' + r.id + '" data-content="' + r.outline[oi] + '" title="拖拽到工作台">📄 ' + r.outline[oi] + '</div>';
-      }
+    // Only show card if it has actual content (outline or viewpoints from conversation)
+    if (r.outline && r.outline.length > 0 || r.viewpoints && r.viewpoints.length > 0) {
+      html += '<div class="wb-sidebar-card">';
+      html += '<div class="wb-sidebar-card-header">';
+      html += '<div class="wb-sidebar-title" title="来源: ' + r.source + '">' + r.title + '</div>';
+      html += '<span class="wb-sidebar-sim">' + Math.round(r.similarity * 100) + '%</span>';
       html += '</div>';
-    }
-    
-    // Viewpoints (draggable) - only show if there are actual conversation-generated viewpoints
-    if (r.viewpoints && r.viewpoints.length > 0) {
-      html += '<div class="wb-sidebar-section-label">💡 核心观点</div>';
-      html += '<div class="wb-sidebar-items">';
-      for (var vi = 0; vi < r.viewpoints.length; vi++) {
-        html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="viewpoint" data-report="' + r.id + '" data-content="' + r.viewpoints[vi] + '" title="拖拽到工作台">💡 ' + r.viewpoints[vi] + '</div>';
+      html += '<div class="wb-sidebar-date">' + r.date + ' · ' + r.source + '</div>';
+      
+      if (r.outline && r.outline.length > 0) {
+        html += '<div class="wb-sidebar-section-label">📋 大纲</div>';
+        html += '<div class="wb-sidebar-items">';
+        for (var oi = 0; oi < r.outline.length; oi++) {
+          html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="outline" data-report="' + r.id + '" data-content="' + r.outline[oi] + '" title="拖拽到工作台">📄 ' + r.outline[oi] + '</div>';
+        }
+        html += '</div>';
       }
-      html += '</div>';
-    }
-    
-    html += '</div>';
-  }
+      
+      if (r.viewpoints && r.viewpoints.length > 0) {
+        html += '<div class="wb-sidebar-section-label">💡 核心观点</div>';
+        html += '<div class="wb-sidebar-items">';
+        for (var vi = 0; vi < r.viewpoints.length; vi++) {
+          html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="viewpoint" data-report="' + r.id + '" data-content="' + r.viewpoints[vi] + '" title="拖拽到工作台">💡 ' + r.viewpoints[vi] + '</div>';
+        }
+        html += '</div>';
+      }
+      
+      html += '</div>';  // close card
+    }  // end if has content
+  }  // end for
   
-  html += '</div>';
+  html += '</div>';  // close list
   html += '<div class="sidebar-footer" style="border-top-color:#d0e3f0;"><span>📌 拖拽大纲/观点到工作台</span></div>';
   
   sb.innerHTML = html;
