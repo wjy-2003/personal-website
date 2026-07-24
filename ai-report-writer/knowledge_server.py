@@ -544,6 +544,7 @@ async def import_folder_files(data: dict):
 async def chat(data: dict):
     text = data.get("text", "").strip()
     session_id = data.get("session_id", "default")
+    folder_id = data.get("folder_id", "")
     
     if not text:
         return {"status": "error", "message": "请输入内容"}
@@ -580,10 +581,26 @@ async def chat(data: dict):
     q_vec = embedder.encode([rag_query]).tolist()
     rag_results = collection.query(query_embeddings=q_vec, n_results=5)
     retrieved = []
+    # Get folder file filter if folder_id is provided
+    folder_files = None
+    if folder_id:
+        try:
+            fdata = load_folders()
+            for f in fdata.get("folders", []):
+                if f["id"] == folder_id:
+                    folder_files = f.get("files", [])
+                    break
+        except:
+            pass
+    
     if rag_results and rag_results["metadatas"] and rag_results["metadatas"][0]:
         for i, meta in enumerate(rag_results["metadatas"][0]):
+            source = meta.get("source", "")
+            # Skip if folder filter is active and file is not in folder
+            if folder_files is not None and source not in folder_files:
+                continue
             retrieved.append({
-                "source": meta.get("source", ""),
+                "source": source,
                 "text": rag_results["documents"][0][i] if rag_results["documents"] else ""
             })
     

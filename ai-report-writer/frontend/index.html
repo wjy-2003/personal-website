@@ -213,7 +213,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="mode-badge" id="modeBadge">💬 自由对话</span>
-      <span class="context-info">Demo数据 · 2个文件</span>
+      <span class="context-info" id="contextInfo">全部 · 0 个文件</span>
     </div>
     <div class="topbar-right">
       <button id="demoPath1" title="演示路径1：北京NEV用户画像→观点→报告">🎯 路径1</button>
@@ -447,7 +447,8 @@ async function sendMessage() {
   
   // Call API
   try {
-    const result = await apiPost('/chat', {text: text, session_id: sessionId});
+    const folderId = window._currentFolder || '';
+    const result = await apiPost('/chat', {text: text, session_id: sessionId, folder_id: folderId});
     const data = result.data;
     
     addIntentBar(['① 原始输入捕获 ✓', '② 意图改写 ✓', '③ 槽位提取 ✓', '④ 模式匹配 ✓', '⑤ 调度执行 ✓'], 5);
@@ -1353,8 +1354,10 @@ document.getElementById('scanFolderBtn').addEventListener('click', function() {
 function updateContextInfo() {
   const el = document.querySelector('.context-info');
   if (el) {
+    const activeFolder = document.querySelector('.folder-item.active');
+    const folderName = activeFolder ? activeFolder.textContent.trim().replace(/\d+$/, '').trim() : '全部';
     const total = document.querySelectorAll('.file-item').length;
-    el.textContent = total + ' 个文件';
+    el.textContent = folderName + ' · ' + total + ' 个文件';
   }
 }
 
