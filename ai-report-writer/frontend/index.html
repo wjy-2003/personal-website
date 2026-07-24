@@ -725,20 +725,83 @@ document.getElementById('sidebarSearch').addEventListener('input', function() {
   }
   
 // ===== Historical Reports Mock Data =====
-const historicalReports = [
-  { id: 'hr_1', title: '2025年Q4北京NEV市场分析报告', date: '2025-12-15', similarity: 0.92,
-    source: '北京NEV市场分析.docx',
-    outline: ['市场概况', '用户画像分析', '竞争格局', '趋势预测'],
-    viewpoints: ['北京新能源渗透率突破45%，领先全国', '26-40岁高学历白领为核心用户群', '比亚迪/特斯拉/小米构成第一梯队'] },
-  { id: 'hr_2', title: '2026年1月中国汽车出口月报', date: '2026-02-10', similarity: 0.85,
-    source: '汽车产业国际化研究月报第12期.pdf',
-    outline: ['出口总览', '区域分析', '品牌表现', '政策影响'],
-    viewpoints: ['2025年11月出口量创历史新高', '东南亚市场增速最快', '新能源出口占比首次超40%'] },
-  { id: 'hr_3', title: '2025年度品牌监测报告', date: '2026-01-20', similarity: 0.78,
-    source: '品牌监测报告-样例.pptx',
-    outline: ['品牌声量', '用户口碑', '竞品对比', '改进建议'],
-    viewpoints: ['品牌认知度提升12个百分点', '智能化配置成用户最关注因素', '售后服务满意度有待提高'] }
-];
+let historicalReports = [];
+
+// Generate sidebar context from knowledge base and current session
+async function buildHistoricalReports() {
+  try {
+    // Fetch knowledge base files
+    const resp = await fetch(API_BASE + '/knowledge/list');
+    const data = await resp.json();
+    const files = data.files || [];
+    
+    // Build reports from knowledge base files
+    historicalReports = files.map(function(f, idx) {
+      var name = f.name || 'untitled';
+      var ext = name.split('.').pop();
+      var title = name.replace('.' + ext, '');
+      
+      // Generate outline from chunks count
+      var outlineCount = Math.min(f.chunks || 1, 5);
+      var outline = [];
+      for (var o = 0; o < outlineCount; o++) {
+        outline.push('第' + (o+1) + '部分');
+      }
+      
+      // Generate sample viewpoints (will be enriched by chat context)
+      var viewpoints = [];
+      if (window._lastInsightCandidates && window._lastInsightCandidates.length > 0) {
+        viewpoints = window._lastInsightCandidates.map(function(v) {
+          return v.title;
+        }).slice(0, 3);
+      }
+      if (viewpoints.length === 0) {
+        viewpoints = ['基于 "' + title + '" 的分析观点（通过对话生成）'];
+      }
+      
+      return {
+        id: 'hr_' + idx,
+        title: title,
+        date: new Date().toISOString().slice(0, 10),
+        similarity: Math.round((0.9 - idx * 0.1) * 100) / 100,
+        source: name,
+        outline: outline,
+        viewpoints: viewpoints
+      };
+    });
+    
+    // If no files in knowledge base, show default
+    if (historicalReports.length === 0) {
+      historicalReports = [{
+        id: 'hr_default',
+        title: '知识库为空',
+        date: new Date().toISOString().slice(0, 10),
+        similarity: 0,
+        source: 'system',
+        outline: ['上传文档后自动生成大纲'],
+        viewpoints: ['暂无观点，请先上传文档进行对话']
+      }];
+    }
+    
+    // Re-render sidebar if workbench is open
+    var panel = document.getElementById('workbenchPanel');
+    if (panel && panel.style.display !== 'none') {
+      renderWBSidebar();
+    }
+  } catch(e) {
+    console.warn('Failed to build reports:', e);
+    historicalReports = [];
+  }
+}
+
+// Store last insight candidates for context
+var _origHandleInsight = handleInsightResponse;
+handleInsightResponse = function(data) {
+  if (data && data.insight && data.insight.candidates) {
+    window._lastInsightCandidates = data.insight.candidates;
+  }
+  if (_origHandleInsight) _origHandleInsight(data);
+};
 
 let _savedSidebarHTML = '';
 let _draggedData = null;
@@ -748,7 +811,7 @@ function renderWBSidebar() {
   if (!sb) return;
   _savedSidebarHTML = sb.innerHTML;
   
-  var html = '<div class="sidebar-header" style="border-bottom-color:#3b82f6;"><h1>📚 相似历史报告</h1><p>基于当前上下文推荐的报告</p></div>';
+  var html = '<div class="sidebar-header" style="border-bottom-color:#3b82f6;"><h1>📚 知识库文件</h1><p>基于当前对话上下文的材料</p></div>';
   html += '<div class="wb-sidebar-list">';
   
   for (var ri = 0; ri < historicalReports.length; ri++) {
@@ -941,7 +1004,11 @@ function setupDropZone() {
     document.querySelector('.main').style.display = 'none';
     document.getElementById('workbenchPanel').classList.add('active');
     document.getElementById('wbToast').style.display = 'none';
-    renderWBSidebar();
+    var self = this;
+    // Build dynamic reports from knowledge base + context, then render
+    Promise.resolve(buildHistoricalReports()).then(function() {
+      renderWBSidebar();
+    });
     renderWorkbench();
     setupDropZone();
   }
