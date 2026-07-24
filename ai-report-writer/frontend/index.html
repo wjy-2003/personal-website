@@ -780,9 +780,7 @@ async function buildHistoricalReports() {
           return s.substring(0, 30) + (s.length > 30 ? '...' : '');
         });
       }
-      if (outline.length === 0) {
-        outline = ['市场概况', '用户画像分析', '竞争格局'];
-      }
+      // Leave outline empty if no search context - no generic fallback
       
       // Use insight candidates from current conversation as viewpoints
       var viewpoints = [];
@@ -793,9 +791,7 @@ async function buildHistoricalReports() {
       if (viewpoints.length === 0 && window.insightCandidates && window.insightCandidates.length > 0) {
         viewpoints = window.insightCandidates.map(function(v) { return v.title || v.evidence; }).slice(0, 3);
       }
-      if (viewpoints.length === 0) {
-        viewpoints = ['通过对话 "数据查询" 步骤生成观点'];
-      }
+      // Leave empty if no conversation context - no fallback messages
       
       return {
         id: 'hr_' + idx,
@@ -809,14 +805,7 @@ async function buildHistoricalReports() {
     });
     
     // Fallback if no files
-    if (historicalReports.length === 0) {
-      historicalReports = [{
-        id: 'hr_default', title: '知识库为空', date: new Date().toISOString().slice(0, 10),
-        similarity: 0, source: 'system',
-        outline: ['上传文档后自动生成大纲'],
-        viewpoints: ['暂无观点，请先上传文档进行对话']
-      }];
-    }
+    // Keep empty array if no files - sidebar shows nothing
     
     var panel = document.getElementById('workbenchPanel');
     if (panel && panel.style.display !== 'none') renderWBSidebar();
@@ -855,21 +844,25 @@ function renderWBSidebar() {
     html += '</div>';
     html += '<div class="wb-sidebar-date">' + r.date + ' · ' + r.source + '</div>';
     
-    // Outline (draggable)
-    html += '<div class="wb-sidebar-section-label">📋 大纲</div>';
-    html += '<div class="wb-sidebar-items">';
-    for (var oi = 0; oi < r.outline.length; oi++) {
-      html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="outline" data-report="' + r.id + '" data-content="' + r.outline[oi] + '" title="拖拽到工作台">📄 ' + r.outline[oi] + '</div>';
+    // Outline (draggable) - only show if there are items
+    if (r.outline && r.outline.length > 0) {
+      html += '<div class="wb-sidebar-section-label">📋 大纲</div>';
+      html += '<div class="wb-sidebar-items">';
+      for (var oi = 0; oi < r.outline.length; oi++) {
+        html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="outline" data-report="' + r.id + '" data-content="' + r.outline[oi] + '" title="拖拽到工作台">📄 ' + r.outline[oi] + '</div>';
+      }
+      html += '</div>';
     }
-    html += '</div>';
     
-    // Viewpoints (draggable)
-    html += '<div class="wb-sidebar-section-label">💡 核心观点</div>';
-    html += '<div class="wb-sidebar-items">';
-    for (var vi = 0; vi < r.viewpoints.length; vi++) {
-      html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="viewpoint" data-report="' + r.id + '" data-content="' + r.viewpoints[vi] + '" title="拖拽到工作台">💡 ' + r.viewpoints[vi] + '</div>';
+    // Viewpoints (draggable) - only show if there are actual conversation-generated viewpoints
+    if (r.viewpoints && r.viewpoints.length > 0) {
+      html += '<div class="wb-sidebar-section-label">💡 核心观点</div>';
+      html += '<div class="wb-sidebar-items">';
+      for (var vi = 0; vi < r.viewpoints.length; vi++) {
+        html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="viewpoint" data-report="' + r.id + '" data-content="' + r.viewpoints[vi] + '" title="拖拽到工作台">💡 ' + r.viewpoints[vi] + '</div>';
+      }
+      html += '</div>';
     }
-    html += '</div>';
     
     html += '</div>';
   }
