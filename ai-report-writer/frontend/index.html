@@ -470,7 +470,7 @@ async function sendMessage() {
         handleReportResponse(data);
         break;
       default:
-        addMessage('ai', '💬 ' + (data.response || getFreeChatResponse(text)));
+        addMessage('ai', '💬 ' + (data.response || data.data.response || '知识库为空，请先上传文档'));
     }
   } catch (e) {
     const tb = document.getElementById('thinkingBubble');
@@ -482,31 +482,36 @@ async function sendMessage() {
 
 function handleDataResponse(data) {
   let html = '';
+  var hasContent = false;
+  
   if (data.data && data.data.charts) {
     html += renderCharts(data.data.charts);
+    hasContent = true;
   }
   if (data.data && data.data.tables) {
-    data.data.tables.forEach(t => { html += renderTable(t); });
-  }
-  // Excel download button
-  if (data.data && data.data.excel_b64) {
-    html += '<div style="margin:8px 0;"><button style="padding:6px 16px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;" onclick="downloadExcel(\'' + data.data.excel_b64 + '\')">📥 导出Excel</button></div>';
+    data.data.tables.forEach(function(t) {
+      t.source = t.source || '知识库';
+      html += renderTable(t);
+      if (t.rows && t.rows.length > 0) hasContent = true;
+    });
   }
   
-  let summary = '📊 **数据分析结果**';
-  if (data.data && data.data.datasets) {
-    summary += '\n已查询 ' + data.data.datasets.length + ' 个数据源';
+  // Show response text if no structured data
+  if (!hasContent) {
+    var respText = (data.data && data.data.response) || '📊 未找到相关结构化数据。请尝试更具体的查询，或上传包含相关数据的文档。';
+    if (data.response) respText = data.response;
+    html += '<div style="padding:12px 16px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;font-size:14px;line-height:1.7;">' + respText.replace(/\n/g, '<br>') + '</div>';
   }
-  // Add data source traceability
-  if (data.data && data.data.tables) {
-    for (var _ti = 0; _ti < data.data.tables.length; _ti++) {
-      data.data.tables[_ti].source = data.data.tables[_ti].source || '北京NEV市场分析.docx';
-    }
+  
+  var summary = '📊 **数据分析结果**';
+  if (data.data && data.data.datasets && data.data.datasets.length > 0) {
+    summary += '\n数据来源: ' + data.data.datasets.map(function(d){return d.name;}).join(', ');
   }
-  // Add insight button
+  
+  // Add insight and report buttons
   html += '<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">' +
-    '<button style="padding:8px 20px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'基于这些数据分析结果，提炼核心观点\';sendMessage()">💡 提炼核心观点</button>' +
-    '<button style="padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'帮我写一份完整的分析报告\';sendMessage()">📝 生成报告</button>' +
+    '<button style="padding:8px 20px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById('inputBox').value='基于这些数据分析结果，提炼核心观点';sendMessage()">💡 提炼核心观点</button>' +
+    '<button style="padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById('inputBox').value='基于当前数据生成报告段落';sendMessage()">📝 生成报告</button>' +
     '</div>';
   addMessage('ai', summary, html);
 }

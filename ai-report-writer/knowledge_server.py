@@ -578,16 +578,48 @@ async def chat(data: dict):
     
     # Build response based on intent
     if intent == "数据分析":
-        # Return data tables from document analysis
         tables = []
         charts = []
+        datasets = []
+        
         if retrieved:
+            # Use LLM to extract structured data from retrieved content
+            data_prompt = f"""基于以下资料，提取与问题相关的数据。
+问题：{text}
+资料：
+{chr(10).join([f'[{r["source"]}] {r["text"][:800]}' for r in retrieved[:3]])}
+
+请用JSON格式输出数据表格，格式：{{"tables":[{{"name":"表名","headers":["列1","列2"],"rows":[["值1","值2"]]}}], "summary":"一句话总结"}}
+只输出JSON，不要其他内容。"""
+            
+            try:
+                data_json_str = await call_llm(data_prompt, temperature=0.1)
+                import json as _json
+                # Extract JSON from response
+                _json_match = re.search(r'\{.*\}', data_json_str, re.DOTALL)
+                if _json_match:
+                    parsed = _json.loads(_json_match.group())
+                    if parsed.get("tables"):
+                        for t in parsed["tables"]:
+                            t["source"] = retrieved[0]["source"]
+                            tables.append(t)
+                    datasets = [{"name": retrieved[0]["source"]}]
+            except Exception as _e:
+                print(f"[WARN] Data extraction failed: {_e}")
+        
+        if not tables:
+            # No structured data found - show what's available
+            available_sources = list(set([r["source"] for r in retrieved]))
             tables.append({
-                "name": "相关数据",
-                "source": retrieved[0]["source"] if retrieved else "",
-                "headers": ["数据项", "值"],
-                "rows": [["来自", retrieved[0]["source"]]]
+                "name": "知识库内容概览",
+                "source": "知识库",
+                "headers": ["文件", "内容摘要"],
+                "rows": [[s, "请查看对话中的原始内容"] for s in available_sources[:5]]
             })
+        
+        # Track history
+        session["history"].append({"role": "user", "content": text})
+        session["history"].append({"role": "assistant", "content": f"数据分析: {len(tables)} 个表格"})
         
         return {
             "status": "ok",
@@ -597,17 +629,24 @@ async def chat(data: dict):
                 "data": {
                     "tables": tables,
                     "charts": charts,
-                    "datasets": [{"name": "知识库"}]
-                },
-                "response": f"📊 已查询知识库。找到 {len(retrieved)} 个相关片段。"
+                    "datasets": datasets,
+                    "response": f"📊 查询了 {len(retrieved)} 个相关片段。"
+                }
             }
         }
     
     elif intent == "核心观点提炼":
         # Get pre-analyzed viewpoints from session or generate
         if not session["viewpoint_candidates"]:
-            # Try to generate from retrieved content
+            # Try to generate from retrieved content + conversation history
             context = "\n".join([r["text"][:500] for r in retrieved[:3]])
+            # Add conversation history for context
+            chat_context = ""
+            if session.get("history"):
+                recent = session["history"][-4:]  # Last 4 messages
+                chat_context = "\n".join([f'{m["role"]}: {m["content"][:200]}' for m in recent])
+            if chat_context:
+                context += "\n\n对话上下文:\n" + chat_context
             sys_prompt = "根据以下内容提炼 3-5 条核心观点。返回 JSON 数组：[{\"title\":\"...\", \"evidence\":\"...\", \"confidence\":0.xx}]"
             vp_result = await call_llm(f"内容：{context}", sys_prompt, 0.3)
             try:
@@ -626,6 +665,10 @@ async def chat(data: dict):
                 {"id": "vp_0", "title": "基于文档自动分析", "evidence": "请先上传文档", "confidence": 0.5, "source": "系统"}
             ]
         
+        # Track history
+        session["history"].append({"role": "user", "content": text})
+        session["history"].append({"role": "assistant", "content": f"核心观点提炼: {len(session['viewpoint_candidates'])} 条候选"})
+        
         return {
             "status": "ok",
             "data": {
@@ -638,6 +681,10 @@ async def chat(data: dict):
         }
     
     elif intent == "报告撰写":
+        # Track history
+        session["history"].append({"role": "user", "content": text})
+        session["history"].append({"role": "assistant", "content": "报告撰写: 生成报告模板"})
+        
         return {
             "status": "ok",
             "data": {
@@ -661,6 +708,10 @@ async def chat(data: dict):
             answer = await rag_query(text, retrieved[:3])
         else:
             answer = "知识库为空，请先上传文档。"
+        
+        # Track history
+        session["history"].append({"role": "user", "content": text})
+        session["history"].append({"role": "assistant", "content": answer})
         
         return {
             "status": "ok",
