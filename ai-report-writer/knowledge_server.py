@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 from datetime import datetime
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Query
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
@@ -60,8 +60,8 @@ app = FastAPI(title="AI Report Writer")
 chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
 collection = chroma_client.get_or_create_collection(name="documents")
 
-# Embedding model (lazy load)
-_embedder = None
+# Embedding model (lazy load - only used if preload failed)
+_embedder = _embedder if "_embedder" in dir() else None
 
 def get_embedder():
     global _embedder
@@ -241,7 +241,7 @@ async def llm_status():
 
 # --- Knowledge / Upload ---
 @app.post("/api/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), folder: str = Form("default")):
     if not file.filename:
         raise HTTPException(400, "文件名无效")
     
@@ -292,6 +292,28 @@ async def upload_file(file: UploadFile = File(...)):
     # LLM analyze
     analysis = await analyze_document(text, file.filename)
     
+    # Track file in folder
+    try:
+        fdata = load_folders()
+        target_folder = folder
+        # If folder is "default", use first non-demo folder or demo folder
+        if target_folder == "default":
+            for f in fdata["folders"]:
+                if not f.get("is_demo"):
+                    target_folder = f["id"]
+                    break
+            if target_folder == "default":
+                target_folder = "demo"
+        
+        for f in fdata["folders"]:
+            if f["id"] == target_folder:
+                if file.filename not in f.get("files", []):
+                    f.setdefault("files", []).append(file.filename)
+                break
+        save_folders(fdata)
+    except Exception as e:
+        print(f"[WARN] Failed to update folder: {e}")
+    
     return {
         "status": "ok",
         "file": {
@@ -338,7 +360,186 @@ async def search_knowledge(q: str = Query("", description="搜索关键词"), to
             })
     return {"results": items}
 
-# --- Chat ---
+
+# --- Folder Management ---
+FOLDERS_FILE = BASE_DIR / "knowledge" / "folders.json"
+
+def load_folders():
+    if FOLDERS_FILE.exists():
+        with open(FOLDERS_FILE, "r") as f:
+            return json.load(f)
+    return {"folders": [{"id": "demo", "name": "演示", "files": [], "is_demo": True}]}
+
+def save_folders(folders_data):
+    FOLDERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(FOLDERS_FILE, "w") as f:
+        json.dump(folders_data, f, ensure_ascii=False, indent=2)
+
+@app.get("/api/folders/list")
+async def list_folders():
+    data = load_folders()
+    # Enrich each folder with file info from chromadb
+    all_data = collection.get()
+    meta_map = {}
+    for meta in (all_data["metadatas"] or []):
+        src = meta.get("source", "unknown")
+        meta_map.setdefault(src, 0)
+        meta_map[src] += 1
+    
+    for folder in data["folders"]:
+        enriched_files = []
+        for fname in folder.get("files", []):
+            enriched_files.append({
+                "name": fname,
+                "chunks": meta_map.get(fname, 0)
+            })
+        folder["file_details"] = enriched_files
+    
+    return {"status": "ok", "data": data}
+
+@app.post("/api/folders/create")
+async def create_folder(data: dict):
+    name = data.get("name", "").strip()
+    if not name:
+        raise HTTPException(400, "文件夹名称不能为空")
+    
+    folders_data = load_folders()
+    # Check duplicate
+    for f in folders_data["folders"]:
+        if f["name"] == name:
+            raise HTTPException(400, f"文件夹 '{name}' 已存在")
+    
+    new_id = "folder_" + str(uuid.uuid4())[:8]
+    folders_data["folders"].append({
+        "id": new_id,
+        "name": name,
+        "files": [],
+        "is_demo": False
+    })
+    save_folders(folders_data)
+    return {"status": "ok", "folder": {"id": new_id, "name": name}}
+
+@app.delete("/api/folders/{folder_id}")
+async def delete_folder(folder_id: str):
+    folders_data = load_folders()
+    folders_data["folders"] = [f for f in folders_data["folders"] if f["id"] != folder_id]
+    save_folders(folders_data)
+    return {"status": "ok"}
+
+@app.post("/api/demo/seed")
+async def seed_demo_data():
+    """Seed demo knowledge base with example data"""
+    try:
+        demo_texts = {
+            "北京NEV市场分析.docx": "北京新能源市场调研数据：\n北京人口2183.2万，30-44岁占比29.1%。\n26-40岁占70%以上，本科及以上学历过半，硕士及以上15.5%。\n白领占比47.1%，高收入群体40.6%，中高收入38.5%。\n人均可支配收入8.5万元。\n核心活动区为朝阳区、海淀区。\n居住区集中在丰台、通州等近郊区。\n高频商圈：朝阳大悦城（首选），高频景区：奥林匹克公园、朝阳公园、圆明园。\n线下业态以公园与购物中心为主，职住模式为核心城区活动+近郊区居住。\nAPP偏好：微信、腾讯视频、高德地图渗透率超75%。\n主力车型为中级轿车，Top3为秦L（性价比）、Model 3（科技感）、小米SU7（全域智能）。\n66%用户月均驾驶46次以上（高频驾驶）。\n需求关键词：长续航、快充效率、冬季低温适应性。\n最满意空间体验，改进点包括数字座舱卡顿、音响噪音、智能辅助驾驶稳定性。\n消费升级趋势：从基础实用向科技赋能和场景化品质进阶，聚焦通勤+家庭两大场景。\n企业启示：需强化长续航、快充、大空间、智驾、座舱，精准续航标定，搭建车主社群（科技沙龙+亲子露营），强化北京区域售后服务。",
+            "中国汽车出口月报.txt": "2025年11月中国汽车出口数据：\n当月汽车出口量：28.4万辆，同比增长12.3%。\n1-11月累计出口：312.5万辆，同比增长18.7%。\n新能源汽车出口占比：38.2%，其中纯电占比62%，插混占比38%。\n主要出口目的地：俄罗斯（18.2%）、墨西哥（9.5%）、泰国（7.8%）、巴西（6.3%）、比利时（5.1%）。\n出口品牌Top5：上汽（21.3%）、比亚迪（15.7%）、奇瑞（13.2%）、吉利（11.8%）、长城（8.9%）。\n新能源出口均价：2.86万美元，同比提升8.3%。\n智能驾驶出口法规风险：欧盟关税壁垒、美国IRA法案影响、东南亚右舵市场改造需求。\n出口模式转型：从整车出口向KD散件组装+本地化生产转型，海外产能布局加速。\n2025年预计全年出口超340万辆，连续两年全球第一。"
+        }
+        
+        embedder = get_embedder()
+        
+        for fname, text in demo_texts.items():
+            existing = collection.get(where={"source": fname})
+            if existing and existing.get("ids"):
+                continue
+            chunks = chunk_text(text)
+            file_id = "demo_" + str(uuid.uuid4())[:8]
+            embeddings = embedder.encode(chunks).tolist()
+            ids = [f"{file_id}_{i}" for i in range(len(chunks))]
+            metadatas = [{"source": fname, "chunk": i, "text": chunks[i][:100]} for i in range(len(chunks))]
+            collection.add(documents=chunks, embeddings=embeddings, metadatas=metadatas, ids=ids)
+        
+        folders_data = load_folders()
+        for folder in folders_data["folders"]:
+            if folder["id"] == "demo":
+                for fname in demo_texts:
+                    if fname not in folder.get("files", []):
+                        folder.setdefault("files", []).append(fname)
+                break
+        save_folders(folders_data)
+        
+        return {"status": "ok", "message": f"已导入 {len(demo_texts)} 个示例文件", "files": list(demo_texts.keys())}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/folders/scan")
+async def scan_local_folder(data: dict):
+    local_path = data.get("path", "").strip()
+    if not local_path or not os.path.isdir(local_path):
+        raise HTTPException(400, f"无效的文件夹路径: {local_path}")
+    
+    supported_exts = {".docx", ".xlsx", ".pdf", ".txt", ".md"}
+    found_files = []
+    
+    for fname in os.listdir(local_path):
+        ext = Path(fname).suffix.lower()
+        if ext in supported_exts:
+            found_files.append(fname)
+    
+    return {
+        "status": "ok",
+        "data": {
+            "path": local_path,
+            "files": found_files,
+            "count": len(found_files)
+        }
+    }
+
+@app.post("/api/folders/import")
+async def import_folder_files(data: dict):
+    local_path = data.get("path", "").strip()
+    folder_id = data.get("folder_id", "")
+    file_names = data.get("files", [])
+    
+    if not local_path or not os.path.isdir(local_path):
+        raise HTTPException(400, "无效的文件夹路径")
+    
+    embedder = get_embedder()
+    imported = []
+    
+    for fname in file_names:
+        fpath = Path(local_path) / fname
+        if not fpath.exists():
+            continue
+        
+        try:
+            parsed = parse_file(fpath)
+            text = parsed["text"]
+            if not text.strip():
+                continue
+            
+            chunks = chunk_text(text)
+            file_id = "import_" + str(uuid.uuid4())[:8]
+            embeddings = embedder.encode(chunks).tolist()
+            ids = [f"{file_id}_{i}" for i in range(len(chunks))]
+            metadatas = [{
+                "source": fname,
+                "chunk": i,
+                "text": chunks[i][:100]
+            } for i in range(len(chunks))]
+            
+            existing = collection.get(where={"source": fname})
+            if existing and existing["ids"]:
+                collection.delete(ids=existing["ids"])
+            
+            collection.add(documents=chunks, embeddings=embeddings, metadatas=metadatas, ids=ids)
+            imported.append(fname)
+        except Exception as e:
+            print(f"[WARN] Failed to import {fname}: {e}")
+    
+    # Update folder
+    if folder_id:
+        folders_data = load_folders()
+        for folder in folders_data["folders"]:
+            if folder["id"] == folder_id:
+                for fname in imported:
+                    if fname not in folder.get("files", []):
+                        folder.setdefault("files", []).append(fname)
+                break
+        save_folders(folders_data)
+    
+    return {"status": "ok", "imported": imported, "count": len(imported)}
 @app.post("/api/chat")
 async def chat(data: dict):
     text = data.get("text", "").strip()
@@ -539,10 +740,19 @@ async def report_generate(data: dict):
 # Main
 # ============================================================
 if __name__ == "__main__":
+    import uvicorn
+    # Pre-load model
+    print("[INFO] Pre-loading embedding model...")
+    try:
+        m = get_embedder()
+        print(f"[INFO] Model loaded: {m.get_sentence_embedding_dimension()}d")
+    except Exception as e:
+        print(f"[WARN] Failed to pre-load model: {e}")
+    
     print(f"""
 ╔══════════════════════════════════════╗
 ║     AI Report Writer Server         ║
 ║     http://localhost:{PORT}          ║
 ╚══════════════════════════════════════╝
     """)
-    uvicorn.run("knowledge_server:app", host=HOST, port=PORT, reload=False)
+    uvicorn.run(app, host=HOST, port=PORT, log_level="info")

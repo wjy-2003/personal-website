@@ -5,3 +5,4 @@ knowledge/chroma_db/
 uploads/
 .DS_Store
 .venv/
+knowledge/folders.json
