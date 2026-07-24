@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商企AI辅助报告撰写系统</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  :root {
+    --sidebar-w: 260px; --bg: #ffffff; --sidebar-bg: #dcecf7;
+    --sidebar-hover: #c8e0f0; --border: #d0e3f0; --primary: #3b82f6;
+    --primary-light: #dbeafe; --text: #1e293b; --text-muted: #6b879e;
+    --msg-user: #dbeafe; --msg-ai: #ffffff;
+    --green: #2ecc71; --orange: #f39c12; --red: #e74c3c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; display: flex; height: 100vh; background: #ffffff; color: var(--text); position: relative; overflow: hidden; }
+.bg-circle { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; width: 360px; height: 360px; background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(59,130,246,0.06) 40%, transparent 65%); }
+#circle1 { top: 5%; left: 5%; animation: drift1 14s ease-in-out infinite; }
+#circle2 { top: 50%; left: 70%; animation: drift2 17s ease-in-out infinite; }
+#circle3 { top: 70%; left: 20%; animation: drift3 20s ease-in-out infinite; }
+@keyframes drift1 { 0% { transform: translate(0,0); } 25% { transform: translate(60vw, 20vh); } 50% { transform: translate(20vw, 60vh); } 75% { transform: translate(70vw, 40vh); } 100% { transform: translate(0,0); } }
+@keyframes drift2 { 0% { transform: translate(0,0); } 25% { transform: translate(-50vw, -20vh); } 50% { transform: translate(-10vw, -50vh); } 75% { transform: translate(-40vw, -10vh); } 100% { transform: translate(0,0); } }
+@keyframes drift3 { 0% { transform: translate(0,0); } 25% { transform: translate(30vw, -50vh); } 50% { transform: translate(-30vw, -10vh); } 75% { transform: translate(10vw, 20vh); } 100% { transform: translate(0,0); } }
+  .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--sidebar-bg); color: #475569; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 1; }
+  .sidebar-header { padding: 16px; border-bottom: 1px solid #2a2a3e; }
+  .sidebar-header h1 { font-size: 15px; color: #1e293b; font-weight: 600; }
+  .sidebar-header p { font-size: 11px; color: #888; margin-top: 2px; }
+  .sidebar-search { margin: 12px 16px; padding: 8px 12px; background: #eef2f6; border: 1px solid #d0e3f0; border-radius: 6px; color: #475569; font-size: 13px; outline: none; width: calc(100% - 32px); }
+  .sidebar-search::placeholder { color: #666; }
+  .folder-tree { flex: 1; overflow-y: auto; padding: 4px 8px; }
+  .folder-item { padding: 6px 12px; margin: 1px 0; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background .15s; }
+  .folder-item:hover { background: var(--sidebar-hover); }
+  .folder-item.active { background: var(--primary); color: #fff; }
+  .folder-item .icon { font-size: 14px; width: 20px; text-align: center; }
+  .folder-item .count { margin-left: auto; font-size: 11px; color: #666; }
+  .sidebar-footer { padding: 12px 16px; border-top: 1px solid #d0e3f0; font-size: 12px; color: #6b879e; display: flex; justify-content: space-between; }
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; z-index: 1; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 52px; border-bottom: 1px solid var(--border); background: #ffffff; }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-left .mode-badge { font-size: 12px; padding: 3px 12px; border-radius: 12px; background: var(--primary-light); color: var(--primary); font-weight: 500; }
+  .topbar-left .context-info { font-size: 13px; color: var(--text-muted); }
+  .topbar-right { display: flex; gap: 8px; }
+  .topbar-right button { padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px; background: #ffffff; cursor: pointer; font-size: 12px; color: var(--text); }
+  .chat-area { flex: 1; overflow-y: auto; padding: 24px; scroll-behavior: smooth; }
+  .chat-area::-webkit-scrollbar { width: 6px; }
+  .chat-area::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+  .msg { max-width: 760px; margin: 0 auto 20px; display: flex; gap: 12px; }
+  .msg.user { flex-direction: row-reverse; }
+  .msg .avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .msg.user .avatar { background: var(--primary); color: #fff; }
+  .msg.ai .avatar { background: #e0e0e0; color: #555; }
+  .msg .bubble { padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.7; max-width: 85%; }
+  .msg.user .bubble { background: var(--msg-user); border-bottom-right-radius: 4px; }
+  .msg.ai .bubble { background: var(--msg-ai); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .intent-bar { max-width: 760px; margin: 0 auto 16px; padding: 10px 16px; background: #f0f7ff; border: 1px solid #d0e3f0; border-radius: 8px; display: flex; align-items: center; gap: 10px; font-size: 13px; flex-wrap: wrap; }
+  .intent-bar .step { color: var(--text-muted); }
+  .intent-bar .step.active { color: var(--primary); font-weight: 600; }
+  .intent-bar .step.done { color: var(--green); }
+  .intent-bar .arrow { color: #ccc; }
+  .signal-card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 8px 0; }
+  .signal-card .title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .signal-card .evidence { font-size: 13px; color: var(--text-muted); }
+  .signal-card .confidence { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 11px; margin-top: 6px; }
+  .signal-card .confidence.high { background: #e8f8f0; color: var(--green); }
+  .signal-card .confidence.medium { background: #fef5e7; color: var(--orange); }
+  .signal-card .actions { display: flex; gap: 8px; margin-top: 8px; }
+  .signal-card .actions button { padding: 4px 16px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 12px; background: #ffffff; }
+  .signal-card .actions button.accept { background: var(--green); color: #fff; border-color: var(--green); }
+  .signal-card .actions button.reject { background: var(--red); color: #fff; border-color: var(--red); }
+  .chart-container { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 8px 0; }
+  .chart-container .chart-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+  .chart-container .plotly-chart { width: 100%; height: 300px; }
+  .data-table { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 8px 0; overflow-x: auto; }
+  .data-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th, .data-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+  .data-table th { background: #fafafa; font-weight: 600; color: var(--text-muted); font-size: 12px; }
+  .report-outline { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 8px 0; }
+  .report-outline .ch-item { padding: 8px 0; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 12px; }
+  .report-outline .ch-num { width: 24px; height: 24px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+  .report-outline .ch-info { flex: 1; }
+  .report-outline .ch-title { font-weight: 600; font-size: 14px; }
+  .report-outline .ch-desc { font-size: 12px; color: var(--text-muted); }
+  .input-area { border-top: 1px solid var(--border); background: #ffffff; padding: 16px 24px 20px; }
+  .input-wrapper { max-width: 760px; margin: 0 auto; display: flex; gap: 8px; align-items: flex-end; }
+  .input-wrapper textarea { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; resize: none; font-family: inherit; line-height: 1.5; min-height: 44px; max-height: 120px; }
+  .input-wrapper textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(67,113,238,.15); }
+  .input-wrapper .actions { display: flex; gap: 6px; }
+  .input-wrapper .actions button { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border); background: #ffffff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .input-wrapper .actions button:hover { background: var(--primary-light); }
+  .input-wrapper .actions button.send { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .welcome { text-align: center; padding: 60px 24px; max-width: 500px; margin: 0 auto; }
+  .welcome h2 { font-size: 22px; margin-bottom: 8px; }
+  .welcome p { color: var(--text-muted); font-size: 14px; line-height: 1.8; }
+  .welcome .suggestions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 24px; }
+  .welcome .suggestions .card { padding: 16px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; text-align: left; transition: all .15s; }
+  .welcome .suggestions .card:hover { border-color: var(--primary); background: var(--primary-light); }
+  .welcome .suggestions .card .card-icon { font-size: 24px; margin-bottom: 6px; }
+  .welcome .suggestions .card .card-title { font-weight: 600; font-size: 13px; }
+  .welcome .suggestions .card .card-desc { font-size: 12px; color: var(--text-muted); }
+  .loading-dots::after { content: ''; animation: dots 1.5s infinite; }
+  @keyframes dots { 0% { content: ''; } 33% { content: '.'; } 66% { content: '..'; } 100% { content: '...'; } }
+  .thinking-bubble { max-width: 760px; margin: 0 auto 16px; padding: 12px 16px; background: #ffffff; border: 1px dashed #ccc; border-radius: 10px; font-size: 13px; color: var(--text-muted); }
+
+  
+/* ===== WBSidebar + Drag/Drop + Tooltip Styles ===== */
+.wb-sidebar-list { flex: 1; overflow-y: auto; padding: 8px; }
+.wb-sidebar-card { background: #f0f7ff; border: 1px solid #d0e3f0; border-radius: 8px; margin-bottom: 10px; padding: 10px 12px; }
+.wb-sidebar-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.wb-sidebar-title { font-size: 12px; font-weight: 600; color: #1e293b; flex: 1; cursor: help; }
+.wb-sidebar-sim { font-size: 11px; font-weight: 600; color: #3b82f6; background: #dbeafe; padding: 1px 8px; border-radius: 8px; }
+.wb-sidebar-date { font-size: 10px; color: #94a3b8; margin-bottom: 6px; }
+.wb-sidebar-section-label { font-size: 10px; color: #6b879e; margin: 4px 0 2px; font-weight: 500; }
+.wb-sidebar-items { display: flex; flex-direction: column; gap: 2px; margin-bottom: 2px; }
+.wb-sidebar-item { font-size: 11px; padding: 4px 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; cursor: grab; color: #475569; transition: all .15s; }
+.wb-sidebar-item:hover { background: #dbeafe; border-color: #3b82f6; transform: translateX(2px); }
+.wb-sidebar-item.dragging { opacity: 0.5; }
+
+/* Data traceability tooltip */
+.source-tip { font-size: 10px; color: #94a3b8; margin-top: 2px; cursor: help; }
+[title] { position: relative; }
+.signal-card.draggable-item { cursor: grab; }
+.signal-card.draggable-item:hover { box-shadow: 0 2px 8px rgba(59,130,246,0.15); }
+
+/* Drop zone */
+.wb-body-full.wb-drop-active { background: #f0f7ff; outline: 2px dashed #3b82f6; outline-offset: -8px; }
+
+/* Modified sidebar header in workbench mode */
+.sidebar-header h1 { font-size: 14px; }
+/* ===== Report Workbench Styles ===== */
+.workbench-panel { display: none; flex: 1; min-width: 0; background: #fff; flex-direction: column; }
+.workbench-panel.active { display: flex; }
+.wb-topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 42px; border-bottom: 1px solid #d0e3f0; background: #f8fafc; flex-shrink: 0; }
+.wb-topbar-left { display: flex; align-items: center; gap: 12px; }
+.wb-topbar-right { display: flex; align-items: center; gap: 6px; }
+.wb-back-btn { padding: 5px 12px; border: 1px solid #d0e3f0; border-radius: 6px; background: #fff; cursor: pointer; font-size: 12px; color: #475569; }
+.wb-back-btn:hover { background: #eef2f6; }
+.wb-title { font-size: 15px; font-weight: 600; color: #1e293b; }
+.wb-btn { padding: 5px 12px; border: 1px solid #d0e3f0; border-radius: 6px; background: #fff; cursor: pointer; font-size: 12px; color: #475569; }
+.wb-btn:hover { background: #eef2f6; }
+.wb-btn-primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+.wb-btn-primary:hover { background: #2563eb; }
+.wb-format-toolbar { display: flex; align-items: center; gap: 3px; padding: 4px 16px; border-bottom: 1px solid #e2e8f0; background: #fff; flex-shrink: 0; flex-wrap: wrap; }
+.fmt-btn { min-width: 30px; height: 30px; border: 1px solid #e2e8f0; border-radius: 4px; background: #fff; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; padding: 0 8px; color: #475569; white-space: nowrap; }
+.fmt-btn:hover { background: #f1f5f9; border-color: #3b82f6; }
+.fmt-sep { width: 1px; height: 18px; background: #e2e8f0; margin: 0 3px; }
+.fmt-select { padding: 3px 6px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; color: #475569; background: #fff; cursor: pointer; }
+.wb-version-list { padding: 4px 16px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; flex-shrink: 0; display: none; }
+.wb-version-list.show { display: block; }
+.wb-version-list .version-item { display: flex; align-items: center; gap: 10px; padding: 5px 8px; border-radius: 4px; font-size: 12px; }
+.wb-version-list .version-item:hover { background: #eef2f6; }
+.wb-version-list .version-item.active { background: #dbeafe; }
+.wb-version-list .v-time { color: #94a3b8; min-width: 45px; font-size: 11px; }
+.wb-version-list .v-title { flex: 1; color: #475569; }
+.wb-version-list .v-status { color: #3b82f6; font-weight: 500; font-size: 11px; }
+.wb-version-list .v-btn { padding: 2px 8px; border: 1px solid #d0e3f0; border-radius: 4px; background: #fff; cursor: pointer; font-size: 11px; color: #475569; }
+.wb-body-full { flex: 1; overflow-y: auto; padding: 12px 16px; }
+.wb-section { margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+.wb-section-header { display: flex; align-items: center; gap: 10px; padding: 6px 14px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+.wb-section-header .s-title { font-weight: 600; font-size: 14px; color: #1e293b; flex: 1; }
+.wb-section-header .s-source { font-size: 11px; color: #94a3b8; }
+.wb-section-header .s-actions { display: flex; gap: 4px; }
+.wb-section-header .s-actions button { padding: 2px 8px; border: 1px solid #d0e3f0; border-radius: 4px; background: #fff; cursor: pointer; font-size: 11px; color: #475569; }
+.wb-section-header .s-actions button:hover { background: #eef2f6; }
+.wb-section-content { padding: 10px 14px; font-size: 14px; line-height: 1.6; color: #1e293b; outline: none; min-height: 40px; transition: background .15s; white-space: pre-wrap; }
+.wb-section-content:focus { background: #f8faff; }
+.wb-section-footer { display: flex; align-items: center; gap: 8px; padding: 4px 14px; background: #fafafa; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; }
+.wb-section-footer .insight-tag { display: flex; gap: 4px; flex: 1; }
+.wb-section-footer .insight-tag span { padding: 2px 6px; background: #e8f4fd; border-radius: 4px; font-size: 10px; color: #3b82f6; }
+.wb-add-section { padding: 8px; text-align: center; border: 2px dashed #d0e3f0; border-radius: 8px; cursor: pointer; font-size: 13px; color: #94a3b8; }
+.wb-add-section:hover { border-color: #3b82f6; color: #3b82f6; background: #f8faff; }
+.wb-empty { text-align: center; padding: 40px 20px; color: #94a3b8; }
+.wb-empty .icon { font-size: 40px; margin-bottom: 12px; }
+.wb-empty p { font-size: 14px; line-height: 1.6; }
+.wb-chat-area { padding: 8px 16px; border-top: 1px solid #e2e8f0; background: #fff; flex-shrink: 0; }
+.wb-chat-input-wrap { display: flex; align-items: center; gap: 8px; max-width: 100%; margin: 0; padding: 6px 12px; border: 1px solid #d0e3f0; border-radius: 24px; background: #f8fafc; }
+.wb-chat-input-wrap:focus-within { border-color: #3b82f6; background: #fff; }
+.wb-chat-input { flex: 1; border: none; background: transparent; outline: none; font-size: 13px; color: #1e293b; resize: none; font-family: inherit; }
+.wb-chat-input::placeholder { color: #94a3b8; }
+.wb-chat-send { width: 32px; height: 32px; border: none; border-radius: 50%; background: #3b82f6; color: #fff; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wb-chat-send:hover { background: #2563eb; }
+.wb-toast { display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 8px 20px; border-radius: 6px; font-size: 13px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.wb-toast.success { background: #dcfce7; color: #166534; }
+.wb-toast.info { background: #dbeafe; color: #1e40af; }
+</style>
+</head>
+<body>
+<div class="bg-circle" id="circle1"></div>
+<div class="bg-circle" id="circle2"></div>
+<div class="bg-circle" id="circle3"></div>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>📊 商企AI报告系统</h1>
+    <p id="statusBadge">v2.0 · <span style="color:#2ecc71">●</span> 已连接</p>
+  </div>
+  <input class="sidebar-search" placeholder="搜索文件夹或文件..." id="sidebarSearch">
+  <div class="folder-tree" id="folderTree">
+    <div class="folder-item active"><span class="icon">📁</span> Demo数据</div>
+    <div class="sub-items" style="padding-left:20px;">
+      <div class="file-item" style="padding:4px 12px;font-size:12px;color:#999;">📄 北京NEV市场分析.docx</div>
+      <div class="file-item" style="padding:4px 12px;font-size:12px;color:#999;">📄 品牌监测报告-样例.pptx</div>
+    </div>
+    <div class="folder-item"><span class="icon">📁</span> 品牌监测</div>
+    <div class="folder-item"><span class="icon">📁</span> 出口数据</div>
+  </div>
+  <div class="sidebar-footer">
+    <span>⚙️ 设置</span>
+    <span id="exportBtn">💾 导出</span>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="mode-badge" id="modeBadge">💬 自由对话</span>
+      <span class="context-info">Demo数据 · 2个文件</span>
+    </div>
+    <div class="topbar-right">
+      <button id="demoPath1" title="演示路径1：北京NEV用户画像→观点→报告">🎯 路径1</button>
+      <button id="demoPath2" title="演示路径2：中国汽车出口自由对话→数据分析">🎯 路径2</button>
+      <button id="clearBtn">🔄 清空</button>
+      <button id="workbenchBtn" title="打开报告编辑工作台" onclick="openWorkbench()" style="background:var(--primary);color:#fff;border-color:var(--primary);font-weight:500;">📝 工作台</button>
+    </div>
+  </div>
+  <div class="chat-area" id="chatArea">
+    <div class="welcome" id="welcomeScreen">
+      <h2>👋 开始对话</h2>
+      <p>输入问题，系统自动识别意图。<br>支持数据分析、观点提炼、报告撰写、自由对话四种模式。</p>
+      <div class="suggestions">
+        <div class="card" onclick="sendSuggestion('北京新能源消费市场的用户画像是什么？')">
+          <div class="card-icon">📊</div>
+          <div class="card-title">数据分析</div>
+          <div class="card-desc">查销量、看趋势、做对比</div>
+        </div>
+        <div class="card" onclick="sendSuggestion('基于用户画像数据，提炼北京市场的核心特征？')">
+          <div class="card-icon">💡</div>
+          <div class="card-title">核心观点提炼</div>
+          <div class="card-desc">发现数据背后的关键信号</div>
+        </div>
+        <div class="card" onclick="sendSuggestion('2025年11月中国汽车出口情况如何？')">
+          <div class="card-icon">💬</div>
+          <div class="card-title">自由对话</div>
+          <div class="card-desc">行业咨询、知识查询</div>
+        </div>
+        <div class="card" onclick="sendSuggestion('把销量数据和核心观点写成一份报告')">
+          <div class="card-icon">📝</div>
+          <div class="card-title">报告撰写</div>
+          <div class="card-desc">生成可交付报告</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="input-area">
+    <div class="input-wrapper">
+      <textarea id="inputBox" rows="1" placeholder="输入问题，或拖拽文件到左侧文件夹..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+      <div class="actions">
+        <button class="send" title="发送" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = "http://localhost:8888/api";
+let sessionId = 'demo_' + Date.now();
+let currentMode = '自由对话';
+let insightCandidates = [];
+let lastResponse = null;
+
+const modeInfo = {
+  '自由对话': { icon: '💬', color: '#4361ee' },
+  '数据分析': { icon: '📊', color: '#2ecc71' },
+  '核心观点提炼': { icon: '💡', color: '#f39c12' },
+  '报告撰写': { icon: '📝', color: '#e74c3c' }
+};
+
+async function apiPost(path, data) {
+  const resp = await fetch(API_BASE + path, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  return await resp.json();
+}
+
+function addMessage(role, content, extraHtml) {
+  const area = document.getElementById('chatArea');
+  const welcome = document.getElementById('welcomeScreen');
+  if (welcome) welcome.style.display = 'none';
+  
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = '<div class="avatar">' + (role === 'user' ? '👤' : '🤖') + '</div>' +
+    '<div class="bubble">' + content.replace(/\n/g, '<br>') + 
+    (extraHtml || '') + '</div>';
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addIntentBar(steps, currentIdx) {
+  const area = document.getElementById('chatArea');
+  let existing = document.getElementById('intentBar');
+  if (!existing) {
+    existing = document.createElement('div');
+    existing.id = 'intentBar';
+    existing.className = 'intent-bar';
+    area.appendChild(existing);
+  }
+  existing.innerHTML = steps.map((s, i) => {
+    const cls = i < currentIdx ? 'step done' : i === currentIdx ? 'step active' : 'step';
+    return `<span class="${cls}">${s}</span>` + (i < steps.length - 1 ? '<span class="arrow">→</span>' : '');
+  }).join('');
+  area.scrollTop = area.scrollHeight;
+}
+
+function updateMode(mode) {
+  currentMode = mode;
+  const badge = document.getElementById('modeBadge');
+  const info = modeInfo[mode] || { icon: '💬', color: '#4361ee' };
+  badge.textContent = info.icon + ' ' + mode;
+  badge.style.background = info.color + '18';
+  badge.style.color = info.color;
+}
+
+function renderCharts(charts) {
+  if (!charts || !charts.length) return '';
+  let html = '';
+  for (const ch of charts) {
+    const plotId = 'plot_' + Math.random().toString(36).substr(2, 9);
+    html += '<div class="chart-container"><div class="chart-title">' + ch.title + '</div><div id="' + plotId + '" class="plotly-chart"></div></div>';
+    setTimeout(() => {
+      try {
+        const fig = JSON.parse(ch.figure);
+        Plotly.newPlot(plotId, fig.data, fig.layout, {responsive: true});
+      } catch(e) { console.error('Plot error:', e); }
+    }, 100);
+  }
+  return html;
+}
+
+function renderTable(table) {
+  if (!table || !table.rows || !table.rows.length) return '';
+  const rows = table.rows;
+  const header = rows[0];
+  const data = rows.slice(1);
+  const source = table.source || '数据源';
+  let html = '<div class="data-table" title="来源: ' + source + '"><div style="font-size:10px;color:#94a3b8;padding:2px 0 4px;">📎 ' + source + '</div><table><thead><tr>';
+  header.forEach(h => { html += '<th>' + h + '</th>'; });
+  html += '</tr></thead><tbody>';
+  data.forEach(row => {
+    html += '<tr>';
+    row.forEach(cell => { html += '<td>' + cell + '</td>'; });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function renderInsightCards(candidates) {
+  if (!candidates || !candidates.length) return '';
+  insightCandidates = candidates;
+  return candidates.map((s, i) => {
+    const cls = s.confidence >= 0.8 ? 'high' : 'medium';
+    const confLabel = s.confidence >= 0.8 ? '高' : '中';
+    var sourceTip = s.source ? '<div class="source-tip" title="来源: ' + (s.source || '') + '">📎 ' + s.source + '</div>' : '';
+    return '<div class="signal-card draggable-item" id="sig_' + s.id + '" draggable="true" data-type="viewpoint" data-report="" data-content="' + (s.title || '').replace(/'/g, '') + '" title="拖拽到工作台">' +
+      '<div class="title">' + s.title + sourceTip + '</div>' +
+      '<div class="evidence">' + s.evidence + '</div>' +
+      '<span class="confidence ' + cls + '">' + confLabel + '置信度 (' + Math.round(s.confidence*100) + '%)</span>' +
+      '<div class="actions">' +
+      '<button class="accept" onclick="filterSignal(\'' + s.id + '\',\'accept\',this)">✅ 采纳</button>' +
+      '<button class="reject" onclick="filterSignal(\'' + s.id + '\',\'reject\',this)">❌ 排除</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+async function filterSignal(signalId, action, btn) {
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  btn.textContent = action === 'accept' ? '✅ 已采纳' : '❌ 已排除';
+  
+  // Update local insightCandidates
+  for (var fi = 0; fi < insightCandidates.length; fi++) {
+    if (insightCandidates[fi].id === signalId) {
+      insightCandidates[fi].adopted = (action === 'accept');
+      break;
+    }
+  }
+  
+  const result = await apiPost('/insight/filter', {
+    session_id: sessionId, signal_id: signalId, action: action
+  });
+  
+  // 检查是否所有都被处理了
+  const cards = document.querySelectorAll('.signal-card');
+  const allDone = Array.from(cards).every(c => c.querySelector('button[disabled]'));
+  if (allDone || action === 'accept') {
+    setTimeout(async () => {
+      const cardResult = await apiPost('/insight/card', {session_id: sessionId, text: ''});
+      if (cardResult.data && cardResult.data.cards && cardResult.data.cards.length > 0) {
+        const cardsHtml = cardResult.data.cards.map(c => 
+          '<div class="signal-card" style="border-left:3px solid var(--green);">' +
+          '<div class="title">' + c.title + '</div>' +
+          '<span class="confidence high">✅ 已采纳</span></div>'
+        ).join('');
+        const wbHtml = cardsHtml + '<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">' +
+          '<button style="padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'基于采纳的观点，生成报告段落并进入工作台\';sendMessage()">📝 进入工作台撰写报告</button>' +
+          '</div>';
+        addMessage('ai', '📋 **最终观点卡片**\n已采纳 ' + cardResult.data.count + ' 条核心观点：', wbHtml);
+      }
+    }, 300);
+  }
+}
+
+async function sendMessage() {
+  const input = document.getElementById('inputBox');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  addMessage('user', text);
+  input.value = '';
+  input.style.height = 'auto';
+  
+  // Show thinking
+  const thinking = document.createElement('div');
+  thinking.className = 'thinking-bubble';
+  thinking.id = 'thinkingBubble';
+  thinking.innerHTML = '🤔 正在分析意图<span class="loading-dots"></span>';
+  document.getElementById('chatArea').appendChild(thinking);
+  
+  // Simulate intent recognition steps
+  addIntentBar(['① 原始输入捕获', '② 意图改写', '③ 槽位提取', '④ 模式匹配', '⑤ 调度执行'], 0);
+  
+  setTimeout(() => addIntentBar(['① 原始输入捕获 ✓', '② 意图改写', '③ 槽位提取', '④ 模式匹配', '⑤ 调度执行'], 1), 300);
+  setTimeout(() => addIntentBar(['① 原始输入捕获 ✓', '② 意图改写 ✓', '③ 槽位提取', '④ 模式匹配', '⑤ 调度执行'], 2), 600);
+  setTimeout(() => addIntentBar(['① 原始输入捕获 ✓', '② 意图改写 ✓', '③ 槽位提取 ✓', '④ 模式匹配', '⑤ 调度执行'], 3), 900);
+  
+  // Check for report generation trigger BEFORE API call
+  const t = text.toLowerCase();
+  if (t.includes('生成报告段落') || t.includes('进入工作台')) {
+    const tb = document.getElementById('thinkingBubble');
+    if (tb) tb.remove();
+    addIntentBar(['① 原始输入捕获 ✓', '② 意图改写 ✓', '③ 槽位提取 ✓', '④ 模式匹配 ✓', '⑤ 调度执行 ✓'], 5);
+    addMessage('ai', '📝 正在基于已采纳的观点生成报告段落...');
+    setTimeout(() => generateFullReportWithWB(), 300);
+    return;
+  }
+  
+  // Call API
+  try {
+    const result = await apiPost('/chat', {text: text, session_id: sessionId});
+    const data = result.data;
+    
+    addIntentBar(['① 原始输入捕获 ✓', '② 意图改写 ✓', '③ 槽位提取 ✓', '④ 模式匹配 ✓', '⑤ 调度执行 ✓'], 5);
+    
+    // Remove thinking
+    const tb = document.getElementById('thinkingBubble');
+    if (tb) tb.remove();
+    
+    updateMode(data.mode);
+    lastResponse = data;
+    
+    switch (data.mode) {
+      case '数据分析':
+        handleDataResponse(data);
+        break;
+      case '核心观点提炼':
+        handleInsightResponse(data);
+        break;
+      case '报告撰写':
+        handleReportResponse(data);
+        break;
+      default:
+        addMessage('ai', '💬 ' + (data.response || getFreeChatResponse(text)));
+    }
+  } catch (e) {
+    const tb = document.getElementById('thinkingBubble');
+    if (tb) tb.remove();
+    addIntentBar(['① 原始输入捕获 ✓', '② 意图改写 ✓', '③ 槽位提取 ✓', '④ 模式匹配 ✓', '❌ 调度失败'], 5);
+    addMessage('ai', '⚠️ 请求失败: ' + e.message);
+  }
+}
+
+function handleDataResponse(data) {
+  let html = '';
+  if (data.data && data.data.charts) {
+    html += renderCharts(data.data.charts);
+  }
+  if (data.data && data.data.tables) {
+    data.data.tables.forEach(t => { html += renderTable(t); });
+  }
+  // Excel download button
+  if (data.data && data.data.excel_b64) {
+    html += '<div style="margin:8px 0;"><button style="padding:6px 16px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;" onclick="downloadExcel(\'' + data.data.excel_b64 + '\')">📥 导出Excel</button></div>';
+  }
+  
+  let summary = '📊 **数据分析结果**';
+  if (data.data && data.data.datasets) {
+    summary += '\n已查询 ' + data.data.datasets.length + ' 个数据源';
+  }
+  // Add data source traceability
+  if (data.data && data.data.tables) {
+    for (var _ti = 0; _ti < data.data.tables.length; _ti++) {
+      data.data.tables[_ti].source = data.data.tables[_ti].source || '北京NEV市场分析.docx';
+    }
+  }
+  // Add insight button
+  html += '<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">' +
+    '<button style="padding:8px 20px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'基于这些数据分析结果，提炼核心观点\';sendMessage()">💡 提炼核心观点</button>' +
+    '<button style="padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'帮我写一份完整的分析报告\';sendMessage()">📝 生成报告</button>' +
+    '</div>';
+  addMessage('ai', summary, html);
+}
+
+function downloadExcel(b64) {
+  const byteChars = atob(b64);
+  const byteNums = new Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+  const byteArray = new Uint8Array(byteNums);
+  const blob = new Blob([byteArray], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'export_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+  a.click();
+}
+
+function handleInsightResponse(data) {
+  if (data.insight && data.insight.candidates) {
+    // Add source traceability
+    data.insight.candidates.forEach(function(c) {
+      if (!c.source) c.source = '北京NEV市场分析.docx - 客观数据';
+    });
+    const cardsHtml = renderInsightCards(data.insight.candidates);
+    addMessage('ai', '💡 **核心观点提炼**\n\n基于当前数据，系统识别到以下 ' + data.insight.total + ' 条关键信号，请选择你认为有价值的观点：', cardsHtml);
+  } else {
+    addMessage('ai', '💡 正在分析数据中的核心信号...');
+  }
+}
+
+function handleReportResponse(data) {
+  if (data.report && data.report.chapters) {
+    let html = '<div class="report-outline">';
+    data.report.chapters.forEach((ch, i) => {
+      html += '<div class="ch-item"><div class="ch-num">' + (i+1) + '</div>' +
+        '<div class="ch-info"><div class="ch-title">' + ch.title + '</div>' +
+        '<div class="ch-desc">' + ch.desc + '</div></div></div>';
+    });
+    html += '</div><div style="display:flex;gap:8px;margin-top:8px;">' +
+      '<button style="padding:6px 16px;background:var(--primary);color:#fff;border:none;border-radius:6px;cursor:pointer;" onclick="generateFullReport()">🚀 开始撰写</button>' +
+      '</div>';
+    addMessage('ai', '📝 **报告大纲**\n已生成报告大纲（' + data.report.report_type + '），共 ' + data.report.chapters.length + ' 章：', html);
+  }
+}
+
+async function generateFullReport() {
+  addMessage('ai', '📝 正在生成完整报告内容...');
+  try {
+    const result = await apiPost('/report/generate', {text: '', session_id: sessionId});
+    if (result.data && result.data.chapters) {
+      let fullHtml = '';
+      result.data.chapters.forEach(ch => {
+        fullHtml += '<div style="margin:12px 0;"><h3>' + ch.title + '</h3><div style="font-size:13px;line-height:1.8;">' + ch.content.replace(/\n/g, '<br>') + '</div></div>';
+      });
+      addMessage('ai', '✅ **报告已生成**（' + result.data.title + '）', fullHtml);
+    }
+  } catch(e) {
+    addMessage('ai', '⚠️ 报告生成失败: ' + e.message);
+  }
+}
+
+async function generateFullReportWithWB() {
+  try {
+    const result = await apiPost('/report/generate', {text: '', session_id: sessionId});
+    if (result.data && result.data.chapters) {
+      // Save paragraphs to window._reportParagraphs for workbench
+      window._reportParagraphs = result.data.chapters.map(function(ch, i) {
+        return {
+          title: ch.title,
+          content: ch.content,
+          source: '基于已采纳观点',
+          tags: ['章节' + (i+1)],
+          time: '刚刚',
+          edited: false
+        };
+      });
+      
+      let fullHtml = '';
+      result.data.chapters.forEach(function(ch) {
+        fullHtml += '<div style="margin:12px 0;"><h3>' + ch.title + '</h3><div style="font-size:13px;line-height:1.8;">' + (ch.content || '').replace(/\n/g, '<br>') + '</div></div>';
+      });
+      // Add enter workbench button
+      fullHtml += '<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);text-align:center;">' +
+        '<button style="padding:10px 32px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;" onclick="openWorkbench()">📝 进入工作台编辑</button>' +
+        '</div>';
+      addMessage('ai', '✅ **报告已生成**（' + result.data.title + '）', fullHtml);
+    } else {
+      addMessage('ai', '📝 报告内容已就绪', '<div style="margin-top:8px;"><button style="padding:10px 32px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;" onclick="openWorkbench()">📝 进入工作台编辑</button></div>');
+    }
+  } catch(e) {
+    addMessage('ai', '⚠️ 报告生成失败: ' + e.message);
+  }
+}
+
+
+function getFreeChatResponse(text) {
+  const t = text.toLowerCase();
+  // Report generation - show content first, then button to enter workbench
+  if (t.includes('生成报告段落') || t.includes('进入工作台')) {
+    setTimeout(() => generateFullReportWithWB(), 500);
+    return '📝 正在基于已采纳的观点生成报告段落...';
+  }
+  if (t.includes('新能源') || t.includes('政策')) {
+    return '截至2025年底，新能源汽车领域主要政策变化包括：\\n\\n1. **购置税减免延续**：新能源车购置税减免政策延续至2027年\\n2. **双积分政策修订**：2025版调整了NEV积分计算方式\\n3. **出口关税调整**：欧盟对中国电动车加征17%-36%关税\\n4. **智能网联准入**：L3级自动驾驶试点扩大至10个城市';
+  }
+  return '您的问题涉及多个维度，我帮您从以下几个角度分析：\\n\\n1. **市场维度**：当前市场的供给与需求匹配情况\\n2. **竞争维度**：主要品牌的核心竞争策略差异\\n3. **技术维度**：智能化和电动化的最新进展\\n\\n请问您想深入了解哪个方面？或者上传相关数据文件，我可以做更具体的分析。';
+}
+
+function sendSuggestion(text) {
+  document.getElementById('inputBox').value = text;
+  sendMessage();
+}
+
+// Demo paths
+document.getElementById('demoPath1').addEventListener('click', async function() {
+  addMessage('user', '📋 演示路径1：北京NEV画像分析→观点提炼→报告');
+  
+  await sleep(500);
+  document.getElementById('inputBox').value = '北京新能源消费市场的用户画像是什么？';
+  await sleep(300);
+  sendMessage();
+  
+  // The rest will continue from the response
+});
+
+document.getElementById('demoPath2').addEventListener('click', function() {
+  addMessage('user', '📋 演示路径2：汽车出口自由对话→数据分析');
+  setTimeout(() => {
+    document.getElementById('inputBox').value = '2025年11月中国汽车出口情况如何？';
+    setTimeout(() => sendMessage(), 300);
+  }, 500);
+});
+
+document.getElementById('clearBtn').addEventListener('click', function() {
+  document.getElementById('chatArea').innerHTML = '';
+  sessionId = 'demo_' + Date.now();
+  const welcome = document.querySelector('.welcome');
+  if (welcome) welcome.style.display = '';
+  updateMode('自由对话');
+});
+
+document.getElementById('exportBtn').addEventListener('click', function() {
+  const area = document.getElementById('chatArea');
+  const content = area.innerText;
+  const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'chat_export_' + new Date().toISOString().slice(0, 10) + '.txt';
+  a.click();
+});
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Auto-resize textarea
+document.getElementById('inputBox').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+// Sidebar search
+document.getElementById('sidebarSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.folder-item, .file-item').forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+
+
+  
+  function fmtCmd(command, value) {
+    document.execCommand(command, false, value || null);
+  }
+  
+  function exportDoc() {
+    var paragraphs = window._reportParagraphs || [];
+    var text = '';
+    paragraphs.forEach(function(p, i) {
+      text += '# ' + p.title + '\n\n';
+      text += p.content + '\n\n';
+    });
+    var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '报告_' + new Date().toISOString().slice(0,10) + '.txt';
+    a.click();
+  }
+  
+  function rollbackWB(index) {
+    if (index >= 0 && index < wbVersionHistory.length) {
+      showWbToast('已回滚到 ' + wbVersionHistory[index].time + ' 版本', 'info');
+    }
+  }
+  
+
+  function sendWbChat() {
+    var input = document.getElementById('wbChatInput');
+    var text = input.value.trim();
+    if (!text) return;
+    
+    // Show thinking in workbench body
+    var body = document.getElementById('wbBody');
+    var thinkingDiv = document.createElement('div');
+    thinkingDiv.style.cssText = 'padding:12px 16px;margin:8px 0;background:#f0f7ff;border-radius:8px;font-size:13px;color:#475569;';
+    thinkingDiv.textContent = '🤔 AI思考中...';
+    body.appendChild(thinkingDiv);
+    body.scrollTop = body.scrollHeight;
+    
+    // Append response
+    setTimeout(function() {
+      thinkingDiv.textContent = '✅ 已完成修改。您可以继续输入指令或手动编辑报告段落。';
+      // Update paragraphs from response if needed
+      renderWorkbench();
+    }, 1500);
+    
+    input.value = '';
+    input.style.height = 'auto';
+  }
+  
+// ===== Historical Reports Mock Data =====
+const historicalReports = [
+  { id: 'hr_1', title: '2025年Q4北京NEV市场分析报告', date: '2025-12-15', similarity: 0.92,
+    source: '北京NEV市场分析.docx',
+    outline: ['市场概况', '用户画像分析', '竞争格局', '趋势预测'],
+    viewpoints: ['北京新能源渗透率突破45%，领先全国', '26-40岁高学历白领为核心用户群', '比亚迪/特斯拉/小米构成第一梯队'] },
+  { id: 'hr_2', title: '2026年1月中国汽车出口月报', date: '2026-02-10', similarity: 0.85,
+    source: '汽车产业国际化研究月报第12期.pdf',
+    outline: ['出口总览', '区域分析', '品牌表现', '政策影响'],
+    viewpoints: ['2025年11月出口量创历史新高', '东南亚市场增速最快', '新能源出口占比首次超40%'] },
+  { id: 'hr_3', title: '2025年度品牌监测报告', date: '2026-01-20', similarity: 0.78,
+    source: '品牌监测报告-样例.pptx',
+    outline: ['品牌声量', '用户口碑', '竞品对比', '改进建议'],
+    viewpoints: ['品牌认知度提升12个百分点', '智能化配置成用户最关注因素', '售后服务满意度有待提高'] }
+];
+
+let _savedSidebarHTML = '';
+let _draggedData = null;
+
+function renderWBSidebar() {
+  var sb = document.querySelector('.sidebar');
+  if (!sb) return;
+  _savedSidebarHTML = sb.innerHTML;
+  
+  var html = '<div class="sidebar-header" style="border-bottom-color:#3b82f6;"><h1>📚 相似历史报告</h1><p>基于当前上下文推荐的报告</p></div>';
+  html += '<div class="wb-sidebar-list">';
+  
+  for (var ri = 0; ri < historicalReports.length; ri++) {
+    var r = historicalReports[ri];
+    html += '<div class="wb-sidebar-card">';
+    html += '<div class="wb-sidebar-card-header">';
+    html += '<div class="wb-sidebar-title" title="来源: ' + r.source + '">' + r.title + '</div>';
+    html += '<span class="wb-sidebar-sim">' + Math.round(r.similarity * 100) + '%</span>';
+    html += '</div>';
+    html += '<div class="wb-sidebar-date">' + r.date + ' · ' + r.source + '</div>';
+    
+    // Outline (draggable)
+    html += '<div class="wb-sidebar-section-label">📋 大纲</div>';
+    html += '<div class="wb-sidebar-items">';
+    for (var oi = 0; oi < r.outline.length; oi++) {
+      html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="outline" data-report="' + r.id + '" data-content="' + r.outline[oi] + '" title="拖拽到工作台">📄 ' + r.outline[oi] + '</div>';
+    }
+    html += '</div>';
+    
+    // Viewpoints (draggable)
+    html += '<div class="wb-sidebar-section-label">💡 核心观点</div>';
+    html += '<div class="wb-sidebar-items">';
+    for (var vi = 0; vi < r.viewpoints.length; vi++) {
+      html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="viewpoint" data-report="' + r.id + '" data-content="' + r.viewpoints[vi] + '" title="拖拽到工作台">💡 ' + r.viewpoints[vi] + '</div>';
+    }
+    html += '</div>';
+    
+    html += '</div>';
+  }
+  
+  html += '</div>';
+  html += '<div class="sidebar-footer" style="border-top-color:#d0e3f0;"><span>📌 拖拽大纲/观点到工作台</span></div>';
+  
+  sb.innerHTML = html;
+  bindDragEvents();
+}
+
+function restoreSidebar() {
+  var sb = document.querySelector('.sidebar');
+  if (sb && _savedSidebarHTML) sb.innerHTML = _savedSidebarHTML;
+  _savedSidebarHTML = '';
+}
+
+function bindDragEvents() {
+  var items = document.querySelectorAll('.draggable-item');
+  for (var i = 0; i < items.length; i++) {
+    items[i].addEventListener('dragstart', function(e) {
+      _draggedData = {
+        type: this.getAttribute('data-type'),
+        report: this.getAttribute('data-report'),
+        content: this.getAttribute('data-content')
+      };
+      e.dataTransfer.effectAllowed = 'copy';
+      e.dataTransfer.setData('text/plain', this.getAttribute('data-content'));
+      this.classList.add('dragging');
+    });
+    items[i].addEventListener('dragend', function(e) {
+      this.classList.remove('dragging');
+    });
+  }
+}
+
+function setupDropZone() {
+  var body = document.getElementById('wbBody');
+  if (!body) return;
+  
+  body.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    body.classList.add('wb-drop-active');
+  });
+  
+  body.addEventListener('dragleave', function(e) {
+    body.classList.remove('wb-drop-active');
+  });
+  
+  // Also make each section content a drop target
+  document.querySelectorAll('.wb-section-content').forEach(function(el) {
+    el.setAttribute('droppable', 'true');
+    el.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
+      this.style.outline = '2px dashed #3b82f6';
+    });
+    el.addEventListener('dragleave', function(e) {
+      this.style.outline = '';
+    });
+    el.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.style.outline = '';
+      handleDropOnSection(this);
+    });
+  });
+  
+  function getSrcName(reportId) {
+    if (!reportId) return '';
+    var found = historicalReports.find(function(r){return r.id==reportId;});
+    return found ? found.source : '';
+  }
+  
+  function handleDropOnSection(sectionEl) {
+    if (!_draggedData) return;
+    if (!window._reportParagraphs) window._reportParagraphs = [];
+    
+    var sectionId = sectionEl.id;
+    var sectionIndex = -1;
+    if (sectionId && sectionId.indexOf('wbC_') === 0) {
+      sectionIndex = parseInt(sectionId.replace('wbC_', ''), 10);
+    }
+    
+    var srcName = getSrcName(_draggedData.report);
+    
+    if (_draggedData.type === 'outline') {
+      // Outline: create new section
+      window._reportParagraphs.push({
+        title: _draggedData.content,
+        content: '',
+        source: srcName || '历史报告',
+        edited: false
+      });
+    } else {
+      // Viewpoint: append to the targeted section
+      if (sectionIndex >= 0 && sectionIndex < window._reportParagraphs.length) {
+        var target = window._reportParagraphs[sectionIndex];
+        var vpLine = '\n• ' + _draggedData.content;
+        target.content = (target.content || '') + vpLine;
+        target.edited = true;
+      } else if (window._reportParagraphs.length > 0) {
+        // Fallback: append to last section
+        var last = window._reportParagraphs[window._reportParagraphs.length - 1];
+        var vpLine = '\n• ' + _draggedData.content;
+        last.content = (last.content || '') + vpLine;
+        last.edited = true;
+      } else {
+        // No sections yet, cannot add viewpoint
+        showWbToast('请先拖拽大纲到工作台，再添加观点', 'info');
+        _draggedData = null;
+        return;
+      }
+    }
+    
+    renderWorkbench();
+    // Re-bind section drop targets after re-render
+    setupDropZone();
+    showWbToast('已添加「' + _draggedData.content + '」到报告', 'success');
+    _draggedData = null;
+  }
+  
+  body.addEventListener('drop', function(e) {
+    e.preventDefault();
+    body.classList.remove('wb-drop-active');
+    if (!_draggedData) return;
+    if (!window._reportParagraphs) window._reportParagraphs = [];
+    
+    var srcName = getSrcName(_draggedData.report);
+    
+    if (_draggedData.type === 'outline') {
+      window._reportParagraphs.push({
+        title: _draggedData.content,
+        content: '',
+        source: srcName || '历史报告',
+        edited: false
+      });
+    } else {
+      if (window._reportParagraphs.length > 0) {
+        var last = window._reportParagraphs[window._reportParagraphs.length - 1];
+        last.content = (last.content || '') + '\n• ' + _draggedData.content;
+        last.edited = true;
+      } else {
+        showWbToast('请先拖拽大纲到工作台，再添加观点', 'info');
+        _draggedData = null;
+        return;
+      }
+    }
+    
+    renderWorkbench();
+    setupDropZone();
+    showWbToast('已添加「' + _draggedData.content + '」到报告', 'success');
+    _draggedData = null;
+  });
+}
+
+// ===== Report Workbench =====
+  let wbVersionExpanded = false;
+  let wbVersionHistory = [];
+  
+  function openWorkbench() {
+    document.querySelector('.main').style.display = 'none';
+    document.getElementById('workbenchPanel').classList.add('active');
+    document.getElementById('wbToast').style.display = 'none';
+    renderWBSidebar();
+    renderWorkbench();
+    setupDropZone();
+  }
+  
+  function closeWorkbench() {
+    document.getElementById('workbenchPanel').classList.remove('active');
+    document.querySelector('.main').style.display = '';
+    restoreSidebar();
+  }
+  
+  function renderWorkbench() {
+    const body = document.getElementById('wbBody');
+    var mainArea = document.querySelector('.main');
+    const adopted = insightCandidates.filter(function(c) { return c.adopted; });
+    
+    if (adopted.length === 0 && !window._reportParagraphs) {
+      body.innerHTML = '<div class="wb-empty"><div class="icon">📝</div><p>暂无报告内容<br>从左侧拖拽历史报告大纲或观点来搭建报告，或在对话中完成数据分析并采纳观点。</p></div>';
+      var vl = document.getElementById('wbVersionList');
+      if (vl) vl.innerHTML = '';
+      return;
+    }
+    
+    var paragraphs = window._reportParagraphs;
+    if (!paragraphs) {
+      paragraphs = generateParagraphs(adopted);
+      window._reportParagraphs = paragraphs;
+    }
+    
+    // Update version list
+    var vl = document.getElementById('wbVersionList');
+    if (vl) {
+      var vhtml = '<div class="version-item active"><span class="v-time">刚刚</span><span class="v-title">当前版本</span><span class="v-status">当前</span></div>';
+      for (var vi = 0; vi < wbVersionHistory.length; vi++) {
+        vhtml += '<div class="version-item"><span class="v-time">' + wbVersionHistory[vi].time + '</span><span class="v-title">' + wbVersionHistory[vi].title + '</span><button class="v-btn" onclick="rollbackWB(' + vi + ')">回滚</button></div>';
+      }
+      vl.innerHTML = vhtml;
+    }
+    
+    // Paragraphs
+    var html = '';
+    for (var pi = 0; pi < paragraphs.length; pi++) {
+      var p = paragraphs[pi];
+      var srcAttr = p.source ? ' title="来源: ' + p.source + '"' : '';
+      html += '<div class="wb-section" id="wbSection_' + pi + '">';
+      html += '<div class="wb-section-header"' + srcAttr + '>';
+      html += '<span class="s-title">' + p.title + '</span>';
+      html += '</div>';
+      var dispContent = p.content || '<span style="color:#cbd5e1;">双击此处输入内容...</span>';
+      html += '<div class="wb-section-content" id="wbC_' + pi + '" contenteditable="false" ondblclick="editWbPara(' + pi + ')"' + srcAttr + '>' + dispContent + '</div>';
+      html += '</div>';
+    }
+    
+    html += '<div class="wb-add-section" onclick="addWbSection()">＋ 添加新段落</div>';
+    body.innerHTML = html;
+  }
+  
+  function toggleWBVersion() {
+    wbVersionExpanded = !wbVersionExpanded;
+    var list = document.getElementById('wbVersionList');
+    var arrow = document.getElementById('vbArrow');
+    if (list) {
+      if (wbVersionExpanded) {
+        list.classList.add('show');
+        if (arrow) arrow.textContent = '▲';
+      } else {
+        list.classList.remove('show');
+        if (arrow) arrow.textContent = '▼';
+      }
+    }
+  }
+  
+  function generateParagraphs(insights) {
+    if (!insights || insights.length === 0) {
+      return [];
+    }
+    var titles = ['北京市场用户基础画像', '北京市场用户行为特征', '北京新能源消费趋势', '出口市场分析', '竞争格局', '发展建议'];
+    return insights.map(function(insight, i) {
+      var t = insight.title || titles[i] || ('第' + (i+1) + '章');
+      var c = insight.content || insight.evidence || '';
+      if (!c) c = '基于数据分析，' + (insight.title || '相关观点') + '。' + (insight.evidence || '');
+      return {
+        title: t,
+        content: c,
+        source: '基于已采纳观点',
+        tags: insight.title ? [insight.title.substring(0, 8)] : ['观点' + (i+1)],
+        time: '刚刚',
+        edited: false,
+        insightId: insight.id || null
+      };
+    });
+  }
+  
+  function editWbPara(index) {
+    var el = document.getElementById('wbC_' + index);
+    if (!el) return;
+    var editing = el.getAttribute('contenteditable') === 'true';
+    if (editing) {
+      el.setAttribute('contenteditable', 'false');
+      el.style.background = '';
+      if (window._reportParagraphs && window._reportParagraphs[index]) {
+        window._reportParagraphs[index].content = el.innerText;
+        window._reportParagraphs[index].edited = true;
+      }
+      showWbToast('段落已保存', 'success');
+    } else {
+      el.setAttribute('contenteditable', 'true');
+      el.focus();
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }
+  
+  function addWbSection() {
+    if (!window._reportParagraphs) window._reportParagraphs = [];
+    window._reportParagraphs.push({
+      title: '新章节 ' + (window._reportParagraphs.length + 1),
+      content: '请在此输入内容...',
+      source: '手动添加',
+      tags: ['新增'],
+      time: '刚刚',
+      edited: false
+    });
+    renderWorkbench();
+    showWbToast('已添加新段落', 'success');
+  }
+  
+  function saveWB() {
+    var now = new Date();
+    var ts = now.getHours().toString().padStart(2,"0") + ":" + now.getMinutes().toString().padStart(2,"0");
+    wbVersionHistory.unshift({
+      time: ts,
+      title: '手动保存 - ' + (window._reportParagraphs ? window._reportParagraphs.length : 0) + '个段落'
+    });
+    showWbToast('已保存当前版本', 'info');
+    renderWorkbench();
+  }
+  
+  function showWbToast(msg, type) {
+    var t = document.getElementById('wbToast');
+    if (!t) return;
+    t.textContent = msg;
+    t.className = 'wb-toast ' + type;
+    t.style.display = 'block';
+    window._wbToastTimer && clearTimeout(window._wbToastTimer);
+    window._wbToastTimer = setTimeout(function() { t.style.display = 'none'; }, 2500);
+  }
+  
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeWorkbench();
+  });
+
+</script>
+
+<!-- Workbench Panel (replaces main area) -->
+  <div class="workbench-panel" id="workbenchPanel">
+    <div class="wb-topbar">
+      <div class="wb-topbar-left">
+        <span class="wb-title">📝 报告编辑工作台</span>
+      </div>
+      <div class="wb-topbar-right">
+        <button class="wb-btn" onclick="saveWB()">💾 保存版本</button>
+        <button class="wb-btn wb-btn-primary" onclick="exportDoc()">📄 导出文档</button>
+        <button class="wb-back-btn" onclick="closeWorkbench()">← 返回</button>
+      </div>
+    </div>
+    <div class="wb-format-toolbar" id="wbFormatToolbar">
+      <button class="fmt-btn" onclick="fmtCmd('bold')" title="加粗"><b>B</b></button>
+      <button class="fmt-btn" onclick="fmtCmd('italic')" title="斜体"><i>I</i></button>
+      <button class="fmt-btn" onclick="fmtCmd('underline')" title="下划线"><u>U</u></button>
+      <span class="fmt-sep"></span>
+      <select class="fmt-select" id="fmtFontSize" onchange="fmtCmd('fontSize', this.value)">
+        <option value="3">小</option>
+        <option value="4" selected>标准</option>
+        <option value="5">大</option>
+        <option value="6">特大</option>
+      </select>
+      <span class="fmt-sep"></span>
+      <button class="fmt-btn" onclick="fmtCmd('justifyLeft')" title="左对齐">≡</button>
+      <button class="fmt-btn" onclick="fmtCmd('justifyCenter')" title="居中">≡</button>
+      <button class="fmt-btn" onclick="fmtCmd('justifyRight')" title="右对齐">≡</button>
+      <button class="fmt-btn" onclick="fmtCmd('insertUnorderedList')" title="列表">☰</button>
+      <span class="fmt-sep"></span>
+      <button class="fmt-btn" onclick="toggleWBVersion()" title="版本历史">🕐 历史版本 <span id="vbArrow">▼</span></button>
+    </div>
+    <div class="wb-version-list" id="wbVersionList" style="display:none;"></div>
+    <div class="wb-body-full" id="wbBody"></div>
+    <div class="wb-chat-area">
+      <div class="wb-chat-input-wrap">
+        <textarea class="wb-chat-input" id="wbChatInput" rows="1" placeholder="输入指令，继续修改报告内容..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWbChat()}"></textarea>
+        <button class="wb-chat-send" onclick="sendWbChat()">➤</button>
+      </div>
+    </div>
+  </div>
+  <div class="wb-toast" id="wbToast"></div>
+</body>
+</html>
