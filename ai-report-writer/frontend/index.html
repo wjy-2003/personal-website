@@ -23,14 +23,11 @@ document.addEventListener('contextmenu', function(e) {
     menu.style.left = e.clientX + 'px';
     menu.style.top = e.clientY + 'px';
     
-    // Show/hide rename based on type
-    var items = menu.querySelectorAll('.context-menu-item');
-    items.forEach(function(item) {
-      if (item.dataset.action === 'copy') {
-        item.style.display = 'flex';
-        item.textContent = _contextType === 'folder' ? '📋 复制目录' : '📋 复制文件名';
-      }
-    });
+    // Update copy label
+    var copyItem = menu.querySelector('[data-action="copy"]');
+    if (copyItem) {
+      copyItem.textContent = _contextType === 'folder' ? '📋 复制目录' : '📋 复制文件路径';
+    }
   } else {
     document.getElementById('contextMenu').style.display = 'none';
   }
@@ -50,7 +47,9 @@ document.getElementById('contextMenu').addEventListener('click', async function(
   document.getElementById('contextMenu').style.display = 'none';
   
   if (action === 'rename') {
-    var oldName = _contextTarget.textContent.trim().replace(/^\\S+\\s*/, '').replace(/\\d+$/, '').trim();
+    var oldText = _contextTarget.textContent.trim();
+    // Extract name (remove icon, file count)
+    var oldName = oldText.replace(/^[📁📄]\s*/, '').replace(/\s*\d+$/, '').trim();
     var newName = prompt('请输入新名称：', oldName);
     if (!newName || !newName.trim()) return;
     
@@ -64,49 +63,93 @@ document.getElementById('contextMenu').addEventListener('click', async function(
           });
           var d = await r.json();
           if (d.status === 'ok') loadFolders();
+          else alert('重命名失败: ' + (d.message || ''));
         } catch(err) {
           alert('重命名失败: ' + err.message);
         }
       }
     } else {
-      // File rename is complex (chromadb source name), skip for now
-      alert('文件重命名功能开发中');
+      // File rename via backend API
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
+      try {
+        var r = await fetch(API_BASE + '/knowledge/rename', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({old_name: fileName, new_name: newName.trim()})
+        });
+        var d = await r.json();
+        if (d.status === 'ok') loadFolders();
+        else alert('重命名失败: ' + (d.message || ''));
+      } catch(err) {
+        alert('重命名失败: ' + err.message);
+      }
     }
   } else if (action === 'delete') {
-    if (!confirm('确定要删除"' + _contextTarget.textContent.trim() + '"吗？')) return;
+    var delText = _contextTarget.textContent.trim();
+    if (!confirm('确定要删除"' + delText.replace(/^[📁📄]\s*/, '') + '"吗？')) return;
     
     if (_contextType === 'folder') {
       var folderId = _contextTarget.dataset.folderId;
       if (folderId) {
         try {
-          await fetch(API_BASE + '/folders/' + folderId, {method: 'DELETE'});
+          var r = await fetch(API_BASE + '/folders/' + folderId, {method: 'DELETE'});
           loadFolders();
+          updateContextInfo();
         } catch(err) {
           alert('删除失败: ' + err.message);
         }
       }
     } else {
-      // Delete file from knowledge base
-      var fileName = _contextTarget.textContent.trim().replace(/^📄\\s*/, '');
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
       try {
-        await fetch(API_BASE + '/knowledge/' + encodeURIComponent(fileName), {method: 'DELETE'});
+        var r = await fetch(API_BASE + '/knowledge/' + encodeURIComponent(fileName), {method: 'DELETE'});
         loadFolders();
+        updateContextInfo();
       } catch(err) {
         alert('删除失败: ' + err.message);
       }
     }
   } else if (action === 'copy') {
-    var text = _contextTarget.textContent.trim();
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch(err) {
-      // Fallback
-      var ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
+    if (_contextType === 'file') {
+      // Copy actual file path from backend
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
+      try {
+        var r = await fetch(API_BASE + '/knowledge/path?source=' + encodeURIComponent(fileName));
+        var d = await r.json();
+        if (d.status === 'ok' && d.path) {
+          try { await navigator.clipboard.writeText(d.path); }
+          catch(err) {
+            var ta = document.createElement('textarea');
+            ta.value = d.path;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+          }
+        }
+      } catch(err) {
+        var text = fileName;
+        try { await navigator.clipboard.writeText(text); }
+        catch(err2) {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+      }
+    } else {
+      // Folder: copy folder name
+      var text = _contextTarget.textContent.trim().replace(/^📁\s*/, '').replace(/\s*\d+$/, '').trim();
+      try { await navigator.clipboard.writeText(text); }
+      catch(err) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
     }
   }
 });
@@ -1599,14 +1642,11 @@ document.addEventListener('contextmenu', function(e) {
     menu.style.left = e.clientX + 'px';
     menu.style.top = e.clientY + 'px';
     
-    // Show/hide rename based on type
-    var items = menu.querySelectorAll('.context-menu-item');
-    items.forEach(function(item) {
-      if (item.dataset.action === 'copy') {
-        item.style.display = 'flex';
-        item.textContent = _contextType === 'folder' ? '📋 复制目录' : '📋 复制文件名';
-      }
-    });
+    // Update copy label
+    var copyItem = menu.querySelector('[data-action="copy"]');
+    if (copyItem) {
+      copyItem.textContent = _contextType === 'folder' ? '📋 复制目录' : '📋 复制文件路径';
+    }
   } else {
     document.getElementById('contextMenu').style.display = 'none';
   }
@@ -1626,7 +1666,9 @@ document.getElementById('contextMenu').addEventListener('click', async function(
   document.getElementById('contextMenu').style.display = 'none';
   
   if (action === 'rename') {
-    var oldName = _contextTarget.textContent.trim().replace(/^\\S+\\s*/, '').replace(/\\d+$/, '').trim();
+    var oldText = _contextTarget.textContent.trim();
+    // Extract name (remove icon, file count)
+    var oldName = oldText.replace(/^[📁📄]\s*/, '').replace(/\s*\d+$/, '').trim();
     var newName = prompt('请输入新名称：', oldName);
     if (!newName || !newName.trim()) return;
     
@@ -1640,49 +1682,93 @@ document.getElementById('contextMenu').addEventListener('click', async function(
           });
           var d = await r.json();
           if (d.status === 'ok') loadFolders();
+          else alert('重命名失败: ' + (d.message || ''));
         } catch(err) {
           alert('重命名失败: ' + err.message);
         }
       }
     } else {
-      // File rename is complex (chromadb source name), skip for now
-      alert('文件重命名功能开发中');
+      // File rename via backend API
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
+      try {
+        var r = await fetch(API_BASE + '/knowledge/rename', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({old_name: fileName, new_name: newName.trim()})
+        });
+        var d = await r.json();
+        if (d.status === 'ok') loadFolders();
+        else alert('重命名失败: ' + (d.message || ''));
+      } catch(err) {
+        alert('重命名失败: ' + err.message);
+      }
     }
   } else if (action === 'delete') {
-    if (!confirm('确定要删除"' + _contextTarget.textContent.trim() + '"吗？')) return;
+    var delText = _contextTarget.textContent.trim();
+    if (!confirm('确定要删除"' + delText.replace(/^[📁📄]\s*/, '') + '"吗？')) return;
     
     if (_contextType === 'folder') {
       var folderId = _contextTarget.dataset.folderId;
       if (folderId) {
         try {
-          await fetch(API_BASE + '/folders/' + folderId, {method: 'DELETE'});
+          var r = await fetch(API_BASE + '/folders/' + folderId, {method: 'DELETE'});
           loadFolders();
+          updateContextInfo();
         } catch(err) {
           alert('删除失败: ' + err.message);
         }
       }
     } else {
-      // Delete file from knowledge base
-      var fileName = _contextTarget.textContent.trim().replace(/^📄\\s*/, '');
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
       try {
-        await fetch(API_BASE + '/knowledge/' + encodeURIComponent(fileName), {method: 'DELETE'});
+        var r = await fetch(API_BASE + '/knowledge/' + encodeURIComponent(fileName), {method: 'DELETE'});
         loadFolders();
+        updateContextInfo();
       } catch(err) {
         alert('删除失败: ' + err.message);
       }
     }
   } else if (action === 'copy') {
-    var text = _contextTarget.textContent.trim();
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch(err) {
-      // Fallback
-      var ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
+    if (_contextType === 'file') {
+      // Copy actual file path from backend
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
+      try {
+        var r = await fetch(API_BASE + '/knowledge/path?source=' + encodeURIComponent(fileName));
+        var d = await r.json();
+        if (d.status === 'ok' && d.path) {
+          try { await navigator.clipboard.writeText(d.path); }
+          catch(err) {
+            var ta = document.createElement('textarea');
+            ta.value = d.path;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+          }
+        }
+      } catch(err) {
+        var text = fileName;
+        try { await navigator.clipboard.writeText(text); }
+        catch(err2) {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+      }
+    } else {
+      // Folder: copy folder name
+      var text = _contextTarget.textContent.trim().replace(/^📁\s*/, '').replace(/\s*\d+$/, '').trim();
+      try { await navigator.clipboard.writeText(text); }
+      catch(err) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
     }
   }
 });
@@ -1762,7 +1848,7 @@ buildHistoricalReports = async function() {
   <div class="context-menu-item" data-action="rename">✏️ 重命名</div>
   <div class="context-menu-item" data-action="delete">🗑️ 删除</div>
   <div class="context-menu-sep"></div>
-  <div class="context-menu-item" data-action="copy">📋 复制路径</div>
+  <div class="context-menu-item" data-action="copy" id="copyMenuItem">📋 复制文件路径</div>
 </div>
 </body>
 </html>
