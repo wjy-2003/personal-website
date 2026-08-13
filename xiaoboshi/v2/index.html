@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 小博士 · 写教案（二期 Demo）</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--brand:#2f73e0;--brand-deep:#1e5fd1;--brand-soft:#f0f6ff;--brand-soft-border:#cfe0ff;--accent:#e67e22;--canvas:#f5f7fa;--surface:#fff;--surface-2:#f8f9fb;--ink:#1f2937;--ink-2:#4b5563;--ink-3:#6b7280;--line:#e5e7eb;--shadow-card:0 1px 2px rgba(0,0,0,.05),0 14px 36px -26px rgba(31,41,55,.35)}
+*{box-sizing:border-box}body{margin:0px;font-family:"Noto Sans SC",PingFang SC,Microsoft YaHei,sans-serif;background:var(--canvas);color:var(--ink)}
+#app{min-height:100vh}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:9px 16px;border-radius:9px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;white-space:nowrap}
+.btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-deep);transform:translateY(-1px)}
+.btn-primary:disabled{background:#9ca3af;cursor:not-allowed}.btn-secondary{background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+.btn-secondary:hover{border-color:var(--brand);color:var(--brand-deep);background:var(--brand-soft)}
+.btn-sm{min-height:30px;padding:5px 10px;font-size:12.5px;border-radius:8px}.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{background:#cf6a17}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-card)}
+.logo-mark{display:block;width:auto;object-fit:contain;flex-shrink:0}.logo-mark.home{height:18px}.logo-mark.chat{height:20px}
+.ui-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:24px;height:24px;border-radius:7px;background:var(--brand-soft);color:var(--brand-deep);font-size:14px;line-height:1}
+.ui-icon.search{width:28px;height:28px;font-size:12px;font-weight:800}.ui-icon.card-icon{width:28px;height:28px;margin-bottom:10px;font-size:12px;font-weight:800}.ui-icon.comp-icon{width:20px;height:20px;font-size:12px;background:#eef2f7;color:var(--ink-2)}
+.home-card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:42px;max-width:900px;width:100%}.entry-card{padding:18px;cursor:pointer}.entry-card.active{border:1.5px solid var(--brand)}
+.entry-card-title{font-weight:800;font-size:15px;margin-bottom:6px}.entry-card-desc{font-size:12.5px;color:var(--ink-3);line-height:1.45}
+.chip{display:inline-flex;align-items:center;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;color:var(--ink-2)}
+.chip:hover{border-color:var(--brand);color:var(--brand-deep)}.chip.selected{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-deep)}
+.step-card{border:1px solid transparent;border-radius:6px;background:var(--surface);margin:2px 10px;overflow:hidden;transition:border-color .15s,background .15s}
+.step-card.active{border-color:transparent;box-shadow:none}.step-card:hover{border-color:#bfcada;background:#fcfdff}.step-header{display:flex;align-items:center;justify-content:space-between;padding:13px 18px 7px;cursor:pointer}
+.drag-handle{color:#a7afb9;cursor:grab;margin-right:3px;font-size:15px;opacity:0}.step-card:hover .drag-handle{opacity:1}.step-content{padding:0 22px 13px 43px}
+.step-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.step-actions .btn{padding:5px 10px;font-size:12px}.section-toggle{font-size:16px;color:var(--ink-3);opacity:0;transition:opacity .15s}.step-card:hover .section-toggle{opacity:1}
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}.plan-card{border:1.5px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;background:var(--surface)}
+.plan-card:hover{border-color:var(--brand);background:var(--brand-soft)}.plan-card.selected{border-color:var(--brand);background:var(--brand-soft)}
+.section-heading{display:flex;align-items:center;gap:8px;min-width:0}.section-tools{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.section-tool{border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 7px;font-family:inherit;font-size:11.5px;font-weight:500;color:var(--ink-2);cursor:pointer}.section-tool:hover{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-deep)}.resource-tabs{position:relative}.resource-plus{width:32px;height:32px;border:0;border-radius:7px;background:transparent;color:var(--ink-2);font-size:21px;cursor:pointer}.resource-plus:hover{background:var(--surface-2);color:var(--brand-deep)}.resource-menu{display:none;position:absolute;left:0;top:42px;width:190px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:9px;box-shadow:var(--shadow-card);z-index:80}.resource-menu.open{display:block}.resource-menu-item{width:100%;border:0;background:transparent;border-radius:6px;padding:8px 10px;text-align:left;font-family:inherit;font-size:12.5px;color:var(--ink-2);cursor:pointer}.resource-menu-item:hover{background:var(--brand-soft);color:var(--brand-deep)}
+.context-menu{position:fixed;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-card);padding:6px 0;z-index:1000;min-width:150px}
+.context-menu-item{padding:8px 14px;font-size:13px;cursor:pointer}.context-menu-item:hover{background:var(--brand-soft);color:var(--brand-deep)}
+.chat-bubble{border-radius:14px;padding:10px 12px;font-size:13px;line-height:1.5;max-width:92%;margin-bottom:10px}.chat-bubble.user{background:var(--brand);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.chat-bubble.ai{background:var(--surface-2);color:var(--ink);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--line)}
+.topbar-btn{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.topbar-btn:hover{border-color:var(--brand);color:var(--brand-deep);background:var(--brand-soft)}
+.topbar-wrap{position:relative}.topbar-menu{position:absolute;top:34px;right:0px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-card);padding:6px 0;min-width:140px;z-index:50;display:none}.topbar-wrap:hover .topbar-menu{display:block}
+.topbar-menu-item{padding:7px 14px;font-size:13px;cursor:pointer;white-space:nowrap}.topbar-menu-item:hover{background:var(--brand-soft);color:var(--brand-deep)}
+.workspace-shell{display:flex;height:100vh;overflow:hidden;background:#f4f6f8}.chat-column{width:25%;min-width:280px;max-width:360px;border-right:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;transition:width .2s,min-width .2s}.chat-column.collapsed{width:50px;min-width:50px}.chat-column.collapsed .chat-content,.chat-column.collapsed .chat-brand-text,.chat-column.collapsed #backHome,.chat-column.collapsed .logo-mark{display:none}.chat-column.collapsed .chat-head{padding:0;justify-content:center}.chat-head{height:60px;padding:0 14px 0 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}.chat-head-actions{display:flex;align-items:center;gap:6px}.collapse-chat{width:30px;height:30px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink-2);font-family:inherit;font-size:15px;cursor:pointer}.collapse-chat:hover{border-color:var(--brand);color:var(--brand-deep);background:var(--brand-soft)}.chat-content{display:flex;flex:1;min-height:0;flex-direction:column}.chat-topic{padding:16px 18px 10px}.chat-topic-label{font-size:12px;color:var(--ink-3);margin-bottom:5px}.chat-topic-title{font-size:15px;font-weight:800;line-height:1.4}.chat-suggestions{margin:0 14px 12px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fbfcfe}.chat-suggestions-title{padding:10px 12px 7px;font-size:12px;color:var(--ink-3);font-weight:700}.chat-suggestion{width:100%;border:0;border-top:1px solid #edf0f4;background:transparent;padding:9px 12px;text-align:left;font-family:inherit;font-size:12.5px;color:var(--ink-2);cursor:pointer}.chat-suggestion:hover{background:var(--brand-soft);color:var(--brand-deep)}.chat-compose{padding:12px 14px;border-top:1px solid var(--line);display:flex;gap:8px}.chat-compose input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:13px;outline:none}.chat-compose input:focus{border-color:var(--brand)}
+.editor-column{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}.resource-bar{height:58px;border-bottom:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:16px}.resource-tabs{display:flex;align-items:center;gap:8px;min-width:0}.resource-tab{height:36px;max-width:420px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);font-size:14px;font-weight:700;min-width:0}.resource-tab span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.resource-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}.editor-scroll{flex:1;overflow-y:auto;padding:8px 10px 20px}.document-shell{width:100%;margin:0}.document-card{background:#fff;border:1px solid #dde2e8;border-radius:8px;box-shadow:0 1px 3px rgba(31,41,55,.04);overflow:hidden}.document-head{padding:14px 18px 12px;border-bottom:1px solid #e9edf2}.document-title{font-size:19px;font-weight:900;line-height:1.35}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:grid;place-items:center}
+.modal-card{background:var(--surface);border-radius:18px;box-shadow:0 24px 60px -20px rgba(0,0,0,.35);padding:26px 28px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.home-fade{animation:fadeUp .55s cubic-bezier(.22,1,.36,1) both}
+@keyframes popIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+.pop{animation:popIn .45s cubic-bezier(.22,1,.36,1) both}
+@keyframes spin{to{transform:rotate(360deg)}}.mini-spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--brand-soft-border);border-top-color:var(--brand);animation:spin .7s linear infinite;display:inline-block}
+@media(max-width:900px){.workspace-shell{flex-direction:column}.chat-column,.chat-column.collapsed{width:100%;max-width:none;height:230px;min-height:230px;border-right:none;border-bottom:1px solid var(--line)}.chat-column.collapsed{height:50px;min-height:50px}.chat-column.collapsed .chat-head{justify-content:flex-start;padding:0 14px}.chat-topic{display:none}.chat-suggestions{display:none}.editor-column{width:100%}.resource-bar{padding:0 10px}.resource-tab{max-width:52vw}.editor-scroll{padding:8px 8px 20px}.step-content{padding-left:36px}.section-heading{align-items:flex-start;flex-direction:column;gap:6px}.plan-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+
+const defaultSections = [
+  { id:'s1',title:'学习目标' },
+  { id:'s2',title:'评估方式' },
+  { id:'s3',title:'关键知识点' },
+  { id:'s4',title:'导入环节',hasPlan:true },
+  { id:'s5',title:'新知识介绍' },
+  { id:'s6',title:'引导练习' },
+  { id:'s7',title:'独立练习' },
+  { id:'s8',title:'分层教学' },
+  { id:'s9',title:'课堂小结' },
+  { id:'s10',title:'拓展与深化' },
+  { id:'s11',title:'家庭作业' },
+  { id:'s12',title:'标准对齐' }
+];
+
+const frameworks = {
+  '学习目标':['学生能够深入理解和赏析毛泽东《沁园春·雪》的主题意蕴、艺术特色和历史背景。','通过多角度分析诗词的语言、意象和思想内涵，形成个人化的审美评价。'],
+  '评估方式':['形成性评估：观察课堂讨论与小组分析活动中的参与度和思维深度；检查诗词语言赏析笔记。','终结性评估：完成一篇1500字左右的诗词鉴赏文章，包含主题思想、意象与修辞、历史背景、个人审美评价。','评分标准：思想内容准确性30%，分析深度30%，语言表达20%，结构完整性20%。'],
+  '关键知识点':['主题思想：通过描写北国雪景，融合政治理想与哲学思考，表现对祖国山河的热爱和对历史发展的思考。','意象系统：雪、山河、古人、红日等意象的象征意义及其相互关联。','修辞手法：比喻、拟人、对比、排比等手法的表达效果。','词牌与格律：《沁园春》的词牌特点，上阕写景、下阕议论的结构。','创作背景：1935年陕北时期的历史环境与毛泽东思想。'],
+  '导入环节':['展示北国冬景的图片或视频片段（2—3分钟），引导学生观察雪景特点。','提问：你看到的雪景给你什么感受？如果用诗歌语言描述，你会怎样表达？','简要介绍毛泽东的诗人身份和《沁园春·雪》的文学地位。','吸引点：这首词创作于战争时期，却展现出磅礴气势和深邃思想。'],
+  '新知识介绍':['背景知识讲授（10分钟）：1935年冬红军到达陕北的历史背景，以及《沁园春》的格律特点。','文本朗读与整体感知（8分钟）：教师范读，学生跟读，逐句理解基本含义。','上阕意象分析（15分钟）：分析“千里冰封，万里雪飘”以及长城、黄河、山峦等地理意象。','下阕思想内涵分析（15分钟）：理解“须晴日”的转折作用，分析对历史人物的评价与“还看今朝”的核心思想。','常见误区：不能只将作品理解为纯写景诗，也不应过度政治化而忽视其文学性和艺术价值。'],
+  '引导练习':['意象追踪练习（15分钟）：四个小组分别追踪自然意象、历史意象、动作意象、色彩与感觉意象，分析其象征意义。','修辞手法识别与赏析（12分钟）：找出至少3处修辞手法，使用规范句式说明其艺术效果。','问题链：从识别“千里冰封，万里雪飘”的修辞，进阶到分析动词选择和上下阕的内在联系。','历史背景与思想内涵讨论（12分钟）：思考战争时期的创作动因和作品表达的历史观、时代精神。','教师观察各组参与度和讨论质量，收集学生笔记与口头回答，对理解困难的学生提供个别指导。'],
+  '独立练习':['任务：选择诗词中最触动你的一句或一个意象，完成约800字的赏析。','文本分析（300字）：说明其在全词中的位置和作用、修辞手法、语言特色与字词选择。','意蕴挖掘（300字）：分析象征意义、与整体主题的关系以及诗人的思想情感。','审美评价（200字）：表达个人感受、启发与对当代读者的意义。'],
+  '分层教学':['基础层：提供详细注释、白话翻译、意象卡片、修辞识别清单和填空式赏析支架，配合同伴学习与个别指导。','年级水平：通过背景介绍、文本朗读和分层讨论，独立完成意象赏析、修辞分析和1500字鉴赏文章。','拓展层：开展《沁园春·长沙》比较阅读、跨文本分析、哲学思想探讨、当代词作创作与研究性学习。'],
+  '课堂小结':['关键要点回顾：这首词的主题是什么？诗人运用了哪些艺术手法？上阕和下阕的关系是什么？','学生反思分享（3—4分钟）：邀请3—4名学生说明最深刻的印象和本课收获。','情感升华：播放诗词配乐朗诵，引导学生在审美体验中结束课堂。'],
+  '拓展与深化':['诗词朗诵与表演：学生可个人或小组进行朗诵、舞台表演，融入音乐、书法或绘画。','毛泽东诗词专题研究：比较《沁园春·长沙》《七律·长征》《卜算子·咏梅》等作品。','古今诗词对话：与苏轼、陆游、辛弃疾等诗人的相关作品对比阅读。','创意写作：模仿《沁园春·雪》的风格，表达对当代中国、个人成长或未来的思考。'],
+  '家庭作业':['必做：完成1500字诗词鉴赏文章，包含主题分析、意象赏析、背景解读和个人评价，下次课前提交。','选做：查阅创作背景并写300字介绍；用书法或绘画表现最喜欢的诗句；听诗词朗诵并做笔记。','学习建议：反复朗读全词，体会节奏与韵律；查阅注释与评析后形成自己的观点。'],
+  '标准对齐':['诗歌鉴赏能力：理解主题思想，分析意象与修辞手法，体会语言美和意蕴。','文化理解能力：结合历史背景理解文学作品，认识中华文化的深厚底蕴。','审美与评价能力：形成个人化的审美评价，表达对作品的理解和感悟。','表达与交流能力：通过口头和书面形式，清晰、有理有据地表达诗词分析与评价。']
+};
+
+const componentTemplates = {
+  '情境导入':{title:'情境导入组件',lines:['出示一段与本课相关的生活情境视频/图片。','提问：你观察到了什么？这与今天要学的知识有什么联系？','学生自由发言，教师引导聚焦核心问题。']},
+  '问题导入':{title:'问题导入组件',lines:['提出一个具有认知冲突的核心问题。','学生独立思考1分钟，写下自己的猜想。','小组内交流，教师收集典型想法板书。']},
+  '实验导入':{title:'实验导入组件',lines:['呈现一个简单、可操作的演示实验。','学生观察现象，记录关键信息。','引导学生提出问题并进入新课。']},
+  '小组讨论':{title:'小组合作学习',lines:['分组策略：异质分组，4-5人/组。','角色分工：记录员、发言人、时间管理员、质疑员。','任务：围绕“核心问题”展开讨论，形成小组结论。','展示：每组2-3分钟汇报，其他组补充或质疑。','评价：过程性评价+成果评价，关注参与度与表达质量。']},
+  '角色扮演':{title:'角色扮演活动',lines:['设定情境与角色，明确活动规则。','学生分组准备3分钟。','分组展示，教师适时点拨。','全班讨论：不同角色的观点有什么异同？']},
+  '实验探究':{title:'实验探究活动',lines:['明确实验目的与假设。','学生分组操作，记录数据。','分析数据，小组讨论得出结论。','全班交流，教师总结科学方法与注意事项。']},
+  '课堂游戏':{title:'课堂游戏',lines:['设计与本课核心知识相关的竞赛/闯关游戏。','全班分组参与，限时完成。','公布结果，结合知识点进行点评。']},
+  '启发式提问链':{title:'启发式提问链',lines:['基础问题：本节课的核心概念是什么？（记忆/理解）','进阶问题：它和我们学过的哪个知识有联系？（应用/分析）','高阶问题：如果条件改变，结论会怎样？（评价/创造）']},
+  '例题变式':{title:'例题变式练习',lines:['原题：呈现课本典型例题。','变式一：改变已知条件，训练正向迁移。','变式二：改变所求问题，训练逆向思维。','学生独立完成，教师选择典型错例讲评。']},
+  '课堂小测':{title:'课堂小测',lines:['设计3-5道当堂检测题。','学生独立作答5分钟。','当堂批改/互批，及时反馈。']},
+  '分层任务':{title:'差异化分层任务',lines:['基础层：提供脚手架（填空、表格、提示卡），完成核心概念识记。','标准层：独立完成课堂练习，能解释解题思路。','拓展层：完成开放性问题，进行比较、迁移或创作。']},
+  '支架递减':{title:'支架递减设计',lines:['高支架：教师示范+详细步骤+句式模板。','中支架：小组讨论+问题引导+示例分析。','低支架：独立完成+同伴互评+自我修正。']},
+  '学科网考点':{title:'学科网考点关联',lines:['本节课对应课标：掌握核心概念，能运用其解决实际问题。','中考/高考常见考法：选择题、填空题、解答题。','学科网真题示例：可插入1-2道典型真题及解析。']},
+  '学科网素材':{title:'学科网教学素材',lines:['教材解析：本节课在单元中的位置和作用。','相关课件图片/视频素材建议。','拓展阅读：与本课主题相关的学科网精选资源。']}
+};
+
+let state = { view:'home', query:'', sections:[], openIds:new Set(), inputs:{classBase:'',hours:'',focus:[],style:''}, planVisible:false, selectedPlan:null, chat:[{role:'ai',text:'你好，我是小博士。输入课题后我会帮你生成教案框架。'}], inputMsg:'', contextMenu:null, askOpen:false, previewOpen:false, dragging:null, chatCollapsed:false };
+
+const $ = id => document.getElementById(id);
+
+function renderHome(){
+  const app = $('app');
+  app.innerHTML = `<div class="home-fade" style="min-height:100vh;background:linear-gradient(135deg,#f0f6ff 0%,#fff 50%,#f8f9fb 100%);display:flex;flex-direction:column">
+    <header style="display:flex;align-items:center;justify-content:space-between;padding:18px 32px">
+      <div style="display:flex;align-items:center;gap:10px"><img class="logo-mark home" src="assets/logo-cap-blue.png"><span style="font-weight:800;font-size:18px;color:var(--brand-deep)">AI 小博士</span></div>
+      <div style="display:flex;gap:16px;font-size:14px;color:var(--ink-2)"><span style="cursor:pointer;font-weight:800;color:var(--brand)">写教案</span><span style="cursor:pointer">出课件</span><span style="cursor:pointer">组试卷</span><span style="cursor:pointer">我的</span></div>
+    </header>
+    <main style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 20px 60px">
+      <div style="text-align:center;max-width:720px;margin-bottom:36px">
+        <h1 style="font-size:42px;font-weight:900;line-height:1.25;margin-bottom:14px">让 AI 成为你的备课副驾驶</h1>
+        <p style="font-size:18px;color:var(--ink-2);line-height:1.6">输入课题，AI 小博士先给教学框架，再陪你逐环节打磨教案</p>
+      </div>
+      <div class="card" style="width:100%;max-width:720px;padding:16px 18px;display:flex;gap:12px;align-items:center">
+        <span class="ui-icon search">搜</span>
+        <input id="homeInput" style="flex:1;border:none;outline:none;font-size:16px;background:transparent" placeholder="输入课题、教材版本或年级，例如：人教版七年级上册《春》">
+        <button class="btn btn-primary" id="homeBtn">写教案</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center">
+        <button class="btn btn-secondary btn-sm" data-q="人教版七年级上册《春》">人教版七年级上册《春》</button>
+        <button class="btn btn-secondary btn-sm" data-q="《沁园春·雪》毛泽东诗词赏析与解读">《沁园春·雪》毛泽东诗词赏析与解读</button>
+        <button class="btn btn-secondary btn-sm" data-q="北师大版八年级数学《勾股定理》">北师大版八年级数学《勾股定理》</button>
+      </div>
+      <div class="home-card-grid">
+        <div class="card entry-card active"><div class="ui-icon card-icon">教</div><div class="entry-card-title">写教案</div><div class="entry-card-desc">输入课题，AI和你一起打磨教学设计</div></div>
+        <div class="card entry-card"><div class="ui-icon card-icon">课</div><div class="entry-card-title">出课件</div><div class="entry-card-desc">根据教案一键生成课件大纲与素材</div></div>
+        <div class="card entry-card"><div class="ui-icon card-icon">卷</div><div class="entry-card-title">组试卷</div><div class="entry-card-desc">按知识点快速组卷、分层出题</div></div>
+        <div class="card entry-card"><div class="ui-icon card-icon">问</div><div class="entry-card-title">问小博士</div><div class="entry-card-desc">教学问题随时问，政策、课标、教材都能答</div></div>
+      </div>
+    </main>
+  </div>`;
+  const go = q => { if(!q) q=$('homeInput').value.trim(); if(!q) return; state.query=q; state.view='wizard'; render(); };
+  $('homeBtn').onclick = () => go();
+  $('homeInput').onkeydown = e => { if(e.key==='Enter') go(); };
+  app.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>go(b.dataset.q));
+  app.querySelector('.entry-card.active').onclick = () => go($('homeInput').value.trim());
+}
+
+function renderWorkspace(){
+  const app = $('app');
+  app.innerHTML = `<div class="workspace workspace-shell">
+    <aside class="chat-column ${state.chatCollapsed?'collapsed':''}" id="chatColumn">
+      <div class="chat-head">
+        <div style="display:flex;align-items:center;gap:8px"><img class="logo-mark chat" src="assets/logo-cap-blue.png"><span class="chat-brand-text" style="font-weight:800;font-size:15px">小博士</span></div>
+        <div class="chat-head-actions"><button class="btn btn-secondary btn-sm" id="backHome">返回</button><button class="collapse-chat" id="collapseChat" title="${state.chatCollapsed?'展开对话栏':'收起对话栏'}">${state.chatCollapsed?'〉':'〈'}</button></div>
+      </div>
+      <div class="chat-content">
+        <div class="chat-topic"><div class="chat-topic-label">当前课题</div><div class="chat-topic-title">${state.query}</div></div>
+        <div id="chatBox" style="flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column"></div>
+        <div class="chat-suggestions">
+          <div class="chat-suggestions-title">可以试试</div>
+          ${['增加学生互动','检查课时安排','补充课堂冷场预案'].map(t=>`<button class="chat-suggestion quickBtn" data-prompt="${t}">${t}<span style="float:right;color:#a7afb9">›</span></button>`).join('')}
+        </div>
+        <div class="chat-compose">
+          <input id="chatInput" placeholder="问小博士如何优化这份教案…">
+          <button class="btn btn-primary btn-sm" id="chatSend">发送</button>
+        </div>
+      </div>
+    </aside>
+    <main class="editor-column">
+      <header class="resource-bar">
+        <div class="resource-tabs">
+          <div class="resource-tab"><span class="ui-icon comp-icon">文</span><span>教案正文</span><span style="font-size:16px;color:#9ca3af">⋮</span></div>
+          <button class="resource-plus" id="resourcePlus" title="添加资料">+</button>
+          <div class="resource-menu" id="resourceMenu">
+            <button class="resource-menu-item">从学科网添加资料</button>
+            <button class="resource-menu-item">上传本地资料</button>
+            <button class="resource-menu-item">新建空白资料</button>
+          </div>
+        </div>
+        <div class="resource-actions">
+          <button class="btn btn-secondary btn-sm" id="previewBtn">预览</button>
+          <button class="btn btn-primary btn-sm" id="exportBtn">导出 Word</button>
+        </div>
+      </header>
+      <div class="editor-scroll" id="editorMain">
+        <div class="document-shell">
+          <article class="document-card">
+            <div class="document-head">
+              <div class="document-title">${state.query}</div>
+            </div>
+            <div id="sectionsArea"></div>
+          </article>
+        </div>
+      </div>
+    </main>
+  </div>`;
+
+  $('backHome').onclick = () => { state.view='home'; render(); };
+  $('collapseChat').onclick = () => { state.chatCollapsed=!state.chatCollapsed; renderWorkspace(); };
+  $('resourcePlus').onclick = e => { e.stopPropagation(); $('resourceMenu').classList.toggle('open'); };
+  app.onclick = e => { const menu=$('resourceMenu'); if(menu && !menu.contains(e.target) && e.target!==$('resourcePlus')) menu.classList.remove('open'); };
+  $('chatSend').onclick = () => { const v=$('chatInput').value.trim(); if(v){ sendChat(v); $('chatInput').value=''; } };
+  $('chatInput').onkeydown = e => { if(e.key==='Enter') $('chatSend').click(); };
+  $('previewBtn').onclick = renderPreview;
+  $('exportBtn').onclick = () => exportWord();
+  app.querySelectorAll('.quickBtn').forEach(b=>b.onclick=()=>sendChat(b.dataset.prompt || b.textContent));
+  renderChat();
+  renderSections();
+}
+
+function renderChat(){
+  const box = $('chatBox'); if(!box) return;
+  box.innerHTML = state.chat.map(m => `<div class="chat-bubble ${m.role}">${m.text}</div>`).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendChat(msg){
+  state.chat.push({role:'user',text:msg});
+  renderChat();
+  setTimeout(() => {
+    let reply='已收到你的需求，小博士会针对当前环节优化。';
+    if(msg.includes('导入')) reply='收到。已为你重新生成导入方案，请在“导入环节”中选择。';
+    else if(msg.includes('活动')||msg.includes('互动')) reply='收到。可以在“引导练习”标题旁选择“小组讨论”或“角色扮演”。';
+    else if(msg.includes('分层')) reply='收到。已在相关环节补充“基础/标准/拓展”三层任务。';
+    state.chat.push({role:'ai',text:reply});
+    renderChat();
+  }, 600);
+}
+
+function startGenerate(){
+  state.view='workspace';
+  state.sections = defaultSections.map(s => ({...s, content: []}));
+  state.openIds = new Set();
+  state.chat.push({role:'user',text:'确认学情：' + ([state.inputs.classBase,state.inputs.hours,state.inputs.focus.join('/')||'默认',state.inputs.style||'默认'].filter(Boolean).join(' / ') || '跳过')});
+  state.chat.push({role:'ai',text:'收到！正在根据学情生成教学框架…'});
+  render();
+  setTimeout(() => {
+    state.sections = defaultSections.map(s => ({...s, content: frameworks[s.title] || []}));
+    state.openIds = new Set(state.sections.map(s=>s.id));
+    state.chat.push({role:'ai',text:'教案框架准备好了。你可以展开或收起环节，拖拽调整顺序，右键段落“问问小博士”，或直接选择上方的教学设计选项。'});
+    render();
+  }, 1500);
+}
+
+function toggleSection(id){
+  const next = new Set(state.openIds);
+  if(next.has(id)) next.delete(id); else next.add(id);
+  state.openIds = next;
+  renderSections();
+}
+
+function renderSections(){
+  const el = $('sectionsArea'); if(!el) return;
+  el.innerHTML = (state.planVisible ? renderPlanPicker() : '') + state.sections.map((s,i) => `
+    <div class="step-card ${state.openIds.has(s.id)?'active':''}" data-idx="${i}" data-id="${s.id}" draggable="true" oncontextmenu="handleCtx(event,'${s.id}')">
+      <div class="step-header" onclick="toggleSection('${s.id}')">
+        <div class="section-heading">
+          <span class="drag-handle">⋮⋮</span>
+          <span style="font-weight:800;font-size:15px">${s.title}</span>
+          ${renderSectionTools(s.title)}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="section-toggle">${state.openIds.has(s.id)?'⌃':'⌄'}</span>
+        </div>
+      </div>
+      ${state.openIds.has(s.id) ? `<div class="step-content">
+        ${s.content.length === 0 ? `<div style="color:var(--ink-3);font-size:13px;padding:7px 0">小博士正在为你生成这一环节…</div>` : s.content.map((l,idx)=>`<p style="margin:5px 0;line-height:1.55;font-size:14.5px" oncontextmenu="handleLineCtx(event,'${s.id}',${idx})">${escapeHtml(l)}</p>`).join('')}
+        <div class="step-actions">
+          ${s.title==='导入环节' ? `<button class="btn btn-accent btn-sm" onclick="showPlan()">选择导入方案</button>` : ''}
+        </div>
+      </div>` : ''}
+    </div>
+  `).join('');
+  // drag events
+  el.querySelectorAll('.step-card').forEach(card => {
+    card.addEventListener('dragstart', e => { state.dragging=parseInt(card.dataset.idx); e.dataTransfer.effectAllowed='move'; card.style.opacity='0.6'; });
+    card.addEventListener('dragend', e => { state.dragging=null; card.style.opacity='1'; renderSections(); });
+    card.addEventListener('dragover', e => { e.preventDefault(); });
+    card.addEventListener('drop', e => { e.preventDefault(); const from=state.dragging; const to=parseInt(card.dataset.idx); if(from!=null && from!==to){ const arr=[...state.sections]; const [m]=arr.splice(from,1); arr.splice(to,0,m); state.sections=arr; render(); } });
+  });
+}
+
+function renderSectionTools(title){
+  const tools = {
+    '新知识介绍':['支架递减','启发式提问链'],
+    '引导练习':['小组讨论','角色扮演','实验探究','课堂游戏','例题变式','课堂小测'],
+    '导入环节':['情境导入','问题导入','实验导入'],
+    '分层教学':['分层任务'],
+    '关键知识点':['学科网考点','学科网素材']
+  };
+  const items = tools[title] || [];
+  return items.length ? `<span class="section-tools">${items.map(item=>`<button class="section-tool" onclick="event.stopPropagation();insertComponent('${item}')">${item}</button>`).join('')}</span>` : '';
+}
+
+function renderPlanPicker(){
+  const plans = [
+    {key:'情境导入',title:'情境导入',desc:'用生活实例或多媒体素材引入新课，激发兴趣。',tag:'推荐'},
+    {key:'问题导入',title:'问题导入',desc:'抛出认知冲突问题，引导学生主动思考。'},
+    {key:'复习导入',title:'复习导入',desc:'回顾旧知，建立新旧知识的连接。'}
+  ];
+  return `<div class="pop" style="margin-bottom:14px;padding:16px;border:1px dashed var(--brand-soft-border);border-radius:12px;background:var(--brand-soft)">
+    <div style="font-weight:800;font-size:14px;margin-bottom:4px">选择导入方案</div>
+    <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px">点击任一方案，AI会将其填充到导入环节</div>
+    <div class="plan-grid">${plans.map(p=>`<div class="plan-card ${state.selectedPlan===p.key?'selected':''}" onclick="applyPlan('${p.key}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-size:14px">${p.title}</b>${p.tag?`<span style="font-size:11px;background:var(--brand);color:#fff;padding:2px 6px;border-radius:10px">${p.tag}</span>`:''}</div>
+      <div style="font-size:12px;color:var(--ink-2);line-height:1.45">${p.desc}</div>
+    </div>`).join('')}</div>
+  </div>`;
+}
+
+function showPlan(){ state.planVisible=true; renderSections(); }
+function applyPlan(key){
+  state.selectedPlan=key;
+  const plans = {情境导入:['情境导入：出示与本课相关的生活情境图片/视频。','提问：你观察到了什么？这与今天要学的知识有什么联系？','学生自由发言，教师引导聚焦核心问题。'],问题导入:['问题导入：提出一个具有认知冲突的核心问题。','学生独立思考1分钟，写下自己的猜想。','小组内交流，教师收集典型想法并板书。'],复习导入:['复习导入：通过3道旧知检测题激活前置知识。','师生共同回顾相关概念，建立新旧知识之间的联系。','揭示课题，明确学习目标。']};
+  const idx = state.sections.findIndex(s=>s.title==='导入环节');
+  if(idx>=0){ state.sections[idx].content = plans[key]; }
+  state.planVisible=false;
+  state.chat.push({role:'ai',text:`已采用“${key}”方案填充导入环节。`});
+  render();
+}
+
+function modifySection(id, action){
+  const sec = state.sections.find(s=>s.id===id);
+  state.chat.push({role:'user',text:`对“${sec.title}”：${action}`});
+  if(action==='选择导入方案'){ showPlan(); state.chat.push({role:'ai',text:'已生成3个导入方案，请选择一个。'}); renderChat(); }
+  else {
+    setTimeout(() => { state.chat.push({role:'ai',text:`已根据“${action}”优化“${sec.title}”内容。`}); renderChat(); }, 500);
+  }
+}
+
+function insertComponent(item){
+  const tmpl = componentTemplates[item]; if(!tmpl) return;
+  const targetTitles = {
+    '分层任务':'分层教学','支架递减':'新知识介绍','启发式提问链':'新知识介绍',
+    '小组讨论':'引导练习','角色扮演':'引导练习','实验探究':'引导练习','课堂游戏':'引导练习',
+    '情境导入':'导入环节','问题导入':'导入环节','实验导入':'导入环节','例题变式':'引导练习','课堂小测':'引导练习',
+    '学科网考点':'关键知识点','学科网素材':'关键知识点'
+  };
+  const target = state.sections.find(s => s.title===targetTitles[item]) || state.sections[state.sections.length-1];
+  if(!target) return;
+  target.content = [...target.content, '—— ' + tmpl.title + ' ——', ...tmpl.lines];
+  state.chat.push({role:'ai',text:`已插入“${tmpl.title}”到当前展开环节，你可以继续修改。`});
+  render();
+}
+
+function handleCtx(e,id){ e.preventDefault(); showContextMenu(e.clientX,e.clientY,()=>{ state.askOpen=true; renderAskModal(); }); }
+function handleLineCtx(e,id,idx){ e.preventDefault(); showContextMenu(e.clientX,e.clientY,()=>{ state.askOpen=true; renderAskModal(); }); }
+function showContextMenu(x,y,onAsk){
+  state.contextMenu={x,y};
+  const existing = document.getElementById('ctxMenu'); if(existing) existing.remove();
+  const div = document.createElement('div'); div.id='ctxMenu'; div.className='context-menu pop'; div.style.left=x+'px'; div.style.top=y+'px';
+  div.innerHTML = `<div class="context-menu-item" onclick="closeCtx();openAskModal()">问问小博士</div>
+                  <div class="context-menu-item" onclick="closeCtx()">编辑段落</div>
+                  <div class="context-menu-item" onclick="closeCtx()">删除段落</div>`;
+  document.body.appendChild(div);
+  setTimeout(() => { document.addEventListener('click', closeCtx, {once:true}); }, 0);
+}
+function closeCtx(){ const el=document.getElementById('ctxMenu'); if(el) el.remove(); state.contextMenu=null; }
+function openAskModal(){ state.askOpen=true; renderAskModal(); }
+function renderAskModal(){
+  if(!state.askOpen) { const m=document.getElementById('askModal'); if(m) m.remove(); return; }
+  if(document.getElementById('askModal')) return;
+  const div=document.createElement('div'); div.id='askModal'; div.className='modal pop';
+  div.innerHTML = `<div class="modal-card" style="width:480px;max-width:92vw">
+    <div style="font-weight:800;font-size:16px;margin-bottom:12px">问问小博士</div>
+    <textarea id="askText" style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:inherit;font-size:14px;outline:none;resize:vertical" placeholder="例如：让导入更贴近学生生活、增加小组合作环节、降低练习难度..."></textarea>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-secondary btn-sm" onclick="closeAskModal()">取消</button>
+      <button class="btn btn-primary btn-sm" id="askSend">发送</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+  $('askSend').onclick = () => { const v=$('askText').value.trim(); if(v){ closeAskModal(); sendChat(v); } };
+  $('askText').onkeydown = e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); $('askSend').click(); } };
+}
+function closeAskModal(){ state.askOpen=false; const m=document.getElementById('askModal'); if(m) m.remove(); }
+
+function renderPreview(){
+  state.previewOpen=true;
+  const existing=document.getElementById('previewModal'); if(existing) existing.remove();
+  const div=document.createElement('div'); div.id='previewModal'; div.className='modal pop';
+  div.innerHTML = `<div class="modal-card" style="width:760px;max-width:95vw;height:80vh;display:flex;flex-direction:column;padding:0px">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-weight:800;font-size:16px">教案预览</div>
+      <button class="btn btn-secondary btn-sm" onclick="closePreview()">关闭</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:24px" id="previewBody"></div>
+    <div style="padding:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" onclick="exportWord();closePreview()">导出 Word</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+  const body = document.getElementById('previewBody');
+  body.innerHTML = `<h2 style="text-align:center">${escapeHtml(state.query)}</h2>` + state.sections.map((s,i)=>`<h3>${i+1}. ${s.title}</h3>`+s.content.map(l=>`<p>${escapeHtml(l)}</p>`).join('')).join('');
+}
+function closePreview(){ state.previewOpen=false; const m=document.getElementById('previewModal'); if(m) m.remove(); }
+
+function exportWord(){
+  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset="utf-8"><title>教案</title></head><body>
+    <h1 style="text-align:center">${escapeHtml(state.query)}</h1>
+    ${state.sections.map((s,i)=>`<h2>${i+1}. ${escapeHtml(s.title)}</h2>`+s.content.map(l=>`<p>${escapeHtml(l)}</p>`).join('')).join('')}
+    </body></html>`;
+  const blob = new Blob(['\ufeff', html], {type:'application/msword'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = '教案_' + state.query.replace(/\s+/g,'_') + '.doc'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+function renderWizard(){
+  const app = $('app');
+  const ready = state.inputs.classBase && state.inputs.hours && state.inputs.focus.length;
+  app.innerHTML = `<div class="modal pop">
+    <div class="modal-card" style="width:560px;max-width:92vw;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div style="font-size:18px;font-weight:800">确认学情信息</div>
+        <div style="cursor:pointer;color:var(--ink-3);font-size:18px" onclick="closeWizard()">×</div>
+      </div>
+      <div style="font-size:13px;color:var(--ink-3);margin-bottom:18px">小博士已识别课题信息，还需补充以下信息即可生成教案框架。</div>
+      <div style="background:var(--brand-soft);border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:13px;color:var(--brand-deep)"><b>已识别：</b>${escapeHtml(state.query)}</div>
+      <div id="wizardFields"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-secondary" onclick="startGenerate()">跳过，直接生成</button>
+        <button class="btn btn-primary" id="wizardGen" ${!ready?'disabled':''}>${ready?'生成教案框架':'请选择学情信息'}</button>
+      </div>
+    </div>
+  </div>`;
+  renderWizardFields();
+  $('wizardGen').onclick = () => { if(ready) startGenerate(); };
+}
+
+function renderWizardFields(){
+  const el = $('wizardFields');
+  const fields = [
+    {label:'班级基础',key:'classBase',options:['基础较弱','基础一般','基础较好','层次分明'],multi:false},
+    {label:'课时长度',key:'hours',options:['1 课时','2 课时'],multi:false},
+    {label:'教学重点',key:'focus',options:['核心知识','方法技能','学科素养','考点训练'],multi:true},
+    {label:'风格偏向',key:'style',options:['素养导向','应试导向','活动导向'],multi:false}
+  ];
+  el.innerHTML = fields.map(f => `<div style="margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--ink-2)">${f.label}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${f.options.map(opt=>{
+      const selected = f.multi ? (state.inputs[f.key]||[]).includes(opt) : state.inputs[f.key]===opt;
+      return `<div class="chip ${selected?'selected':''}" onclick="toggleInput('${f.key}','${opt}',${f.multi})">${opt}</div>`;
+    }).join('')}</div>
+  </div>`).join('');
+}
+
+function toggleInput(key, opt, multi){
+  if(multi){ const arr=state.inputs[key]||[]; if(arr.includes(opt)) state.inputs[key]=arr.filter(x=>x!==opt); else state.inputs[key]=[...arr,opt]; }
+  else state.inputs[key] = state.inputs[key]===opt ? '' : opt;
+  renderWizard();
+}
+function closeWizard(){ state.view='home'; render(); }
+
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function render(){ if(state.view==='home') renderHome(); else if(state.view==='wizard') renderWizard(); else if(state.view==='workspace') renderWorkspace(); }
+
+render();
+</script>
+</body>
+</html>
