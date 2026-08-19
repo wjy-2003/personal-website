@@ -1,459 +1,129 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 小博士 · 写教案（二期 Demo）</title>
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 小博士 · 智能备课资料包</title>
+<link rel="icon" href="assets/favicon-32.png">
 <style>
-:root{--brand:#2f73e0;--brand-deep:#1e5fd1;--brand-soft:#f0f6ff;--brand-soft-border:#cfe0ff;--accent:#e67e22;--canvas:#f5f7fa;--surface:#fff;--surface-2:#f8f9fb;--ink:#1f2937;--ink-2:#4b5563;--ink-3:#6b7280;--line:#e5e7eb;--shadow-card:0 1px 2px rgba(0,0,0,.05),0 14px 36px -26px rgba(31,41,55,.35)}
-*{box-sizing:border-box}body{margin:0px;font-family:"Noto Sans SC",PingFang SC,Microsoft YaHei,sans-serif;background:var(--canvas);color:var(--ink)}
-#app{min-height:100vh}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:9px 16px;border-radius:9px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;white-space:nowrap}
-.btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-deep);transform:translateY(-1px)}
-.btn-primary:disabled{background:#9ca3af;cursor:not-allowed}.btn-secondary{background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
-.btn-secondary:hover{border-color:var(--brand);color:var(--brand-deep);background:var(--brand-soft)}
-.btn-sm{min-height:30px;padding:5px 10px;font-size:12.5px;border-radius:8px}.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{background:#cf6a17}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-card)}
-.logo-mark{display:block;width:auto;object-fit:contain;flex-shrink:0}.logo-mark.home{height:18px}.logo-mark.chat{height:20px}
-.ui-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:24px;height:24px;border-radius:7px;background:var(--brand-soft);color:var(--brand-deep);font-size:14px;line-height:1}
-.ui-icon.search{width:28px;height:28px;font-size:12px;font-weight:800}.ui-icon.card-icon{width:28px;height:28px;margin-bottom:10px;font-size:12px;font-weight:800}.ui-icon.comp-icon{width:20px;height:20px;font-size:12px;background:#eef2f7;color:var(--ink-2)}
-.home-card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:42px;max-width:900px;width:100%}.entry-card{padding:18px;cursor:pointer}.entry-card.active{border:1.5px solid var(--brand)}
-.entry-card-title{font-weight:800;font-size:15px;margin-bottom:6px}.entry-card-desc{font-size:12.5px;color:var(--ink-3);line-height:1.45}
-.chip{display:inline-flex;align-items:center;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;color:var(--ink-2)}
-.chip:hover{border-color:var(--brand);color:var(--brand-deep)}.chip.selected{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-deep)}
-.step-card{border:1px solid transparent;border-radius:6px;background:var(--surface);margin:2px 10px;overflow:hidden;transition:border-color .15s,background .15s}
-.step-card.active{border-color:transparent;box-shadow:none}.step-card:hover{border-color:#bfcada;background:#fcfdff}.step-header{display:flex;align-items:center;justify-content:space-between;padding:13px 18px 7px;cursor:pointer}
-.drag-handle{color:#a7afb9;cursor:grab;margin-right:3px;font-size:15px;opacity:0}.step-card:hover .drag-handle{opacity:1}.step-content{padding:0 22px 13px 43px}
-.step-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.step-actions .btn{padding:5px 10px;font-size:12px}.section-toggle{font-size:16px;color:var(--ink-3);opacity:0;transition:opacity .15s}.step-card:hover .section-toggle{opacity:1}
-.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}.plan-card{border:1.5px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;background:var(--surface)}
-.plan-card:hover{border-color:var(--brand);background:var(--brand-soft)}.plan-card.selected{border-color:var(--brand);background:var(--brand-soft)}
-.section-heading{display:flex;align-items:center;gap:8px;min-width:0}.section-tools{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.section-tool{border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 7px;font-family:inherit;font-size:11.5px;font-weight:500;color:var(--ink-2);cursor:pointer}.section-tool:hover{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-deep)}.resource-tabs{position:relative}.resource-plus{width:32px;height:32px;border:0;border-radius:7px;background:transparent;color:var(--ink-2);font-size:21px;cursor:pointer}.resource-plus:hover{background:var(--surface-2);color:var(--brand-deep)}.resource-menu{display:none;position:absolute;left:0;top:42px;width:190px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:9px;box-shadow:var(--shadow-card);z-index:80}.resource-menu.open{display:block}.resource-menu-item{width:100%;border:0;background:transparent;border-radius:6px;padding:8px 10px;text-align:left;font-family:inherit;font-size:12.5px;color:var(--ink-2);cursor:pointer}.resource-menu-item:hover{background:var(--brand-soft);color:var(--brand-deep)}
-.context-menu{position:fixed;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-card);padding:6px 0;z-index:1000;min-width:150px}
-.context-menu-item{padding:8px 14px;font-size:13px;cursor:pointer}.context-menu-item:hover{background:var(--brand-soft);color:var(--brand-deep)}
-.chat-bubble{border-radius:14px;padding:10px 12px;font-size:13px;line-height:1.5;max-width:92%;margin-bottom:10px}.chat-bubble.user{background:var(--brand);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-.chat-bubble.ai{background:var(--surface-2);color:var(--ink);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--line)}
-.topbar-btn{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
-.topbar-btn:hover{border-color:var(--brand);color:var(--brand-deep);background:var(--brand-soft)}
-.topbar-wrap{position:relative}.topbar-menu{position:absolute;top:34px;right:0px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-card);padding:6px 0;min-width:140px;z-index:50;display:none}.topbar-wrap:hover .topbar-menu{display:block}
-.topbar-menu-item{padding:7px 14px;font-size:13px;cursor:pointer;white-space:nowrap}.topbar-menu-item:hover{background:var(--brand-soft);color:var(--brand-deep)}
-.workspace-shell{display:flex;height:100vh;overflow:hidden;background:#f4f6f8}.chat-column{width:25%;min-width:280px;max-width:360px;border-right:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;transition:width .2s,min-width .2s}.chat-column.collapsed{width:50px;min-width:50px}.chat-column.collapsed .chat-content,.chat-column.collapsed .chat-brand-text,.chat-column.collapsed #backHome,.chat-column.collapsed .logo-mark{display:none}.chat-column.collapsed .chat-head{padding:0;justify-content:center}.chat-head{height:60px;padding:0 14px 0 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}.chat-head-actions{display:flex;align-items:center;gap:6px}.collapse-chat{width:30px;height:30px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink-2);font-family:inherit;font-size:15px;cursor:pointer}.collapse-chat:hover{border-color:var(--brand);color:var(--brand-deep);background:var(--brand-soft)}.chat-content{display:flex;flex:1;min-height:0;flex-direction:column}.chat-topic{padding:16px 18px 10px}.chat-topic-label{font-size:12px;color:var(--ink-3);margin-bottom:5px}.chat-topic-title{font-size:15px;font-weight:800;line-height:1.4}.chat-suggestions{margin:0 14px 12px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fbfcfe}.chat-suggestions-title{padding:10px 12px 7px;font-size:12px;color:var(--ink-3);font-weight:700}.chat-suggestion{width:100%;border:0;border-top:1px solid #edf0f4;background:transparent;padding:9px 12px;text-align:left;font-family:inherit;font-size:12.5px;color:var(--ink-2);cursor:pointer}.chat-suggestion:hover{background:var(--brand-soft);color:var(--brand-deep)}.chat-compose{padding:12px 14px;border-top:1px solid var(--line);display:flex;gap:8px}.chat-compose input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:13px;outline:none}.chat-compose input:focus{border-color:var(--brand)}
-.editor-column{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}.resource-bar{height:58px;border-bottom:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:16px}.resource-tabs{display:flex;align-items:center;gap:8px;min-width:0}.resource-tab{height:36px;max-width:420px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);font-size:14px;font-weight:700;min-width:0}.resource-tab span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.resource-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}.editor-scroll{flex:1;overflow-y:auto;padding:8px 10px 20px}.document-shell{width:100%;margin:0}.document-card{background:#fff;border:1px solid #dde2e8;border-radius:8px;box-shadow:0 1px 3px rgba(31,41,55,.04);overflow:hidden}.document-head{padding:14px 18px 12px;border-bottom:1px solid #e9edf2}.document-title{font-size:19px;font-weight:900;line-height:1.35}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:grid;place-items:center}
-.modal-card{background:var(--surface);border-radius:18px;box-shadow:0 24px 60px -20px rgba(0,0,0,.35);padding:26px 28px}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-.home-fade{animation:fadeUp .55s cubic-bezier(.22,1,.36,1) both}
-@keyframes popIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
-.pop{animation:popIn .45s cubic-bezier(.22,1,.36,1) both}
-@keyframes spin{to{transform:rotate(360deg)}}.mini-spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--brand-soft-border);border-top-color:var(--brand);animation:spin .7s linear infinite;display:inline-block}
-@media(max-width:900px){.workspace-shell{flex-direction:column}.chat-column,.chat-column.collapsed{width:100%;max-width:none;height:230px;min-height:230px;border-right:none;border-bottom:1px solid var(--line)}.chat-column.collapsed{height:50px;min-height:50px}.chat-column.collapsed .chat-head{justify-content:flex-start;padding:0 14px}.chat-topic{display:none}.chat-suggestions{display:none}.editor-column{width:100%}.resource-bar{padding:0 10px}.resource-tab{max-width:52vw}.editor-scroll{padding:8px 8px 20px}.step-content{padding-left:36px}.section-heading{align-items:flex-start;flex-direction:column;gap:6px}.plan-grid{grid-template-columns:1fr}}
+:root{--brand:#2878f0;--brand-deep:#145ecb;--brand-soft:#edf5ff;--brand-line:#cfe2ff;--ink:#1f2937;--ink-2:#4b5563;--ink-3:#8490a2;--line:#e5e9ef;--bg:#f5f7fa;--surface:#fff;--green:#1f9d67;--green-soft:#edf9f4;--orange:#d97706;--orange-soft:#fff7e8;--red:#d94b4b;--red-soft:#fff2f1;--shadow:0 8px 28px rgba(31,53,82,.10);--shadow-sm:0 2px 10px rgba(31,53,82,.07)}
+*{box-sizing:border-box}html,body,#app{height:100%;margin:0}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);font-size:14px}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.5}.hidden{display:none!important}
+.icon{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:13px;line-height:1}.logo{width:28px;height:28px;object-fit:contain}.logo.sm{width:23px;height:23px}.btn{height:36px;border:1px solid transparent;border-radius:8px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:650;color:var(--ink);background:#fff;transition:.18s}.btn:hover{transform:translateY(-1px)}.btn-primary{background:var(--brand);color:#fff;box-shadow:0 4px 10px rgba(40,120,240,.20)}.btn-primary:hover{background:var(--brand-deep)}.btn-secondary{border-color:var(--line);background:#fff}.btn-ghost{background:transparent;color:var(--ink-2)}.btn-sm{height:30px;padding:0 10px;font-size:12.5px}.btn-danger{color:var(--red);border-color:#ffd0cd;background:#fff}.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#f2f4f7;color:var(--ink-2);font-size:11.5px}.pill.blue{background:var(--brand-soft);color:var(--brand-deep)}.pill.green{background:var(--green-soft);color:var(--green)}.pill.orange{background:var(--orange-soft);color:var(--orange)}
+.topbar{height:58px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px}.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:17px}.nav{display:flex;height:100%;align-items:center;gap:28px}.nav-item{height:100%;display:flex;align-items:center;color:var(--ink-3);font-weight:600;position:relative}.nav-item.active{color:var(--brand)}.nav-item.active:after{content:"";position:absolute;left:4px;right:4px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--brand)}.user-dot{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#dceaff,#b8d4ff);display:grid;place-items:center;color:var(--brand-deep);font-size:12px;font-weight:800}
+.home{min-height:100%;background:radial-gradient(circle at 50% 30%,#fff 0,#f6f9ff 42%,#f3f6fa 100%)}.hero{max-width:960px;margin:0 auto;padding:88px 24px 30px;text-align:center}.hero h1{font-size:34px;margin:0 0 12px;letter-spacing:-.8px}.hero p{font-size:15px;color:var(--ink-3);margin:0 0 32px}.search-box{max-width:720px;height:58px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:7px 8px 7px 18px;background:#fff;border:1px solid #dce4ef;border-radius:14px;box-shadow:0 12px 35px rgba(38,80,132,.11)}.search-box:focus-within{border-color:#9bc3ff;box-shadow:0 12px 35px rgba(40,120,240,.15)}.search-box input{flex:1;border:0;outline:0;min-width:0;font-size:15px;color:var(--ink)}.search-box .btn{height:42px;border-radius:9px;padding:0 20px}.examples{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:14px}.example{border:0;background:transparent;color:var(--ink-3);font-size:12.5px;padding:5px 8px}.example:hover{color:var(--brand)}.recent{max-width:960px;margin:34px auto 0;padding:0 24px}.section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.section-title h2{font-size:15px;margin:0}.recent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.recent-card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:15px;text-align:left;box-shadow:var(--shadow-sm);transition:.18s}.recent-card:hover{border-color:var(--brand-line);transform:translateY(-2px)}.recent-card .subject{font-size:12px;color:var(--ink-3);margin-bottom:8px}.recent-card .title{font-weight:750;line-height:1.5}.recent-card .meta{font-size:11.5px;color:var(--ink-3);margin-top:10px}.home-features{max-width:960px;margin:16px auto;padding:0 24px 40px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.feature{padding:12px;border-radius:10px;color:var(--ink-2);font-size:12.5px}.feature b{display:block;color:var(--ink);margin-bottom:4px;font-size:13px}.feature .icon{border-radius:6px;width:24px;height:24px;background:var(--brand-soft);color:var(--brand);margin-bottom:7px}
+.setup-shell{min-height:100%;display:flex;flex-direction:column}.setup-head{height:58px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px}.setup-main{width:min(920px,calc(100% - 40px));margin:30px auto 50px}.progress{display:flex;align-items:center;justify-content:center;margin-bottom:26px}.progress-step{display:flex;align-items:center;gap:8px;color:var(--ink-3);font-size:12.5px;font-weight:650}.progress-step.active{color:var(--brand)}.progress-step.done{color:var(--green)}.progress-num{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#e8ecf1;color:inherit;font-size:11.5px}.active .progress-num{background:var(--brand);color:#fff}.done .progress-num{background:var(--green);color:#fff}.progress-line{width:72px;height:1px;background:#dfe4ea;margin:0 9px}.setup-card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-sm);overflow:hidden}.setup-card-head{padding:22px 24px 16px;border-bottom:1px solid var(--line)}.setup-card-head h1{font-size:20px;margin:0 0 7px}.setup-card-head p{margin:0;color:var(--ink-3);font-size:13px}.setup-body{padding:22px 24px}.recognized{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:13px 14px;background:var(--brand-soft);border:1px solid var(--brand-line);border-radius:9px;margin-bottom:22px}.recognized strong{display:block;color:var(--brand-deep);margin-bottom:4px}.recognized span{color:#42658e;font-size:12.5px}.form-section{margin-bottom:22px}.form-label{font-size:13px;font-weight:750;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between}.optional{font-size:11.5px;color:var(--ink-3);font-weight:500}.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{height:34px;border:1px solid var(--line);border-radius:8px;padding:0 13px;background:#fff;color:var(--ink-2);display:flex;align-items:center;gap:6px}.chip:hover{border-color:#9fc5ff}.chip.selected{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-deep);font-weight:650}.upload-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.upload-card{height:84px;border:1px dashed #cfd7e3;border-radius:10px;background:#fafbfc;padding:12px;display:flex;align-items:flex-start;gap:9px;text-align:left}.upload-card:hover{border-color:var(--brand);background:var(--brand-soft)}.upload-card.added{border-style:solid;border-color:#9dd9c0;background:var(--green-soft)}.upload-card b{display:block;font-size:12.5px;margin-bottom:4px}.upload-card span{color:var(--ink-3);font-size:11.5px;line-height:1.4}.setup-footer{padding:16px 24px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}.setup-footer .hint{font-size:12px;color:var(--ink-3)}
+.package-intro{display:grid;grid-template-columns:1fr 260px;gap:18px}.output-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.output-card{border:1px solid var(--line);border-radius:10px;padding:13px;display:flex;gap:11px;position:relative}.output-card.selected{border-color:#9fc5ff;background:#f8fbff}.output-check{width:18px;height:18px;border-radius:5px;border:1px solid #cbd3df;display:grid;place-items:center;color:#fff;font-size:11px;flex:none}.selected .output-check{background:var(--brand);border-color:var(--brand)}.output-card b{display:block;font-size:13.5px;margin-bottom:4px}.output-card p{margin:0;color:var(--ink-3);font-size:11.5px;line-height:1.5}.package-aside{border:1px solid var(--line);background:#fafbfc;border-radius:10px;padding:15px}.package-aside h3{font-size:13px;margin:0 0 12px}.summary-row{display:flex;justify-content:space-between;gap:12px;font-size:12px;margin:8px 0;color:var(--ink-2)}.summary-row span:first-child{color:var(--ink-3)}.ai-note{margin-top:14px;padding:10px;background:var(--orange-soft);border-radius:8px;color:#8b5a11;font-size:11.5px;line-height:1.55}
+.generating{min-height:100%;display:grid;place-items:center}.generating-card{width:min(600px,calc(100% - 40px));background:#fff;border:1px solid var(--line);border-radius:14px;padding:30px;box-shadow:var(--shadow);text-align:center}.brain{width:52px;height:52px;border-radius:16px;background:var(--brand-soft);display:grid;place-items:center;margin:0 auto 15px;color:var(--brand);font-size:22px}.generating h2{font-size:20px;margin:0 0 7px}.generating p{color:var(--ink-3);font-size:13px}.gen-list{margin:22px 0 0;text-align:left}.gen-item{height:44px;display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);font-size:12.5px}.gen-state{margin-left:auto;color:var(--ink-3)}.gen-item.done .gen-state{color:var(--green)}.gen-item.active .gen-state{color:var(--brand)}
+.workspace{height:100%;display:flex;overflow:hidden;background:#f3f5f8}.chat-column{width:25%;min-width:260px;max-width:350px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;transition:.2s}.chat-column.collapsed{width:54px;min-width:54px}.chat-column.collapsed .chat-body,.chat-column.collapsed .brand-name,.chat-column.collapsed .back-text{display:none}.chat-head{height:58px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 13px;flex:none}.chat-brand{display:flex;align-items:center;gap:8px;font-weight:800}.chat-actions{display:flex;align-items:center;gap:4px}.square-btn{width:30px;height:30px;border:0;background:transparent;border-radius:7px;color:var(--ink-3);display:grid;place-items:center}.square-btn:hover{background:#f1f4f8;color:var(--ink)}.chat-body{display:flex;flex-direction:column;min-height:0;flex:1}.topic-card{margin:12px 12px 4px;padding:11px;border-radius:9px;background:var(--brand-soft)}.topic-card small{display:block;color:#6482a8;margin-bottom:3px}.topic-card b{font-size:12.5px;line-height:1.45}.chat-scroll{flex:1;overflow:auto;padding:10px 12px}.bubble{max-width:92%;padding:9px 10px;border-radius:10px;margin:7px 0;font-size:12.5px;line-height:1.55;white-space:pre-wrap}.bubble.ai{background:#f2f4f7;border-top-left-radius:3px}.bubble.user{background:var(--brand);color:#fff;margin-left:auto;border-top-right-radius:3px}.answer-actions{display:flex;gap:6px;margin-top:8px;padding-top:7px;border-top:1px solid #e2e6eb}.answer-action{height:26px;border:1px solid #dfe4ea;border-radius:6px;background:#fff;padding:0 9px;color:var(--ink-2);font-size:11px}.answer-action:hover{border-color:var(--brand-line);color:var(--brand);background:var(--brand-soft)}.answer-action.accepted{border-color:#bce5d2;background:var(--green-soft);color:var(--green)}.quick-area{padding:8px 12px;border-top:1px solid var(--line)}.quick-title{font-size:11px;color:var(--ink-3);margin-bottom:6px}.quick-list{display:flex;flex-wrap:wrap;gap:5px}.quick{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 8px;font-size:11px;color:var(--ink-2)}.composer{padding:10px 12px 12px;border-top:1px solid var(--line);display:flex;gap:6px}.composer input{min-width:0;flex:1;border:1px solid var(--line);border-radius:8px;padding:0 9px;outline:0;font-size:12px}.composer input:focus{border-color:#9fc5ff}
+.main-column{flex:1;min-width:0;display:flex;flex-direction:column}.workbar{height:58px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:12px;flex:none}.material-tabs{display:flex;align-items:center;gap:5px;min-width:0;overflow:auto}.material-tab{height:34px;border:1px solid transparent;background:transparent;border-radius:7px;padding:0 9px;display:flex;align-items:center;gap:6px;color:var(--ink-3);white-space:nowrap;font-size:12.5px}.material-tab:hover{background:#f3f5f8}.material-tab.active{border-color:var(--brand-line);background:var(--brand-soft);color:var(--brand-deep);font-weight:700}.tab-status{width:6px;height:6px;border-radius:50%;background:#b8c1ce}.tab-status.ready{background:var(--green)}.work-actions{display:flex;align-items:center;gap:6px;flex:none}.sync-btn{position:relative}.sync-dot{position:absolute;right:3px;top:2px;width:7px;height:7px;border-radius:50%;background:var(--orange);border:1px solid #fff}.content-scroll{flex:1;overflow:auto;padding:14px}.work-layout{max-width:920px;margin:0 auto}.doc-card{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(30,50,80,.035)}.doc-head{padding:22px 30px 16px;border-bottom:1px solid #eef1f4}.doc-head-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.doc-title{font-size:21px;font-weight:850}.section-list{padding:12px 24px 30px}.lesson-section{border:1px solid transparent;border-radius:7px;margin:2px 0;background:#fff;transition:border-color .15s,background .15s}.lesson-section:hover{border-color:#edf0f3;background:#fdfefe}.lesson-section.dragging{opacity:.55}.section-head{height:42px;padding:0 10px;display:flex;align-items:center;gap:8px}.section-head-left{display:flex;align-items:center;gap:8px;min-width:0}.drag-handle{width:14px;color:#c7ced7;cursor:grab;letter-spacing:-2px;opacity:0;transition:opacity .15s}.lesson-section:hover .drag-handle{opacity:1}.section-name{font-weight:750;font-size:15px;white-space:nowrap}.section-content{padding:2px 24px 14px 32px}.editable-line{position:relative;padding:4px 6px;border:1px solid transparent;border-radius:5px;line-height:1.72;color:var(--ink-2);font-size:13.5px;outline:0}.editable-line:hover{border-color:#f0f2f5;background:#fff}.editable-line:focus{background:#fff;border-color:#c7dbfa}.editable-line.protected:after{content:"人工编辑";margin-left:7px;font-size:9.5px;padding:2px 5px;border-radius:8px;background:var(--orange-soft);color:var(--orange)}.section-tools{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;opacity:0;pointer-events:none;transition:opacity .15s}.lesson-section:hover .section-tools{opacity:1;pointer-events:auto}.mini-action{border:1px solid #edf0f3;border-radius:6px;background:#fff;color:var(--ink-3);font-size:10.5px;padding:4px 7px}.mini-action:hover{border-color:var(--brand-line);color:var(--brand);background:var(--brand-soft)}
+.plan-stage{padding:16px}.plan-intro{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.plan-intro h2{font-size:16px;margin:0 0 4px}.plan-intro p{font-size:11.5px;color:var(--ink-3);margin:0}.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.plan-card{border:1px solid var(--line);border-radius:10px;padding:13px;position:relative;background:#fff}.plan-card:hover{border-color:#a9caff}.plan-card.selected{border:2px solid var(--brand);padding:12px;background:#f8fbff}.recommend{position:absolute;right:9px;top:9px;font-size:9.5px;padding:3px 6px;border-radius:8px;background:var(--brand);color:#fff}.plan-card h3{font-size:13.5px;margin:0 0 8px}.plan-card p{font-size:11.5px;color:var(--ink-2);line-height:1.55;min-height:52px}.plan-facts{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0}.plan-risk{font-size:10.5px;color:var(--orange);margin:8px 0}.plan-card .btn{width:100%;margin-top:5px}
+.material-view{padding:18px 20px}.material-view h2{font-size:17px;margin:0 0 5px}.material-view>p{font-size:12px;color:var(--ink-3);margin:0 0 15px}.ppt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.ppt-slide{aspect-ratio:16/9;border:1px solid var(--line);border-radius:8px;background:linear-gradient(145deg,#fff,#f5f9ff);padding:11px;position:relative}.ppt-slide .num{position:absolute;right:7px;bottom:5px;color:#b0b9c5;font-size:9px}.ppt-slide b{font-size:11.5px}.ppt-slide p{font-size:9.5px;color:var(--ink-3);line-height:1.4}.ppt-slide.synced{border-color:#9dd9c0;background:linear-gradient(145deg,#fbfffd,#edf9f4)}.resource-list{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.resource-card{border:1px solid var(--line);border-radius:8px;padding:11px}.resource-card.adopted,.exercise.adopted{border-color:#b9d4fb;background:#f8fbff}.resource-card.synced,.exercise.synced{border-color:#bce5d2;background:#fbfffd}.resource-card b{display:block;font-size:12px;margin-bottom:5px}.resource-card p{font-size:10.5px;line-height:1.5;color:var(--ink-3);margin:0}.exercise{border:1px solid var(--line);border-radius:8px;padding:11px;margin:8px 0}.exercise .level{font-size:9.5px;color:var(--brand);margin-bottom:5px}.exercise b{font-size:12px}.exercise p{font-size:11px;color:var(--ink-2);margin:6px 0 0}.adopt-row{display:flex;align-items:center;justify-content:flex-end;margin-top:9px}.adopt-btn{height:28px;border:1px solid var(--brand-line);border-radius:6px;background:#fff;color:var(--brand);padding:0 10px;font-size:11px}.adopt-btn:hover{background:var(--brand-soft)}.adopt-btn.pending{background:var(--brand-soft);color:var(--brand-deep)}.adopt-btn.synced{border-color:#bce5d2;background:var(--green-soft);color:var(--green)}
+.modal{position:fixed;inset:0;background:rgba(26,35,48,.32);display:grid;place-items:center;padding:20px;z-index:200}.modal-card{width:min(680px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:13px;box-shadow:var(--shadow)}.modal-head{padding:17px 19px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}.modal-head h2{font-size:16px;margin:0}.modal-body{padding:18px 19px}.modal-foot{padding:13px 19px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}.close{border:0;background:transparent;color:var(--ink-3);font-size:18px}.audit-score{display:flex;align-items:center;gap:15px;padding:14px;background:var(--green-soft);border-radius:9px;margin-bottom:13px}.score{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#fff;color:var(--green);font-weight:850}.audit-list{display:flex;flex-direction:column;gap:8px}.audit-item{border:1px solid var(--line);border-radius:8px;padding:11px;display:flex;gap:9px}.audit-item.warn{border-color:#ffdba3;background:#fffdf8}.audit-item b{font-size:12px;display:block;margin-bottom:3px}.audit-item p{font-size:10.5px;color:var(--ink-3);margin:0}.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px}.compare-box{border:1px solid var(--line);border-radius:8px;padding:11px;font-size:11.5px;line-height:1.6;color:var(--ink-2)}.compare-box.new{border-color:var(--brand-line);background:var(--brand-soft)}.compare-box b{display:block;color:var(--ink);margin-bottom:6px}.feedback-options{display:flex;gap:10px}.feedback-option{flex:1;border:1px solid var(--line);border-radius:9px;padding:13px;text-align:center}.feedback-option.selected{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}.feedback-note{width:100%;height:78px;margin-top:12px;border:1px solid var(--line);border-radius:8px;padding:10px;resize:none;outline:0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#273142;color:#fff;border-radius:8px;padding:10px 14px;font-size:12px;box-shadow:var(--shadow);z-index:300;animation:toast 2.6s both}@keyframes toast{0%{opacity:0;transform:translate(-50%,8px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,5px)}}
+@media(max-width:980px){.plan-grid{grid-template-columns:1fr}.package-intro{grid-template-columns:1fr}.recent-grid{grid-template-columns:1fr 1fr}.home-features{grid-template-columns:1fr 1fr}.chat-column{width:28%;min-width:235px}.material-tab span.label{display:none}}@media(max-width:720px){.nav{display:none}.hero{padding-top:58px}.hero h1{font-size:28px}.recent-grid,.output-grid,.upload-row,.ppt-grid,.resource-list{grid-template-columns:1fr}.workspace{flex-direction:column}.chat-column,.chat-column.collapsed{width:100%;max-width:none;min-width:0;height:190px;border-right:0;border-bottom:1px solid var(--line)}.chat-column.collapsed{height:54px}.workbar{padding:0 8px}.work-actions .btn span{display:none}.content-scroll{padding:8px}.section-content{padding-left:18px}.progress-line{width:30px}}
 </style>
 </head>
-<body>
-<div id="app"></div>
-<script>
-
-const defaultSections = [
-  { id:'s1',title:'学习目标' },
-  { id:'s2',title:'评估方式' },
-  { id:'s3',title:'关键知识点' },
-  { id:'s4',title:'导入环节',hasPlan:true },
-  { id:'s5',title:'新知识介绍' },
-  { id:'s6',title:'引导练习' },
-  { id:'s7',title:'独立练习' },
-  { id:'s8',title:'分层教学' },
-  { id:'s9',title:'课堂小结' },
-  { id:'s10',title:'拓展与深化' },
-  { id:'s11',title:'家庭作业' },
-  { id:'s12',title:'标准对齐' }
+<body><div id="app"></div><script>
+const $=id=>document.getElementById(id);
+const icons={book:'▤',spark:'✦',file:'▧',ppt:'▣',link:'⌁',chat:'◌',quiz:'✓',task:'≡',check:'✓',upload:'↑',clock:'◷',risk:'!',sync:'↻',more:'⋯',home:'⌂',back:'‹',collapse:'‹',expand:'›',drag:'⠿',edit:'✎'};
+const outputs=[
+ {id:'lesson',name:'教案',desc:'完整教学目标、过程与板书设计',icon:'file'},
+ {id:'ppt',name:'PPT',desc:'与教学环节一一对应的页面初稿',icon:'ppt'},
+ {id:'resources',name:'推荐资料',desc:'学科网优质课件、案例与素材',icon:'link'},
+ {id:'interaction',name:'互动环节',desc:'课堂提问、活动和学生反应预设',icon:'chat'},
+ {id:'exercise',name:'课堂练习',desc:'对应目标的随堂检测与变式题',icon:'quiz'},
+ {id:'homework',name:'分层作业',desc:'基础、标准、拓展三层任务',icon:'task'}
 ];
-
-const frameworks = {
-  '学习目标':['学生能够深入理解和赏析毛泽东《沁园春·雪》的主题意蕴、艺术特色和历史背景。','通过多角度分析诗词的语言、意象和思想内涵，形成个人化的审美评价。'],
-  '评估方式':['形成性评估：观察课堂讨论与小组分析活动中的参与度和思维深度；检查诗词语言赏析笔记。','终结性评估：完成一篇1500字左右的诗词鉴赏文章，包含主题思想、意象与修辞、历史背景、个人审美评价。','评分标准：思想内容准确性30%，分析深度30%，语言表达20%，结构完整性20%。'],
-  '关键知识点':['主题思想：通过描写北国雪景，融合政治理想与哲学思考，表现对祖国山河的热爱和对历史发展的思考。','意象系统：雪、山河、古人、红日等意象的象征意义及其相互关联。','修辞手法：比喻、拟人、对比、排比等手法的表达效果。','词牌与格律：《沁园春》的词牌特点，上阕写景、下阕议论的结构。','创作背景：1935年陕北时期的历史环境与毛泽东思想。'],
-  '导入环节':['展示北国冬景的图片或视频片段（2—3分钟），引导学生观察雪景特点。','提问：你看到的雪景给你什么感受？如果用诗歌语言描述，你会怎样表达？','简要介绍毛泽东的诗人身份和《沁园春·雪》的文学地位。','吸引点：这首词创作于战争时期，却展现出磅礴气势和深邃思想。'],
-  '新知识介绍':['背景知识讲授（10分钟）：1935年冬红军到达陕北的历史背景，以及《沁园春》的格律特点。','文本朗读与整体感知（8分钟）：教师范读，学生跟读，逐句理解基本含义。','上阕意象分析（15分钟）：分析“千里冰封，万里雪飘”以及长城、黄河、山峦等地理意象。','下阕思想内涵分析（15分钟）：理解“须晴日”的转折作用，分析对历史人物的评价与“还看今朝”的核心思想。','常见误区：不能只将作品理解为纯写景诗，也不应过度政治化而忽视其文学性和艺术价值。'],
-  '引导练习':['意象追踪练习（15分钟）：四个小组分别追踪自然意象、历史意象、动作意象、色彩与感觉意象，分析其象征意义。','修辞手法识别与赏析（12分钟）：找出至少3处修辞手法，使用规范句式说明其艺术效果。','问题链：从识别“千里冰封，万里雪飘”的修辞，进阶到分析动词选择和上下阕的内在联系。','历史背景与思想内涵讨论（12分钟）：思考战争时期的创作动因和作品表达的历史观、时代精神。','教师观察各组参与度和讨论质量，收集学生笔记与口头回答，对理解困难的学生提供个别指导。'],
-  '独立练习':['任务：选择诗词中最触动你的一句或一个意象，完成约800字的赏析。','文本分析（300字）：说明其在全词中的位置和作用、修辞手法、语言特色与字词选择。','意蕴挖掘（300字）：分析象征意义、与整体主题的关系以及诗人的思想情感。','审美评价（200字）：表达个人感受、启发与对当代读者的意义。'],
-  '分层教学':['基础层：提供详细注释、白话翻译、意象卡片、修辞识别清单和填空式赏析支架，配合同伴学习与个别指导。','年级水平：通过背景介绍、文本朗读和分层讨论，独立完成意象赏析、修辞分析和1500字鉴赏文章。','拓展层：开展《沁园春·长沙》比较阅读、跨文本分析、哲学思想探讨、当代词作创作与研究性学习。'],
-  '课堂小结':['关键要点回顾：这首词的主题是什么？诗人运用了哪些艺术手法？上阕和下阕的关系是什么？','学生反思分享（3—4分钟）：邀请3—4名学生说明最深刻的印象和本课收获。','情感升华：播放诗词配乐朗诵，引导学生在审美体验中结束课堂。'],
-  '拓展与深化':['诗词朗诵与表演：学生可个人或小组进行朗诵、舞台表演，融入音乐、书法或绘画。','毛泽东诗词专题研究：比较《沁园春·长沙》《七律·长征》《卜算子·咏梅》等作品。','古今诗词对话：与苏轼、陆游、辛弃疾等诗人的相关作品对比阅读。','创意写作：模仿《沁园春·雪》的风格，表达对当代中国、个人成长或未来的思考。'],
-  '家庭作业':['必做：完成1500字诗词鉴赏文章，包含主题分析、意象赏析、背景解读和个人评价，下次课前提交。','选做：查阅创作背景并写300字介绍；用书法或绘画表现最喜欢的诗句；听诗词朗诵并做笔记。','学习建议：反复朗读全词，体会节奏与韵律；查阅注释与评析后形成自己的观点。'],
-  '标准对齐':['诗歌鉴赏能力：理解主题思想，分析意象与修辞手法，体会语言美和意蕴。','文化理解能力：结合历史背景理解文学作品，认识中华文化的深厚底蕴。','审美与评价能力：形成个人化的审美评价，表达对作品的理解和感悟。','表达与交流能力：通过口头和书面形式，清晰、有理有据地表达诗词分析与评价。']
-};
-
-const componentTemplates = {
-  '情境导入':{title:'情境导入组件',lines:['出示一段与本课相关的生活情境视频/图片。','提问：你观察到了什么？这与今天要学的知识有什么联系？','学生自由发言，教师引导聚焦核心问题。']},
-  '问题导入':{title:'问题导入组件',lines:['提出一个具有认知冲突的核心问题。','学生独立思考1分钟，写下自己的猜想。','小组内交流，教师收集典型想法板书。']},
-  '实验导入':{title:'实验导入组件',lines:['呈现一个简单、可操作的演示实验。','学生观察现象，记录关键信息。','引导学生提出问题并进入新课。']},
-  '小组讨论':{title:'小组合作学习',lines:['分组策略：异质分组，4-5人/组。','角色分工：记录员、发言人、时间管理员、质疑员。','任务：围绕“核心问题”展开讨论，形成小组结论。','展示：每组2-3分钟汇报，其他组补充或质疑。','评价：过程性评价+成果评价，关注参与度与表达质量。']},
-  '角色扮演':{title:'角色扮演活动',lines:['设定情境与角色，明确活动规则。','学生分组准备3分钟。','分组展示，教师适时点拨。','全班讨论：不同角色的观点有什么异同？']},
-  '实验探究':{title:'实验探究活动',lines:['明确实验目的与假设。','学生分组操作，记录数据。','分析数据，小组讨论得出结论。','全班交流，教师总结科学方法与注意事项。']},
-  '课堂游戏':{title:'课堂游戏',lines:['设计与本课核心知识相关的竞赛/闯关游戏。','全班分组参与，限时完成。','公布结果，结合知识点进行点评。']},
-  '启发式提问链':{title:'启发式提问链',lines:['基础问题：本节课的核心概念是什么？（记忆/理解）','进阶问题：它和我们学过的哪个知识有联系？（应用/分析）','高阶问题：如果条件改变，结论会怎样？（评价/创造）']},
-  '例题变式':{title:'例题变式练习',lines:['原题：呈现课本典型例题。','变式一：改变已知条件，训练正向迁移。','变式二：改变所求问题，训练逆向思维。','学生独立完成，教师选择典型错例讲评。']},
-  '课堂小测':{title:'课堂小测',lines:['设计3-5道当堂检测题。','学生独立作答5分钟。','当堂批改/互批，及时反馈。']},
-  '分层任务':{title:'差异化分层任务',lines:['基础层：提供脚手架（填空、表格、提示卡），完成核心概念识记。','标准层：独立完成课堂练习，能解释解题思路。','拓展层：完成开放性问题，进行比较、迁移或创作。']},
-  '支架递减':{title:'支架递减设计',lines:['高支架：教师示范+详细步骤+句式模板。','中支架：小组讨论+问题引导+示例分析。','低支架：独立完成+同伴互评+自我修正。']},
-  '学科网考点':{title:'学科网考点关联',lines:['本节课对应课标：掌握核心概念，能运用其解决实际问题。','中考/高考常见考法：选择题、填空题、解答题。','学科网真题示例：可插入1-2道典型真题及解析。']},
-  '学科网素材':{title:'学科网教学素材',lines:['教材解析：本节课在单元中的位置和作用。','相关课件图片/视频素材建议。','拓展阅读：与本课主题相关的学科网精选资源。']}
-};
-
-let state = { view:'home', query:'', sections:[], openIds:new Set(), inputs:{classBase:'',hours:'',focus:[],style:''}, planVisible:false, selectedPlan:null, chat:[{role:'ai',text:'你好，我是小博士。输入课题后我会帮你生成教案框架。'}], inputMsg:'', contextMenu:null, askOpen:false, previewOpen:false, dragging:null, chatCollapsed:false };
-
-const $ = id => document.getElementById(id);
-
+const baseSections=[
+ {id:'goal',title:'教学目标',time:'—',lines:['有节奏、有气势地朗读并背诵全词，掌握“莽莽、妖娆、风骚、天骄、风流人物”等词语。','圈画“望、舞、驰、惜、数”等关键词，赏析虚实相生、化静为动、对比等手法。','梳理“景—史—情”的结构，理解词人热爱山河、评点历史、抒发抱负的情感脉络。','联系新时代青年使命，思考“风流人物”的当代内涵。']},
+ {id:'focus',title:'教学重点与难点',time:'—',lines:['教学重点：通过朗读设计和意象赏析，体会上阕雄浑壮阔的雪景意境。','教学重点：抓住“惜”和“数风流人物，还看今朝”，理解下阕评史明志的作用。','教学难点：理解“惜”中既有肯定又有惋惜的辩证态度，并将古代英雄与新时代担当建立联系。']},
+ {id:'intro',title:'导入',time:'5 分钟',lines:['先呈现《江雪》中清冷孤寂的雪景，再播放北国长城、黄土高原的壮阔雪景。','提问：“同样是写雪，两组画面给你的感受有何不同？”学生用一个词写下第一感受。','从“清冷孤寂”与“壮阔豪迈”的差异切入《沁园春·雪》，板书课题与作者。']},
+ {id:'preview',title:'任务一：自主预学',time:'10 分钟',lines:['学生借助教材注释完成字音、词义和文体常识检测，重点辨析“分外、数风流人物、风骚”。','结合课件标注节奏、领字和韵脚，明确“望”“惜”在句首领起下文。','用四至六个字概括上下阕内容：上阕绘雪景，下阕评英雄、抒抱负。']},
+ {id:'scene',title:'任务二：品“多娇江山”',time:'20 分钟',lines:['圈画上阕意象：冰封、雪飘、长城、大河、群山、高原、晴日，概括画面特点。','聚焦“望”字，梳理从“长城内外”到“欲与天公试比高”的统领范围和空间层次。','比较“山舞银蛇，原驰蜡象”中的“舞、驰”与普通动词，体会化静为动的力量感。','辨析眼前雪景与“须晴日”的想象，理解虚实相生、红白映衬的审美效果。']},
+ {id:'read1',title:'朗读设计：上阕',time:'10 分钟',lines:['“北国风光”豪迈而舒缓；“千里冰封，万里雪飘”拉长重读，读出空间的辽阔。','“望”后稍作停顿，“山舞银蛇，原驰蜡象”提高语调、加快节奏，读出动态气势。','“须晴日，看红装素裹，分外妖娆”放慢语速，读出对祖国山河的赞叹。']},
+ {id:'history',title:'任务三：评“历史人物”',time:'20 分钟',lines:['找出“江山如此多娇，引无数英雄竞折腰”的过渡作用，由写景转入评史。','梳理秦皇汉武、唐宗宋祖、成吉思汗的功绩与局限，理解词人为何选择这些代表人物。','小组讨论：“惜”的是什么？明确其中既有对历史功绩的肯定，也有对文治与时代局限的惋惜。','由“俱往矣”转向“今朝”，理解词人超越历史、开创未来的自信。']},
+ {id:'read2',title:'朗读设计：下阕',time:'10 分钟',lines:['“惜秦皇汉武”语调低沉舒缓，“略输、稍逊、只识”重读，读出辩证评价。','“俱往矣”放慢并拉长，形成历史与当下的转折。','“数风流人物，还看今朝”提高语调，重读“数、今朝”，读出坚定、自信与伟大抱负。']},
+ {id:'thinking',title:'任务四：古今思辨',time:'10 分钟',lines:['讨论：“风流人物”在词中指谁？结合1936年的时代背景，从革命英雄、人民群众两个角度理解。','对比古代帝王与新时代青年：前者功业服务于封建王朝，后者应心怀家国人民、担当民族复兴。','仿写：“数风流人物，还看今朝。以青春之我，________。”并分享自己的答案。']},
+ {id:'summary',title:'课堂小结',time:'5 分钟',lines:['全词由北国雪景写到历史人物，再落到今朝风流，形成“景—史—情”的递进。','意象宏大、视野开阔、手法多样、情感豪迈，共同构成“气魄之大”。','学生用“一个关键词 + 一句词”概括本课最深的感受。']},
+ {id:'homework',title:'分层作业',time:'—',lines:['基础：背诵并默写全词，完成学案中字词、节奏和重点句检测。','提升：用150字赏析“山舞银蛇，原驰蜡象”，写清手法、画面和情感。','拓展：对比阅读《沁园春·长沙》，从意象、意境和青年担当三个角度完成阅读札记。']}
+];
+const plans=[
+ {id:'scene',name:'双雪景对比导入',desc:'对比《江雪》的清冷孤寂与北国雪景的壮阔豪迈，让学生先形成审美差异。',fit:'基础一般',time:'5 分钟',material:'两段雪景视频',risk:'视频需控制在3分钟内',recommended:true},
+ {id:'conflict',name:'朗读气魄导入',desc:'教师用两种不同语气朗读“千里冰封，万里雪飘”，学生判断哪一种更符合文本。',fit:'朗读基础较好',time:'4 分钟',material:'课文朗读',risk:'需要教师示范具有明显差异'},
+ {id:'review',name:'手迹与传播故事导入',desc:'展示毛泽东手迹和1945年重庆传播故事，从“为何无人能超越其气魄”进入文本。',fit:'思辨兴趣较强',time:'6 分钟',material:'手迹图片',risk:'背景介绍过长会挤压文本阅读'}
+];
+const resourceItems=[['《江雪》雪景朗诵视频','用于导入，与北国雪景形成“清冷—壮阔”的审美对比。'],['北国长城与黄土高原雪景视频','对应“千里冰封、万里雪飘”“山舞银蛇，原驰蜡象”。'],['1936年红军东征动态地图','用于理解创作背景和“还看今朝”的革命自信。'],['秦皇汉武等历史人物资料卡','按“主要功绩—历史局限”呈现，支持“惜”字的辩证讨论。'],['毛泽东《沁园春·雪》手迹','用于朗读课或拓展导入，感受书法气势与词作传播。'],['《沁园春·长沙》对比阅读','用于课后拓展，比较意象选择、青春气象和家国抱负。']];
+const interactionItems=[['雪景感受对比','学生可能只回答“一个安静，一个壮观”','追问“这种感受由哪些画面、声音和词语产生？”把直觉转向文本证据。'],['“舞、驰”炼字讨论','学生容易只说“用了拟人，很生动”','要求将“舞、驰”替换为“绕、铺”朗读比较，说明力量感和豪迈气势的差异。'],['“惜”字辩证评价','学生可能把词人的态度简单理解为批评','先列历史功绩，再寻找“略、稍、只”等程度词，形成“肯定中有惋惜”的判断。'],['“风流人物”内涵','学生可能直接回答“毛泽东”','补充1936年背景，引导从革命英雄、人民群众和时代新人三个层面讨论。'],['仿写分享','部分学生表达空泛或不愿发言','先提供“以青春之我，____”句式支架，同桌互读后再邀请代表分享。']];
+const exerciseItems=[['字词检测','给“妖娆、稍逊、风骚、成吉思汗、数风流人物”注音并解释词义。'],['朗读设计','为“江山如此多娇，引无数英雄竞折腰”标注停连、重音和语调。'],['炼字赏析','“舞”和“驰”能否换成“绕”和“铺”？结合画面与情感说明理由。'],['结构理解','“江山如此多娇，引无数英雄竞折腰”在上下阕之间有什么作用？'],['思辨表达','词人为什么用“惜”评价五位帝王？你如何理解“还看今朝”？']];
+const homeworkItems=[['基础','背诵并默写全词，整理“莽、娆、逊、骚、数”等字音词义。'],['提升','用150字赏析“山舞银蛇，原驰蜡象”，写清手法、画面与情感。'],['拓展','对比《沁园春·长沙》，从意象、意境和青年担当三个角度完成阅读札记。']];
+let state={view:'home',query:'统编版九年级上册《沁园春·雪》/ 毛泽东',inputs:{base:'基础一般',duration:'2 课时',style:'诵读赏析',focus:['朗读品味','景史情融合']},uploads:['reference','lesson','ppt'],selectedOutputs:new Set(outputs.map(x=>x.id)),activeMaterial:'lesson',selectedPlan:'scene',sections:structuredClone(baseSections),open:new Set(baseSections.map(x=>x.id)),chat:[{role:'ai',text:'三份备课资料已识别完成。我会以真实教案的两课时结构为主，结合导学案的分层任务和原课件的朗读设计，陪你完成《沁园春·雪》的备课。'}],chatCollapsed:false,dirty:new Set(),needsSync:false,feedback:'',activeTarget:null,answerSeed:0,adopted:new Set(),synced:new Set(),syncedSlides:[]};
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function icon(name){return `<span class="icon">${icons[name]||name}</span>`}
+function toast(msg){const old=$('toast');if(old)old.remove();const el=document.createElement('div');el.id='toast';el.className='toast';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2700)}
+function render(){({home:renderHome,setup:renderSetup,package:renderPackage,generating:renderGenerating,workspace:renderWorkspace}[state.view]||renderHome)()}
+function topbar(){return `<header class="topbar"><div class="brand"><img class="logo" src="assets/logo-cap-blue.png">AI 小博士</div><nav class="nav"><div class="nav-item active">智能备课</div><div class="nav-item">智能组卷</div><div class="nav-item">教学问答</div><div class="nav-item">我的资料</div></nav><div class="user-dot">王</div></header>`}
 function renderHome(){
-  const app = $('app');
-  app.innerHTML = `<div class="home-fade" style="min-height:100vh;background:linear-gradient(135deg,#f0f6ff 0%,#fff 50%,#f8f9fb 100%);display:flex;flex-direction:column">
-    <header style="display:flex;align-items:center;justify-content:space-between;padding:18px 32px">
-      <div style="display:flex;align-items:center;gap:10px"><img class="logo-mark home" src="assets/logo-cap-blue.png"><span style="font-weight:800;font-size:18px;color:var(--brand-deep)">AI 小博士</span></div>
-      <div style="display:flex;gap:16px;font-size:14px;color:var(--ink-2)"><span style="cursor:pointer;font-weight:800;color:var(--brand)">写教案</span><span style="cursor:pointer">出课件</span><span style="cursor:pointer">组试卷</span><span style="cursor:pointer">我的</span></div>
-    </header>
-    <main style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 20px 60px">
-      <div style="text-align:center;max-width:720px;margin-bottom:36px">
-        <h1 style="font-size:42px;font-weight:900;line-height:1.25;margin-bottom:14px">让 AI 成为你的备课副驾驶</h1>
-        <p style="font-size:18px;color:var(--ink-2);line-height:1.6">输入课题，AI 小博士先给教学框架，再陪你逐环节打磨教案</p>
-      </div>
-      <div class="card" style="width:100%;max-width:720px;padding:16px 18px;display:flex;gap:12px;align-items:center">
-        <span class="ui-icon search">搜</span>
-        <input id="homeInput" style="flex:1;border:none;outline:none;font-size:16px;background:transparent" placeholder="输入课题、教材版本或年级，例如：人教版七年级上册《春》">
-        <button class="btn btn-primary" id="homeBtn">写教案</button>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center">
-        <button class="btn btn-secondary btn-sm" data-q="人教版七年级上册《春》">人教版七年级上册《春》</button>
-        <button class="btn btn-secondary btn-sm" data-q="《沁园春·雪》毛泽东诗词赏析与解读">《沁园春·雪》毛泽东诗词赏析与解读</button>
-        <button class="btn btn-secondary btn-sm" data-q="北师大版八年级数学《勾股定理》">北师大版八年级数学《勾股定理》</button>
-      </div>
-      <div class="home-card-grid">
-        <div class="card entry-card active"><div class="ui-icon card-icon">教</div><div class="entry-card-title">写教案</div><div class="entry-card-desc">输入课题，AI和你一起打磨教学设计</div></div>
-        <div class="card entry-card"><div class="ui-icon card-icon">课</div><div class="entry-card-title">出课件</div><div class="entry-card-desc">根据教案一键生成课件大纲与素材</div></div>
-        <div class="card entry-card"><div class="ui-icon card-icon">卷</div><div class="entry-card-title">组试卷</div><div class="entry-card-desc">按知识点快速组卷、分层出题</div></div>
-        <div class="card entry-card"><div class="ui-icon card-icon">问</div><div class="entry-card-title">问小博士</div><div class="entry-card-desc">教学问题随时问，政策、课标、教材都能答</div></div>
-      </div>
-    </main>
-  </div>`;
-  const go = q => { if(!q) q=$('homeInput').value.trim(); if(!q) return; state.query=q; state.view='wizard'; render(); };
-  $('homeBtn').onclick = () => go();
-  $('homeInput').onkeydown = e => { if(e.key==='Enter') go(); };
-  app.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>go(b.dataset.q));
-  app.querySelector('.entry-card.active').onclick = () => go($('homeInput').value.trim());
+ $('app').innerHTML=`<div class="home">${topbar()}<main class="hero"><span class="pill blue">${icon('spark')} 小博士二期 · 智能备课资料包</span><h1>让 AI 成为你的备课副驾驶</h1><p>从一个课题开始，选方案、磨环节，一次生成能直接使用的备课材料</p><div class="search-box">${icon('book')}<input id="topicInput" value="${esc(state.query)}" placeholder="输入课题、教材版本或年级，例如：统编版九年级上册《沁园春·雪》"><button class="btn btn-primary" id="startBtn">开始备课 ${icon('expand')}</button></div><div class="examples">${['统编版九年级上册《沁园春·雪》/ 毛泽东','统编版九年级上册《我爱这土地》','统编版九年级上册《乡愁》'].map(x=>`<button class="example" data-topic="${x}">${x}</button>`).join('')}</div></main><section class="recent"><div class="section-title"><h2>最近课节</h2><button class="btn btn-ghost btn-sm">查看全部</button></div><div class="recent-grid">${[['语文 · 九年级上册','《沁园春·雪》/ 毛泽东','刚刚编辑 · 已识别3份资料'],['语文 · 九年级上册','《我爱这土地》/ 艾青','3 天前 · 4 项材料'],['语文 · 九年级上册','《乡愁》/ 余光中','上周 · 待继续打磨']].map((x,i)=>`<button class="recent-card" data-recent="${i}"><div class="subject">${x[0]}</div><div class="title">${x[1]}</div><div class="meta">${x[2]}</div></button>`).join('')}</div></section><section class="home-features">${[['spark','三个方案供你选','每个方案说明适用学情、耗时与风险'],['chat','模拟真实课堂','补充学生反应、冷场预案与互动设计'],['sync','一处设计，多处同步','教案、PPT、练习保持同一教学逻辑'],['check','导出前轻量检查','提示时间、目标匹配与素材来源风险']].map(x=>`<div class="feature">${icon(x[0])}<b>${x[1]}</b>${x[2]}</div>`).join('')}</section></div>`;
+ const go=q=>{state.query=q||$('topicInput').value.trim();if(!state.query){toast('请先输入要备课的课题');return}state.view='setup';state.chat.push({role:'user',text:state.query},{role:'ai',text:'我已识别到课题信息。再补充少量学情和课时，我会让活动与练习更贴合你的课堂。'});render()};
+ $('startBtn').onclick=()=>go();$('topicInput').onkeydown=e=>{if(e.key==='Enter')go()};document.querySelectorAll('.example').forEach(b=>b.onclick=()=>go(b.dataset.topic));document.querySelectorAll('[data-recent]').forEach(b=>b.onclick=()=>{state.query=b.querySelector('.title').textContent;state.view='workspace';render()})
 }
-
+function progress(step){return `<div class="progress">${['明确课节','选择资料包','生成与打磨'].map((x,i)=>`${i?'<div class="progress-line"></div>':''}<div class="progress-step ${i+1<step?'done':i+1===step?'active':''}"><span class="progress-num">${i+1<step?'✓':i+1}</span>${x}</div>`).join('')}</div>`}
+function setupShell(content,step=1){return `<div class="setup-shell"><header class="setup-head"><div class="brand"><img class="logo sm" src="assets/logo-cap-blue.png">AI 小博士</div><button class="btn btn-ghost btn-sm" id="exitSetup">退出备课</button></header><main class="setup-main">${progress(step)}${content}</main></div>`}
+function renderSetup(){
+ const groups=[{label:'班级基础',key:'base',opts:['基础较弱','基础一般','基础较好','层次分明']},{label:'课时长度',key:'duration',opts:['1 课时（45分钟）','2 课时','3 课时']},{label:'备课风格',key:'style',opts:['诵读赏析','任务驱动','思辨拓展']}];
+ const content=`<section class="setup-card"><div class="setup-card-head"><h1>先了解这节课</h1><p>只保留影响课堂设计的关键信息；不确定的内容可以跳过。</p></div><div class="setup-body"><div class="recognized"><div><strong>${icon('check')} 已识别课题信息</strong><span>初中语文 · 九年级上册 · 第1课《沁园春·雪》/ 毛泽东</span></div><button class="btn btn-secondary btn-sm">修改</button></div>${groups.map(g=>`<div class="form-section"><div class="form-label">${g.label}<span class="optional">可跳过</span></div><div class="chips">${g.opts.map(o=>`<button class="chip ${state.inputs[g.key]===o?'selected':''}" data-key="${g.key}" data-val="${o}">${state.inputs[g.key]===o?icon('check'):''}${o}</button>`).join('')}</div></div>`).join('')}<div class="form-section"><div class="form-label">教学重点 <span class="optional">可多选</span></div><div class="chips">${['朗读品味','意象手法','景史情融合','古今思辨'].map(o=>`<button class="chip ${state.inputs.focus.includes(o)?'selected':''}" data-focus="${o}">${state.inputs.focus.includes(o)?icon('check'):''}${o}</button>`).join('')}</div></div><div class="form-section"><div class="form-label">已有资料 <span class="optional">小博士已完成识别</span></div><div class="upload-row">${[['reference','参考资料.docx','导学案、分层探究与标准答案'],['lesson','真实教案.docx','两课时教学设计与课堂活动'],['ppt','《沁园春·雪》课件.pptx','17页水墨课件与朗读设计']].map(x=>`<button class="upload-card ${state.uploads.includes(x[0])?'added':''}" data-upload="${x[0]}">${icon(state.uploads.includes(x[0])?'check':'upload')}<div><b>${state.uploads.includes(x[0])?'已识别：':''}${x[1]}</b><span>${state.uploads.includes(x[0])?'已提取可用信息，将自动用于后续生成':x[2]}</span></div></button>`).join('')}</div></div></div><footer class="setup-footer"><span class="hint">所有信息后续均可修改</span><div><button class="btn btn-ghost" id="skipSetup">跳过</button> <button class="btn btn-primary" id="nextPackage">下一步：选择资料包 ${icon('expand')}</button></div></footer></section>`;
+ $('app').innerHTML=setupShell(content);$('exitSetup').onclick=()=>{state.view='home';render()};$('skipSetup').onclick=$('nextPackage').onclick=()=>{state.view='package';render()};document.querySelectorAll('[data-key]').forEach(b=>b.onclick=()=>{state.inputs[b.dataset.key]=b.dataset.val;renderSetup()});document.querySelectorAll('[data-focus]').forEach(b=>b.onclick=()=>{const v=b.dataset.focus;state.inputs.focus=state.inputs.focus.includes(v)?state.inputs.focus.filter(x=>x!==v):[...state.inputs.focus,v];renderSetup()});document.querySelectorAll('[data-upload]').forEach(b=>b.onclick=()=>{const v=b.dataset.upload;if(!state.uploads.includes(v))state.uploads.push(v);renderSetup();toast('资料识别完成，已提取格式和学情信息')})
+}
+function renderPackage(){
+ const content=`<section class="setup-card"><div class="setup-card-head"><h1>这节课需要哪些备课材料？</h1><p>默认生成完整资料包。你可以关闭暂时不需要的内容，之后随时补充。</p></div><div class="setup-body package-intro"><div class="output-grid">${outputs.map(o=>`<button class="output-card ${state.selectedOutputs.has(o.id)?'selected':''}" data-output="${o.id}"><span class="output-check">${state.selectedOutputs.has(o.id)?'✓':''}</span><div>${icon(o.icon)} <b>${o.name}</b><p>${o.desc}</p></div></button>`).join('')}</div><aside class="package-aside"><h3>本次生成摘要</h3><div class="summary-row"><span>课题</span><b>${esc(state.query)}</b></div><div class="summary-row"><span>班级基础</span><b>${state.inputs.base}</b></div><div class="summary-row"><span>课时</span><b>${state.inputs.duration}</b></div><div class="summary-row"><span>生成材料</span><b>${state.selectedOutputs.size} 项</b></div><div class="summary-row"><span>已识别资料</span><b>${state.uploads.length} 份</b></div><div class="ai-note">${icon('spark')} 建议保留“互动环节”和“课堂练习”，小博士会据此模拟学生反应并检查目标是否落实。</div></aside></div><footer class="setup-footer"><button class="btn btn-secondary" id="backSetup">${icon('back')} 返回修改</button><button class="btn btn-primary" id="generateBtn">生成智能备课资料包 ${icon('spark')}</button></footer></section>`;
+ $('app').innerHTML=setupShell(content,2);$('exitSetup').onclick=()=>{state.view='home';render()};$('backSetup').onclick=()=>{state.view='setup';render()};document.querySelectorAll('[data-output]').forEach(b=>b.onclick=()=>{const id=b.dataset.output;state.selectedOutputs.has(id)?state.selectedOutputs.delete(id):state.selectedOutputs.add(id);renderPackage()});$('generateBtn').onclick=()=>{if(!state.selectedOutputs.size){toast('请至少选择一项输出内容');return}state.view='generating';render()}
+}
+function renderGenerating(){
+ $('app').innerHTML=`<div class="generating"><div class="generating-card"><div class="brain">${icons.spark}</div><h2>小博士正在组装这节课</h2><p>先完成教学骨架和导入方案，你可以更早开始打磨。</p><div class="gen-list">${[['校验教材与学科网资料','done'],['生成教学目标与整体框架','done'],['准备 3 个差异化导入方案','active'],['同步教案、PPT 与分层练习','']].map(x=>`<div class="gen-item ${x[1]}">${x[1]==='done'?icon('check'):x[1]==='active'?icon('spark'):icon('clock')}<span>${x[0]}</span><span class="gen-state">${x[1]==='done'?'已完成':x[1]==='active'?'生成中':'等待中'}</span></div>`).join('')}</div></div></div>`;
+ setTimeout(()=>{state.view='workspace';state.chat.push({role:'ai',text:'教学骨架已完成。我为“导入环节”准备了 3 个策略不同的方案，并根据班级基础推荐了一个。请先完成选择，再继续打磨。'});render()},1300)
+}
+function materialTabs(){return outputs.filter(o=>state.selectedOutputs.has(o.id)).map(o=>`<button class="material-tab ${state.activeMaterial===o.id?'active':''}" data-material="${o.id}"><span class="label">${o.name}</span><span class="tab-status ready"></span></button>`).join('')}
 function renderWorkspace(){
-  const app = $('app');
-  app.innerHTML = `<div class="workspace workspace-shell">
-    <aside class="chat-column ${state.chatCollapsed?'collapsed':''}" id="chatColumn">
-      <div class="chat-head">
-        <div style="display:flex;align-items:center;gap:8px"><img class="logo-mark chat" src="assets/logo-cap-blue.png"><span class="chat-brand-text" style="font-weight:800;font-size:15px">小博士</span></div>
-        <div class="chat-head-actions"><button class="btn btn-secondary btn-sm" id="backHome">返回</button><button class="collapse-chat" id="collapseChat" title="${state.chatCollapsed?'展开对话栏':'收起对话栏'}">${state.chatCollapsed?'〉':'〈'}</button></div>
-      </div>
-      <div class="chat-content">
-        <div class="chat-topic"><div class="chat-topic-label">当前课题</div><div class="chat-topic-title">${state.query}</div></div>
-        <div id="chatBox" style="flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column"></div>
-        <div class="chat-suggestions">
-          <div class="chat-suggestions-title">可以试试</div>
-          ${['增加学生互动','检查课时安排','补充课堂冷场预案'].map(t=>`<button class="chat-suggestion quickBtn" data-prompt="${t}">${t}<span style="float:right;color:#a7afb9">›</span></button>`).join('')}
-        </div>
-        <div class="chat-compose">
-          <input id="chatInput" placeholder="问小博士如何优化这份教案…">
-          <button class="btn btn-primary btn-sm" id="chatSend">发送</button>
-        </div>
-      </div>
-    </aside>
-    <main class="editor-column">
-      <header class="resource-bar">
-        <div class="resource-tabs">
-          <div class="resource-tab"><span class="ui-icon comp-icon">文</span><span>教案正文</span><span style="font-size:16px;color:#9ca3af">⋮</span></div>
-          <button class="resource-plus" id="resourcePlus" title="添加资料">+</button>
-          <div class="resource-menu" id="resourceMenu">
-            <button class="resource-menu-item">从学科网添加资料</button>
-            <button class="resource-menu-item">上传本地资料</button>
-            <button class="resource-menu-item">新建空白资料</button>
-          </div>
-        </div>
-        <div class="resource-actions">
-          <button class="btn btn-secondary btn-sm" id="previewBtn">预览</button>
-          <button class="btn btn-primary btn-sm" id="exportBtn">导出 Word</button>
-        </div>
-      </header>
-      <div class="editor-scroll" id="editorMain">
-        <div class="document-shell">
-          <article class="document-card">
-            <div class="document-head">
-              <div class="document-title">${state.query}</div>
-            </div>
-            <div id="sectionsArea"></div>
-          </article>
-        </div>
-      </div>
-    </main>
-  </div>`;
-
-  $('backHome').onclick = () => { state.view='home'; render(); };
-  $('collapseChat').onclick = () => { state.chatCollapsed=!state.chatCollapsed; renderWorkspace(); };
-  $('resourcePlus').onclick = e => { e.stopPropagation(); $('resourceMenu').classList.toggle('open'); };
-  app.onclick = e => { const menu=$('resourceMenu'); if(menu && !menu.contains(e.target) && e.target!==$('resourcePlus')) menu.classList.remove('open'); };
-  $('chatSend').onclick = () => { const v=$('chatInput').value.trim(); if(v){ sendChat(v); $('chatInput').value=''; } };
-  $('chatInput').onkeydown = e => { if(e.key==='Enter') $('chatSend').click(); };
-  $('previewBtn').onclick = renderPreview;
-  $('exportBtn').onclick = () => exportWord();
-  app.querySelectorAll('.quickBtn').forEach(b=>b.onclick=()=>sendChat(b.dataset.prompt || b.textContent));
-  renderChat();
-  renderSections();
+ $('app').innerHTML=`<div class="workspace"><aside class="chat-column ${state.chatCollapsed?'collapsed':''}"><div class="chat-head"><div class="chat-brand"><img class="logo sm" src="assets/logo-cap-blue.png"><span class="brand-name">小博士</span></div><div class="chat-actions"><button class="square-btn" id="backHome" title="返回首页">${icon('home')}</button><button class="square-btn" id="collapseChat" title="收起/展开">${icon(state.chatCollapsed?'expand':'collapse')}</button></div></div><div class="chat-body"><div class="topic-card"><small>当前课节</small><b>${esc(state.query)}</b></div><div class="chat-scroll" id="chatScroll">${state.chat.map((m,i)=>renderChatMessage(m,i)).join('')}</div><div class="quick-area"><div class="quick-title">针对当前设计</div><div class="quick-list">${['增加学生互动','补充冷场预案','检查课时安排','降低练习难度'].map(q=>`<button class="quick" data-quick="${q}">${q}</button>`).join('')}</div></div><div class="composer"><input id="chatInput" placeholder="问问小博士…"><button class="btn btn-primary btn-sm" id="chatSend">发送</button></div></div></aside><main class="main-column"><header class="workbar"><div class="material-tabs">${materialTabs()}</div><div class="work-actions"><button class="btn btn-secondary btn-sm sync-btn" id="syncBtn">${icon('sync')}<span>同步材料</span>${state.needsSync?'<i class="sync-dot"></i>':''}</button><button class="btn btn-secondary btn-sm" id="auditBtn">${icon('check')}<span>检查</span></button><button class="btn btn-primary btn-sm" id="exportBtn">导出 ${icon('expand')}</button></div></header><div class="content-scroll"><div class="work-layout"><section class="doc-card" id="mainDoc">${renderMaterial()}</section></div></div></main></div>`;
+ bindWorkspace()
 }
-
-function renderChat(){
-  const box = $('chatBox'); if(!box) return;
-  box.innerHTML = state.chat.map(m => `<div class="chat-bubble ${m.role}">${m.text}</div>`).join('');
-  box.scrollTop = box.scrollHeight;
+function renderMaterial(){if(state.activeMaterial==='lesson')return renderLesson();if(state.activeMaterial==='ppt')return renderPpt();if(state.activeMaterial==='resources')return renderResources();if(state.activeMaterial==='interaction')return renderInteraction();if(state.activeMaterial==='exercise')return renderExercises(false);return renderExercises(true)}
+function renderLesson(){return `<div class="doc-head"><div class="doc-head-row"><div class="doc-title">${esc(state.query)}</div><button class="btn btn-ghost btn-sm" id="showPlans">比较导入方案</button></div></div>${state.selectedPlan?'':renderPlanStage()}<div class="section-list" id="sectionList">${state.sections.map((s,i)=>renderSection(s,i)).join('')}</div>`}
+function renderPlanStage(){return `<div class="plan-stage"><div class="plan-intro"><div><h2>选择导入设计</h2><p>选择更适合这节课的课堂策略。</p></div><button class="btn btn-secondary btn-sm" id="refreshPlans">换一批</button></div><div class="plan-grid">${plans.map(p=>`<div class="plan-card ${state.selectedPlan===p.id?'selected':''}">${p.recommended?'<span class="recommend">AI 推荐</span>':''}<h3>${p.name}</h3><p>${p.desc}</p><div class="plan-facts"><span class="pill">${p.fit}</span><span class="pill">${p.time}</span><span class="pill">需 ${p.material}</span></div><div class="plan-risk">${icon('risk')} ${p.risk}</div><button class="btn ${state.selectedPlan===p.id?'btn-primary':'btn-secondary'} btn-sm" data-plan="${p.id}">${state.selectedPlan===p.id?'已采用':'采用此方案'}</button></div>`).join('')}</div></div>`}
+function renderSection(s,i){return `<article class="lesson-section" draggable="true" data-section="${s.id}" data-index="${i}" oncontextmenu="openModuleContext(event,'${s.id}')"><div class="section-head"><div class="section-head-left"><span class="drag-handle">${icons.drag}</span><span class="section-name">${s.title}</span></div></div><div class="section-content">${s.lines.map((l,j)=>`<div class="editable-line ${state.dirty.has(s.id+'-'+j)?'protected':''}" contenteditable="true" data-line="${s.id}-${j}" oncontextmenu="openContext(event,'${s.id}',${j})">${esc(l)}</div>`).join('')}<div class="section-tools">${['更具体','更简洁','加例子','降低难度','增加互动','调整时长'].map(a=>`<button class="mini-action" data-ai-action="${a}" data-section-id="${s.id}">${a}</button>`).join('')}</div></div></article>`}
+function renderAdoptButton(type,index){const key=`${type}:${index}`,synced=state.synced.has(key),adopted=state.adopted.has(key);return `<div class="adopt-row"><button class="adopt-btn ${synced?'synced':adopted?'pending':''}" data-adopt-type="${type}" data-adopt-index="${index}" ${synced?'disabled':''}>${synced?'已同步':adopted?'待同步':'采纳'}</button></div>`}
+function renderPpt(){const slides=[['单元导学','任务一：学习鉴赏｜任务二：诗歌朗诵｜任务三：尝试创作'],['诗歌与概念','感情基调、意象、意境'],['课题页','沁园春·雪｜毛泽东'],['词体常识','词牌、上下阕、豪放派与婉约派'],['自主预学','字音、节奏、领字、押韵'],['写作背景','1936年陕北，红军东征前夕'],['品“多娇江山”','意象之大、手法之多'],['上阕朗读设计','重音、停连、语调与情感'],['评“历史人物”','过渡句、“惜”字与五位帝王'],['格局与信念','略输、稍逊、只识｜俱往矣、今朝'],['下阕朗读设计','读出自信豪迈与伟大抱负'],['毛泽东手迹','诗词传播与重庆轰动'],['课后作业','完成学案｜拓展《沁园春·长沙》'],...state.syncedSlides];return `<div class="material-view"><h2>PPT</h2><div class="ppt-grid">${slides.map((x,i)=>`<div class="ppt-slide ${i>=13?'synced':''}"><b>${x[0]}</b><p>${esc(x[1])}</p><span class="num">${i+1}</span></div>`).join('')}</div></div>`}
+function renderResources(){return `<div class="material-view"><h2>推荐资料</h2><div class="resource-list">${resourceItems.map((x,i)=>{const key=`resources:${i}`;return `<div class="resource-card ${state.synced.has(key)?'synced':state.adopted.has(key)?'adopted':''}"><b>${x[0]}</b><p>${x[1]}</p>${renderAdoptButton('resources',i)}</div>`}).join('')}</div></div>`}
+function renderInteraction(){return `<div class="material-view"><h2>课堂互动与学生反应预设</h2>${interactionItems.map((x,i)=>{const key=`interaction:${i}`;return `<div class="exercise ${state.synced.has(key)?'synced':state.adopted.has(key)?'adopted':''}"><div class="level">互动 ${i+1}</div><b>${x[0]}</b><p><strong>预设：</strong>${x[1]}</p><p><strong>教师应对：</strong>${x[2]}</p>${renderAdoptButton('interaction',i)}</div>`}).join('')}</div>`}
+function renderExercises(homework){const type=homework?'homework':'exercise',rows=homework?homeworkItems:exerciseItems;return `<div class="material-view"><h2>${homework?'分层作业':'课堂练习'}</h2>${rows.map((x,i)=>{const key=`${type}:${i}`;return `<div class="exercise ${state.synced.has(key)?'synced':state.adopted.has(key)?'adopted':''}"><div class="level">${x[0]}</div><b>《沁园春·雪》</b><p>${x[1]}</p>${renderAdoptButton(type,i)}</div>`}).join('')}</div>`}
+function bindWorkspace(){
+ $('backHome').onclick=()=>{state.view='home';render()};$('collapseChat').onclick=()=>{state.chatCollapsed=!state.chatCollapsed;renderWorkspace()};document.querySelectorAll('[data-material]').forEach(b=>b.onclick=()=>{state.activeMaterial=b.dataset.material;renderWorkspace()});document.querySelectorAll('[data-quick]').forEach(b=>b.onclick=()=>sendChat(b.dataset.quick));document.querySelectorAll('[data-accept-answer]').forEach(b=>b.onclick=()=>acceptAnswer(+b.dataset.acceptAnswer));document.querySelectorAll('[data-refresh-answer]').forEach(b=>b.onclick=()=>refreshAnswer(+b.dataset.refreshAnswer));document.querySelectorAll('[data-adopt-type]').forEach(b=>b.onclick=()=>toggleAdopt(b.dataset.adoptType,+b.dataset.adoptIndex));$('chatSend').onclick=()=>{const v=$('chatInput').value.trim();if(v){sendChat(v)}};$('chatInput').onkeydown=e=>{if(e.key==='Enter')$('chatSend').click()};$('syncBtn').onclick=syncMaterials;$('auditBtn').onclick=showAudit;$('exportBtn').onclick=showExport;
+ if(state.activeMaterial==='lesson')bindLesson();const cs=$('chatScroll');if(cs)cs.scrollTop=cs.scrollHeight
 }
-
-function sendChat(msg){
-  state.chat.push({role:'user',text:msg});
-  renderChat();
-  setTimeout(() => {
-    let reply='已收到你的需求，小博士会针对当前环节优化。';
-    if(msg.includes('导入')) reply='收到。已为你重新生成导入方案，请在“导入环节”中选择。';
-    else if(msg.includes('活动')||msg.includes('互动')) reply='收到。可以在“引导练习”标题旁选择“小组讨论”或“角色扮演”。';
-    else if(msg.includes('分层')) reply='收到。已在相关环节补充“基础/标准/拓展”三层任务。';
-    state.chat.push({role:'ai',text:reply});
-    renderChat();
-  }, 600);
+function bindLesson(){
+ [$('showPlans'),$('changePlan')].filter(Boolean).forEach(show=>show.onclick=()=>{state.selectedPlan=null;renderWorkspace()});if($('refreshPlans'))$('refreshPlans').onclick=()=>toast('已换一批方案，当前已选内容不会被覆盖');document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>applyPlan(b.dataset.plan));document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{const id=b.dataset.toggle;state.open.has(id)?state.open.delete(id):state.open.add(id);renderWorkspace()});document.querySelectorAll('[data-line]').forEach(el=>el.onblur=()=>{const [id,j]=el.dataset.line.split('-');const sec=state.sections.find(x=>x.id===id);if(sec&&sec.lines[+j]!==el.innerText.trim()){sec.lines[+j]=el.innerText.trim();state.dirty.add(el.dataset.line);state.needsSync=true;toast('已保护这处人工修改，后续不会自动覆盖')}});document.querySelectorAll('[data-ai-action]').forEach(b=>b.onclick=()=>showCompare(b.dataset.sectionId,b.dataset.aiAction));
+ const cards=[...document.querySelectorAll('[data-section]')];cards.forEach(c=>{c.ondragstart=()=>{state.dragId=c.dataset.section;c.classList.add('dragging')};c.ondragend=()=>c.classList.remove('dragging');c.ondragover=e=>e.preventDefault();c.ondrop=e=>{e.preventDefault();const from=state.sections.findIndex(x=>x.id===state.dragId),to=+c.dataset.index;if(from<0||from===to)return;const [m]=state.sections.splice(from,1);state.sections.splice(to,0,m);state.needsSync=true;renderWorkspace();toast('教学环节顺序已调整')}})
 }
-
-function startGenerate(){
-  state.view='workspace';
-  state.sections = defaultSections.map(s => ({...s, content: []}));
-  state.openIds = new Set();
-  state.chat.push({role:'user',text:'确认学情：' + ([state.inputs.classBase,state.inputs.hours,state.inputs.focus.join('/')||'默认',state.inputs.style||'默认'].filter(Boolean).join(' / ') || '跳过')});
-  state.chat.push({role:'ai',text:'收到！正在根据学情生成教学框架…'});
-  render();
-  setTimeout(() => {
-    state.sections = defaultSections.map(s => ({...s, content: frameworks[s.title] || []}));
-    state.openIds = new Set(state.sections.map(s=>s.id));
-    state.chat.push({role:'ai',text:'教案框架准备好了。你可以展开或收起环节，拖拽调整顺序，右键段落“问问小博士”，或直接选择上方的教学设计选项。'});
-    render();
-  }, 1500);
-}
-
-function toggleSection(id){
-  const next = new Set(state.openIds);
-  if(next.has(id)) next.delete(id); else next.add(id);
-  state.openIds = next;
-  renderSections();
-}
-
-function renderSections(){
-  const el = $('sectionsArea'); if(!el) return;
-  el.innerHTML = (state.planVisible ? renderPlanPicker() : '') + state.sections.map((s,i) => `
-    <div class="step-card ${state.openIds.has(s.id)?'active':''}" data-idx="${i}" data-id="${s.id}" draggable="true" oncontextmenu="handleCtx(event,'${s.id}')">
-      <div class="step-header" onclick="toggleSection('${s.id}')">
-        <div class="section-heading">
-          <span class="drag-handle">⋮⋮</span>
-          <span style="font-weight:800;font-size:15px">${s.title}</span>
-          ${renderSectionTools(s.title)}
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="section-toggle">${state.openIds.has(s.id)?'⌃':'⌄'}</span>
-        </div>
-      </div>
-      ${state.openIds.has(s.id) ? `<div class="step-content">
-        ${s.content.length === 0 ? `<div style="color:var(--ink-3);font-size:13px;padding:7px 0">小博士正在为你生成这一环节…</div>` : s.content.map((l,idx)=>`<p style="margin:5px 0;line-height:1.55;font-size:14.5px" oncontextmenu="handleLineCtx(event,'${s.id}',${idx})">${escapeHtml(l)}</p>`).join('')}
-        <div class="step-actions">
-          ${s.title==='导入环节' ? `<button class="btn btn-accent btn-sm" onclick="showPlan()">选择导入方案</button>` : ''}
-        </div>
-      </div>` : ''}
-    </div>
-  `).join('');
-  // drag events
-  el.querySelectorAll('.step-card').forEach(card => {
-    card.addEventListener('dragstart', e => { state.dragging=parseInt(card.dataset.idx); e.dataTransfer.effectAllowed='move'; card.style.opacity='0.6'; });
-    card.addEventListener('dragend', e => { state.dragging=null; card.style.opacity='1'; renderSections(); });
-    card.addEventListener('dragover', e => { e.preventDefault(); });
-    card.addEventListener('drop', e => { e.preventDefault(); const from=state.dragging; const to=parseInt(card.dataset.idx); if(from!=null && from!==to){ const arr=[...state.sections]; const [m]=arr.splice(from,1); arr.splice(to,0,m); state.sections=arr; render(); } });
-  });
-}
-
-function renderSectionTools(title){
-  const tools = {
-    '新知识介绍':['支架递减','启发式提问链'],
-    '引导练习':['小组讨论','角色扮演','实验探究','课堂游戏','例题变式','课堂小测'],
-    '导入环节':['情境导入','问题导入','实验导入'],
-    '分层教学':['分层任务'],
-    '关键知识点':['学科网考点','学科网素材']
-  };
-  const items = tools[title] || [];
-  return items.length ? `<span class="section-tools">${items.map(item=>`<button class="section-tool" onclick="event.stopPropagation();insertComponent('${item}')">${item}</button>`).join('')}</span>` : '';
-}
-
-function renderPlanPicker(){
-  const plans = [
-    {key:'情境导入',title:'情境导入',desc:'用生活实例或多媒体素材引入新课，激发兴趣。',tag:'推荐'},
-    {key:'问题导入',title:'问题导入',desc:'抛出认知冲突问题，引导学生主动思考。'},
-    {key:'复习导入',title:'复习导入',desc:'回顾旧知，建立新旧知识的连接。'}
-  ];
-  return `<div class="pop" style="margin-bottom:14px;padding:16px;border:1px dashed var(--brand-soft-border);border-radius:12px;background:var(--brand-soft)">
-    <div style="font-weight:800;font-size:14px;margin-bottom:4px">选择导入方案</div>
-    <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px">点击任一方案，AI会将其填充到导入环节</div>
-    <div class="plan-grid">${plans.map(p=>`<div class="plan-card ${state.selectedPlan===p.key?'selected':''}" onclick="applyPlan('${p.key}')">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-size:14px">${p.title}</b>${p.tag?`<span style="font-size:11px;background:var(--brand);color:#fff;padding:2px 6px;border-radius:10px">${p.tag}</span>`:''}</div>
-      <div style="font-size:12px;color:var(--ink-2);line-height:1.45">${p.desc}</div>
-    </div>`).join('')}</div>
-  </div>`;
-}
-
-function showPlan(){ state.planVisible=true; renderSections(); }
-function applyPlan(key){
-  state.selectedPlan=key;
-  const plans = {情境导入:['情境导入：出示与本课相关的生活情境图片/视频。','提问：你观察到了什么？这与今天要学的知识有什么联系？','学生自由发言，教师引导聚焦核心问题。'],问题导入:['问题导入：提出一个具有认知冲突的核心问题。','学生独立思考1分钟，写下自己的猜想。','小组内交流，教师收集典型想法并板书。'],复习导入:['复习导入：通过3道旧知检测题激活前置知识。','师生共同回顾相关概念，建立新旧知识之间的联系。','揭示课题，明确学习目标。']};
-  const idx = state.sections.findIndex(s=>s.title==='导入环节');
-  if(idx>=0){ state.sections[idx].content = plans[key]; }
-  state.planVisible=false;
-  state.chat.push({role:'ai',text:`已采用“${key}”方案填充导入环节。`});
-  render();
-}
-
-function modifySection(id, action){
-  const sec = state.sections.find(s=>s.id===id);
-  state.chat.push({role:'user',text:`对“${sec.title}”：${action}`});
-  if(action==='选择导入方案'){ showPlan(); state.chat.push({role:'ai',text:'已生成3个导入方案，请选择一个。'}); renderChat(); }
-  else {
-    setTimeout(() => { state.chat.push({role:'ai',text:`已根据“${action}”优化“${sec.title}”内容。`}); renderChat(); }, 500);
-  }
-}
-
-function insertComponent(item){
-  const tmpl = componentTemplates[item]; if(!tmpl) return;
-  const targetTitles = {
-    '分层任务':'分层教学','支架递减':'新知识介绍','启发式提问链':'新知识介绍',
-    '小组讨论':'引导练习','角色扮演':'引导练习','实验探究':'引导练习','课堂游戏':'引导练习',
-    '情境导入':'导入环节','问题导入':'导入环节','实验导入':'导入环节','例题变式':'引导练习','课堂小测':'引导练习',
-    '学科网考点':'关键知识点','学科网素材':'关键知识点'
-  };
-  const target = state.sections.find(s => s.title===targetTitles[item]) || state.sections[state.sections.length-1];
-  if(!target) return;
-  target.content = [...target.content, '—— ' + tmpl.title + ' ——', ...tmpl.lines];
-  state.chat.push({role:'ai',text:`已插入“${tmpl.title}”到当前展开环节，你可以继续修改。`});
-  render();
-}
-
-function handleCtx(e,id){ e.preventDefault(); showContextMenu(e.clientX,e.clientY,()=>{ state.askOpen=true; renderAskModal(); }); }
-function handleLineCtx(e,id,idx){ e.preventDefault(); showContextMenu(e.clientX,e.clientY,()=>{ state.askOpen=true; renderAskModal(); }); }
-function showContextMenu(x,y,onAsk){
-  state.contextMenu={x,y};
-  const existing = document.getElementById('ctxMenu'); if(existing) existing.remove();
-  const div = document.createElement('div'); div.id='ctxMenu'; div.className='context-menu pop'; div.style.left=x+'px'; div.style.top=y+'px';
-  div.innerHTML = `<div class="context-menu-item" onclick="closeCtx();openAskModal()">问问小博士</div>
-                  <div class="context-menu-item" onclick="closeCtx()">编辑段落</div>
-                  <div class="context-menu-item" onclick="closeCtx()">删除段落</div>`;
-  document.body.appendChild(div);
-  setTimeout(() => { document.addEventListener('click', closeCtx, {once:true}); }, 0);
-}
-function closeCtx(){ const el=document.getElementById('ctxMenu'); if(el) el.remove(); state.contextMenu=null; }
-function openAskModal(){ state.askOpen=true; renderAskModal(); }
-function renderAskModal(){
-  if(!state.askOpen) { const m=document.getElementById('askModal'); if(m) m.remove(); return; }
-  if(document.getElementById('askModal')) return;
-  const div=document.createElement('div'); div.id='askModal'; div.className='modal pop';
-  div.innerHTML = `<div class="modal-card" style="width:480px;max-width:92vw">
-    <div style="font-weight:800;font-size:16px;margin-bottom:12px">问问小博士</div>
-    <textarea id="askText" style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:inherit;font-size:14px;outline:none;resize:vertical" placeholder="例如：让导入更贴近学生生活、增加小组合作环节、降低练习难度..."></textarea>
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
-      <button class="btn btn-secondary btn-sm" onclick="closeAskModal()">取消</button>
-      <button class="btn btn-primary btn-sm" id="askSend">发送</button>
-    </div>
-  </div>`;
-  document.body.appendChild(div);
-  $('askSend').onclick = () => { const v=$('askText').value.trim(); if(v){ closeAskModal(); sendChat(v); } };
-  $('askText').onkeydown = e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); $('askSend').click(); } };
-}
-function closeAskModal(){ state.askOpen=false; const m=document.getElementById('askModal'); if(m) m.remove(); }
-
-function renderPreview(){
-  state.previewOpen=true;
-  const existing=document.getElementById('previewModal'); if(existing) existing.remove();
-  const div=document.createElement('div'); div.id='previewModal'; div.className='modal pop';
-  div.innerHTML = `<div class="modal-card" style="width:760px;max-width:95vw;height:80vh;display:flex;flex-direction:column;padding:0px">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
-      <div style="font-weight:800;font-size:16px">教案预览</div>
-      <button class="btn btn-secondary btn-sm" onclick="closePreview()">关闭</button>
-    </div>
-    <div style="flex:1;overflow-y:auto;padding:24px" id="previewBody"></div>
-    <div style="padding:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end">
-      <button class="btn btn-primary" onclick="exportWord();closePreview()">导出 Word</button>
-    </div>
-  </div>`;
-  document.body.appendChild(div);
-  const body = document.getElementById('previewBody');
-  body.innerHTML = `<h2 style="text-align:center">${escapeHtml(state.query)}</h2>` + state.sections.map((s,i)=>`<h3>${i+1}. ${s.title}</h3>`+s.content.map(l=>`<p>${escapeHtml(l)}</p>`).join('')).join('');
-}
-function closePreview(){ state.previewOpen=false; const m=document.getElementById('previewModal'); if(m) m.remove(); }
-
-function exportWord(){
-  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head><meta charset="utf-8"><title>教案</title></head><body>
-    <h1 style="text-align:center">${escapeHtml(state.query)}</h1>
-    ${state.sections.map((s,i)=>`<h2>${i+1}. ${escapeHtml(s.title)}</h2>`+s.content.map(l=>`<p>${escapeHtml(l)}</p>`).join('')).join('')}
-    </body></html>`;
-  const blob = new Blob(['\ufeff', html], {type:'application/msword'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = '教案_' + state.query.replace(/\s+/g,'_') + '.doc'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-}
-
-function renderWizard(){
-  const app = $('app');
-  const ready = state.inputs.classBase && state.inputs.hours && state.inputs.focus.length;
-  app.innerHTML = `<div class="modal pop">
-    <div class="modal-card" style="width:560px;max-width:92vw;max-height:90vh;overflow-y:auto">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-        <div style="font-size:18px;font-weight:800">确认学情信息</div>
-        <div style="cursor:pointer;color:var(--ink-3);font-size:18px" onclick="closeWizard()">×</div>
-      </div>
-      <div style="font-size:13px;color:var(--ink-3);margin-bottom:18px">小博士已识别课题信息，还需补充以下信息即可生成教案框架。</div>
-      <div style="background:var(--brand-soft);border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:13px;color:var(--brand-deep)"><b>已识别：</b>${escapeHtml(state.query)}</div>
-      <div id="wizardFields"></div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
-        <button class="btn btn-secondary" onclick="startGenerate()">跳过，直接生成</button>
-        <button class="btn btn-primary" id="wizardGen" ${!ready?'disabled':''}>${ready?'生成教案框架':'请选择学情信息'}</button>
-      </div>
-    </div>
-  </div>`;
-  renderWizardFields();
-  $('wizardGen').onclick = () => { if(ready) startGenerate(); };
-}
-
-function renderWizardFields(){
-  const el = $('wizardFields');
-  const fields = [
-    {label:'班级基础',key:'classBase',options:['基础较弱','基础一般','基础较好','层次分明'],multi:false},
-    {label:'课时长度',key:'hours',options:['1 课时','2 课时'],multi:false},
-    {label:'教学重点',key:'focus',options:['核心知识','方法技能','学科素养','考点训练'],multi:true},
-    {label:'风格偏向',key:'style',options:['素养导向','应试导向','活动导向'],multi:false}
-  ];
-  el.innerHTML = fields.map(f => `<div style="margin-bottom:16px">
-    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--ink-2)">${f.label}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">${f.options.map(opt=>{
-      const selected = f.multi ? (state.inputs[f.key]||[]).includes(opt) : state.inputs[f.key]===opt;
-      return `<div class="chip ${selected?'selected':''}" onclick="toggleInput('${f.key}','${opt}',${f.multi})">${opt}</div>`;
-    }).join('')}</div>
-  </div>`).join('');
-}
-
-function toggleInput(key, opt, multi){
-  if(multi){ const arr=state.inputs[key]||[]; if(arr.includes(opt)) state.inputs[key]=arr.filter(x=>x!==opt); else state.inputs[key]=[...arr,opt]; }
-  else state.inputs[key] = state.inputs[key]===opt ? '' : opt;
-  renderWizard();
-}
-function closeWizard(){ state.view='home'; render(); }
-
-function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function render(){ if(state.view==='home') renderHome(); else if(state.view==='wizard') renderWizard(); else if(state.view==='workspace') renderWorkspace(); }
-
+function applyPlan(id){state.selectedPlan=id;const plan=plans.find(x=>x.id===id),sec=state.sections.find(x=>x.id==='intro');sec.lines=id==='scene'?['呈现《江雪》清冷孤寂的雪景，再播放北国长城、黄土高原的壮阔雪景。','提问：“同样是写雪，两组画面给你的感受有何不同？”学生先写下一个感受词，再说明画面依据。','从“清冷孤寂”与“壮阔豪迈”的差异进入《沁园春·雪》。']:id==='conflict'?['教师分别用平缓和豪迈两种语气朗读“千里冰封，万里雪飘”。','学生投票选择更符合文本的一种，并从意象、节奏和情感三个角度说明理由。','由朗读差异提出本课任务：这首词的“气魄之大”从何而来？']:['展示毛泽东《沁园春·雪》手迹和1945年重庆传播故事。','提问：“为什么这首写于九年前的旧作会在重庆引起轰动？”','学生带着“意境、气势、文笔”三个关键词进入文本阅读。'];state.needsSync=true;state.chat.push({role:'ai',text:`已采用“${plan.name}”。导入模块已更新。`});renderWorkspace();toast('方案已采用')}
+function renderChatMessage(m,i){return `<div class="bubble ${m.role}">${esc(m.text)}${m.role==='ai'&&m.actionable?`<div class="answer-actions"><button class="answer-action ${m.accepted?'accepted':''}" data-accept-answer="${i}" ${m.accepted?'disabled':''}>${m.accepted?'已采纳':'采纳'}</button><button class="answer-action" data-refresh-answer="${i}">换一个</button></div>`:''}</div>`}
+function buildAnswer(msg,variant=0){const alternatives={interaction:['建议采用“先批注、再朗读、后说明”的小组任务：每人选择一句标注重音与停连，再由小组推荐一人展示。','可以改成“替换字辩论”：一组主张保留“舞、驰”，另一组尝试替换，双方用画面和情感证据回应。'],cold:['如果学生说不出“惜”的复杂态度，先让他们分别列出帝王的功绩和局限，再选择“肯定、批评、惋惜”中的两个词。','可以先给出“略输、稍逊、只识”三个程度词，让学生比较语气轻重，从词语本身发现评价态度。'],time:['建议第一课时完成字词、上阕朗读和意象赏析；第二课时集中处理评史、主旨与古今思辨。','可以将背景介绍压缩为一张时间轴，把更多时间留给两次朗读展示和“惜”字讨论。'],easy:['建议为朗读设计提供“重音、停连、语调”三项选择表，基础学生先完成一项再解释。','可以把开放赏析拆成“写了什么—怎么写—表达什么”三步支架，降低完整表达难度。'],general:['建议将这一模块改成“文本证据—学生判断—朗读验证—教师追问”的结构，让赏析落到具体词句。','可以减少背景讲解，增加一次可操作的朗读或替换比较，并补充学生可能出现的两种回答。']};let key=msg.includes('互动')?'interaction':msg.includes('冷场')?'cold':msg.includes('课时')?'time':msg.includes('难度')?'easy':'general';return alternatives[key][variant%alternatives[key].length]}
+function sendChat(msg,target=state.activeTarget){state.chat.push({role:'user',text:msg});const variant=state.answerSeed++;setTimeout(()=>{state.chat.push({role:'ai',text:buildAnswer(msg,variant),actionable:true,target:target?{...target}:null,prompt:msg,variant});renderWorkspace()},260);renderWorkspace()}
+function acceptAnswer(index){const answer=state.chat[index];if(!answer||answer.role!=='ai')return;let target=answer.target;if(!target){const fallback=state.sections.find(x=>x.id==='new')||state.sections[0];target={sectionId:fallback.id,lineIndex:0}}const sec=state.sections.find(x=>x.id===target.sectionId);if(!sec)return;if(Number.isInteger(target.lineIndex)){sec.lines[target.lineIndex]=answer.text;state.dirty.add(`${sec.id}-${target.lineIndex}`)}else{sec.lines=[...sec.lines,answer.text];state.dirty.add(`${sec.id}-${sec.lines.length-1}`)}answer.accepted=true;state.needsSync=true;state.activeMaterial='lesson';renderWorkspace();toast(`已采纳到“${sec.title}”`)}
+function refreshAnswer(index){const answer=state.chat[index];if(!answer)return;answer.variant=(answer.variant||0)+1;answer.text=buildAnswer(answer.prompt||'',answer.variant);answer.accepted=false;renderWorkspace()}
+function openContext(e,id,j){e.preventDefault();document.querySelectorAll('.context-menu').forEach(x=>x.remove());const m=document.createElement('div');m.className='context-menu';m.style.cssText=`position:fixed;left:${e.clientX}px;top:${e.clientY}px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:5px;z-index:190;width:150px`;m.innerHTML=`<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:flex-start" id="askX">${icon('chat')} 问问小博士</button><button class="btn btn-ghost btn-sm" style="width:100%;justify-content:flex-start" id="rewriteX">${icon('edit')} AI 改写对照</button>`;document.body.appendChild(m);$('askX').onclick=()=>{m.remove();showAsk(id,j)};$('rewriteX').onclick=()=>{m.remove();showCompare(id,'更贴近真实课堂',j)};setTimeout(()=>document.addEventListener('click',()=>m.remove(),{once:true}),0)}
+function openModuleContext(e,id){if(e.target.closest('.editable-line'))return;e.preventDefault();document.querySelectorAll('.context-menu').forEach(x=>x.remove());const sec=state.sections.find(x=>x.id===id),m=document.createElement('div');m.className='context-menu';m.style.cssText=`position:fixed;left:${e.clientX}px;top:${e.clientY}px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:5px;z-index:190;width:150px`;m.innerHTML=`<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:flex-start" id="askModule">${icon('chat')} 问问小博士</button>`;document.body.appendChild(m);$('askModule').onclick=()=>{m.remove();showModuleAsk(id)};setTimeout(()=>document.addEventListener('click',()=>m.remove(),{once:true}),0)}
+function showModuleAsk(id){const sec=state.sections.find(x=>x.id===id);modal('问问小博士',`<div class="recognized"><div><strong>当前模块：${esc(sec.title)}</strong><span>${esc(sec.lines.join(' '))}</span></div></div><textarea id="askText" class="feedback-note" placeholder="例如：这个模块如何增加互动？学生可能有什么反应？"></textarea>`,`<button class="btn btn-secondary" data-close>取消</button><button class="btn btn-primary" id="askSubmit">发送</button>`);$('askSubmit').onclick=()=>{const v=$('askText').value.trim();closeModal();if(v){state.activeTarget={sectionId:id,lineIndex:null};sendChat(`针对“${sec.title}”：${v}`,state.activeTarget)}}}
+function showAsk(id,j){const sec=state.sections.find(x=>x.id===id);modal('问问小博士',`<div class="recognized"><div><strong>已选中段落</strong><span>${esc(sec.lines[j])}</span></div></div><textarea id="askText" class="feedback-note" placeholder="例如：这段学生可能有什么反应？如何增加互动？"></textarea>`,`<button class="btn btn-secondary" data-close>取消</button><button class="btn btn-primary" id="askSubmit">发送</button>`);$('askSubmit').onclick=()=>{const v=$('askText').value.trim();closeModal();if(v){state.activeTarget={sectionId:id,lineIndex:j};sendChat(`针对“${sec.title}”：${v}`,state.activeTarget)}}}
+function showCompare(id,action,j=0){const sec=state.sections.find(x=>x.id===id),old=sec.lines[j]||sec.lines[0],fresh=action==='增加互动'?old+' 学生先独立写下判断，再由小组轮流发言；教师抽取一组不同意见进行追问。':old+' 教师根据学生可能出现的两类回答准备追问，并设置可操作的支架。';modal(`AI 优化 · ${action}`,`<div class="compare"><div class="compare-box"><b>原内容</b>${esc(old)}</div><div class="compare-box new"><b>小博士建议</b>${esc(fresh)}</div></div><p style="font-size:11px;color:var(--ink-3);margin-top:12px">确认后只替换当前段落，其他环节不会变化。</p>`,`<button class="btn btn-secondary" data-close>保留原文</button><button class="btn btn-primary" id="acceptChange">采用建议</button>`);$('acceptChange').onclick=()=>{sec.lines[j]=fresh;state.needsSync=true;closeModal();renderWorkspace();toast('已替换当前段落，可撤销或继续修改')}}
+function toggleAdopt(type,index){const key=`${type}:${index}`;if(state.synced.has(key))return;state.adopted.has(key)?state.adopted.delete(key):state.adopted.add(key);state.needsSync=state.adopted.size>0;renderWorkspace();toast(state.adopted.has(key)?'已记录选择，点击“同步材料”后写入教案和PPT':'已取消采纳')}
+function adoptedPayload(type,index){if(type==='resources'){const x=resourceItems[index];return {sectionId:index<2?'intro':index<4?'history':'thinking',line:`采用资料：${x[0]}。${x[1]}`,slide:[`采用资料：${x[0]}`,x[1]]}}if(type==='interaction'){const x=interactionItems[index];return {sectionId:index<2?'scene':index<4?'history':'thinking',line:`课堂互动：${x[0]}。学生预设：${x[1]} 教师应对：${x[2]}`,slide:[`互动：${x[0]}`,`预设：${x[1]}｜应对：${x[2]}`]}}if(type==='exercise'){const x=exerciseItems[index];return {sectionId:index<2?'preview':index<4?'scene':'thinking',line:`课堂练习：${x[0]}——${x[1]}`,slide:[`课堂练习：${x[0]}`,x[1]]}}const x=homeworkItems[index];return {sectionId:'homework',line:`${x[0]}：${x[1]}`,slide:[`分层作业：${x[0]}`,x[1]]}}
+function syncAdopted(){const pending=[...state.adopted].filter(key=>!state.synced.has(key));pending.forEach(key=>{const [type,indexText]=key.split(':'),payload=adoptedPayload(type,+indexText),sec=state.sections.find(x=>x.id===payload.sectionId);if(sec&&!sec.lines.includes(payload.line))sec.lines.push(payload.line);if(!state.syncedSlides.some(x=>x[0]===payload.slide[0]))state.syncedSlides.push(payload.slide);state.synced.add(key)});state.adopted.clear();state.needsSync=false;return pending.length}
+function syncMaterials(){const pendingCount=[...state.adopted].filter(key=>!state.synced.has(key)).length;if(!pendingCount&&!state.needsSync){toast('没有待同步的内容');return}modal('同步材料',`<p style="margin-top:0">将 ${pendingCount} 项已采纳内容写入教案和 PPT。</p>${state.dirty.size?`<div class="audit-item warn">${icon('risk')}<div><b>${state.dirty.size} 处人工编辑将保留</b><p>同步内容会追加到相关模块，不会覆盖老师修改。</p></div></div>`:''}`,`<button class="btn btn-secondary" data-close>取消</button><button class="btn btn-primary" id="confirmSync">确认同步</button>`);$('confirmSync').onclick=()=>{const count=syncAdopted();closeModal();renderWorkspace();toast(`已将 ${count} 项内容同步到教案和 PPT`)}}
+function showAudit(){modal('导出前检查',`<div class="audit-score"><div class="score">91</div><div><b>教案结构完整，可继续导出</b></div></div><div class="audit-list"><div class="audit-item">${icon('check')}<div><b>两课时任务分配清晰</b><p>第一课时聚焦上阕与朗读，第二课时聚焦评史、明志与整合。</p></div></div><div class="audit-item">${icon('check')}<div><b>教学目标与活动对应</b><p>朗读、意象赏析、评史思辨和拓展表达均有课堂任务承接。</p></div></div><div class="audit-item warn">${icon('risk')}<div><b>导入视频需控制时长</b><p>两段雪景视频建议合计不超过3分钟。</p></div></div><div class="audit-item">${icon('check')}<div><b>资料来源已识别</b><p>参考资料、真实教案和原课件均已用于本次备课。</p></div></div></div>`,`<button class="btn btn-secondary" data-close>继续修改</button><button class="btn btn-primary" id="auditExport">继续导出</button>`);$('auditExport').onclick=()=>{closeModal();showExport()}}
+function showExport(){modal('导出备课材料',`<p style="margin-top:0;color:var(--ink-2)">选择本次要下载的文件。Demo 当前可实际导出 Word，其余格式展示完整流程。</p>${outputs.filter(o=>state.selectedOutputs.has(o.id)).map((o,i)=>`<label style="display:flex;align-items:center;gap:9px;padding:10px;border-bottom:1px solid var(--line)"><input type="checkbox" ${i===0?'checked':''} ${o.id==='lesson'?'':'disabled'}><span>${icon(o.icon)} <b>${o.name}</b></span><span style="margin-left:auto;color:var(--ink-3);font-size:11px">${o.id==='lesson'?'.doc':'演示版暂不下载'}</span></label>`).join('')}`,`<button class="btn btn-secondary" data-close>取消</button><button class="btn btn-primary" id="downloadWord">导出 Word</button>`);$('downloadWord').onclick=()=>{exportWord();closeModal();setTimeout(showFeedback,350)}}
+function exportWord(){const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>教案</title></head><body><h1 style="text-align:center">${esc(state.query)}</h1><p>班级基础：${state.inputs.base}　课时：${state.inputs.duration}　风格：${state.inputs.style}</p>${state.sections.map((s,i)=>`<h2>${i+1}. ${esc(s.title)}（${s.time}）</h2>${s.lines.map(l=>`<p>${esc(l)}</p>`).join('')}`).join('')}</body></html>`;const blob=new Blob(['\ufeff',html],{type:'application/msword'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='教案_'+state.query.replace(/[\\/:*?"<>|\s]+/g,'_')+'.doc';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);toast('Word 教案已导出')}
+function showFeedback(){modal('这节课上完后，欢迎回来告诉我',`<p style="margin-top:0;color:var(--ink-3);font-size:12px">30 秒反馈会沉淀为这个班的备课经验，下次生成更贴合。</p><div class="feedback-options"><button class="feedback-option" data-feedback="好用">👍<br><b>整体好用</b></button><button class="feedback-option" data-feedback="需调整">🛠<br><b>需要调整</b></button></div><textarea class="feedback-note" placeholder="例如：导入有效，但练习偏难（可稍后填写）"></textarea>`,`<button class="btn btn-secondary" data-close>稍后再说</button><button class="btn btn-primary" id="saveFeedback">保存并复制本课</button>`);document.querySelectorAll('[data-feedback]').forEach(b=>b.onclick=()=>{state.feedback=b.dataset.feedback;document.querySelectorAll('[data-feedback]').forEach(x=>x.classList.toggle('selected',x===b))});$('saveFeedback').onclick=()=>{closeModal();toast('反馈已保存，下次可从本课复制创建')}}
+function modal(title,body,foot){const old=$('globalModal');if(old)old.remove();const el=document.createElement('div');el.id='globalModal';el.className='modal';el.innerHTML=`<div class="modal-card"><div class="modal-head"><h2>${title}</h2><button class="close" data-close>×</button></div><div class="modal-body">${body}</div><div class="modal-foot">${foot}</div></div>`;document.body.appendChild(el);el.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeModal)}
+function closeModal(){const el=$('globalModal');if(el)el.remove()}
 render();
-</script>
-</body>
-</html>
+</script></body></html>
