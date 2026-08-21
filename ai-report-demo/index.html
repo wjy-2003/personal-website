@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>商企AI辅助报告撰写系统</title>
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+
 <style>
   :root {
     --sidebar-w: 260px; --bg: #ffffff; --sidebar-bg: #dcecf7;
@@ -182,13 +183,22 @@
 .wb-toast { display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 8px 20px; border-radius: 6px; font-size: 13px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 .wb-toast.success { background: #dcfce7; color: #166534; }
 .wb-toast.info { background: #dbeafe; color: #1e40af; }
+
+/* Context menu */
+.context-menu { position: fixed; background: #fff; border: 1px solid #d0e3f0; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 10000; min-width: 140px; padding: 4px; display: none; }
+.context-menu-item { padding: 8px 14px; font-size: 13px; color: #1e293b; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 8px; }
+.context-menu-item:hover { background: var(--primary-light); }
+.context-menu-item.danger { color: #e74c3c; }
+.context-menu-item.danger:hover { background: #fde8e8; }
+.context-menu-sep { height: 1px; background: #e2e8f0; margin: 4px 8px; }
+
 </style>
 </head>
 <body>
 <div class="bg-circle" id="circle1"></div>
 <div class="bg-circle" id="circle2"></div>
 <div class="bg-circle" id="circle3"></div>
-<body>
+
 <div class="sidebar">
   <div class="sidebar-header">
     <h1>📊 商企AI报告系统</h1>
@@ -196,14 +206,13 @@
   </div>
   <input class="sidebar-search" placeholder="搜索文件夹或文件..." id="sidebarSearch">
   <div class="folder-tree" id="folderTree">
-    <div class="folder-item active"><span class="icon">📁</span> Demo数据</div>
-    <div class="sub-items" style="padding-left:20px;">
-      <div class="file-item" style="padding:4px 12px;font-size:12px;color:#999;">📄 北京NEV市场分析.docx</div>
-      <div class="file-item" style="padding:4px 12px;font-size:12px;color:#999;">📄 品牌监测报告-样例.pptx</div>
-    </div>
-    <div class="folder-item"><span class="icon">📁</span> 品牌监测</div>
-    <div class="folder-item"><span class="icon">📁</span> 出口数据</div>
+    <!-- Dynamic folder tree loaded from backend -->
   </div>
+  <div class="sidebar-actions" style="padding:8px 16px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);">
+    <button id="uploadBtn" style="flex:1;padding:6px 10px;border:1px solid var(--primary);border-radius:6px;background:var(--primary);color:#fff;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:4px;">📤 上传</button>
+    <button id="newFolderBtn" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:4px;">📁 新建</button>
+  </div>
+  <input type="file" id="fileInput" style="display:none" accept=".docx,.xlsx,.pdf,.txt,.md" multiple>
   <div class="sidebar-footer">
     <span>⚙️ 设置</span>
     <span id="exportBtn">💾 导出</span>
@@ -213,7 +222,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="mode-badge" id="modeBadge">💬 自由对话</span>
-      <span class="context-info">Demo数据 · 2个文件</span>
+      <span class="context-info" id="contextInfo">全部 · 0 个文件</span>
     </div>
     <div class="topbar-right">
       <button id="demoPath1" title="演示路径1：北京NEV用户画像→观点→报告">🎯 路径1</button>
@@ -227,22 +236,22 @@
       <h2>👋 开始对话</h2>
       <p>输入问题，系统自动识别意图。<br>支持数据分析、观点提炼、报告撰写、自由对话四种模式。</p>
       <div class="suggestions">
-        <div class="card" onclick="sendSuggestion('北京新能源消费市场的用户画像是什么？')">
+        <div class="card" onclick="triggerMode('analyze')">
           <div class="card-icon">📊</div>
           <div class="card-title">数据分析</div>
           <div class="card-desc">查销量、看趋势、做对比</div>
         </div>
-        <div class="card" onclick="sendSuggestion('基于用户画像数据，提炼北京市场的核心特征？')">
+        <div class="card" onclick="triggerMode('insight')">
           <div class="card-icon">💡</div>
           <div class="card-title">核心观点提炼</div>
           <div class="card-desc">发现数据背后的关键信号</div>
         </div>
-        <div class="card" onclick="sendSuggestion('2025年11月中国汽车出口情况如何？')">
+        <div class="card" onclick="triggerMode('chat')">
           <div class="card-icon">💬</div>
           <div class="card-title">自由对话</div>
           <div class="card-desc">行业咨询、知识查询</div>
         </div>
-        <div class="card" onclick="sendSuggestion('把销量数据和核心观点写成一份报告')">
+        <div class="card" onclick="triggerMode('report')">
           <div class="card-icon">📝</div>
           <div class="card-title">报告撰写</div>
           <div class="card-desc">生成可交付报告</div>
@@ -260,8 +269,237 @@
   </div>
 </div>
 
+
+
+<!-- Workbench Panel (replaces main area) -->
+  <div class="workbench-panel" id="workbenchPanel">
+    <div class="wb-topbar">
+      <div class="wb-topbar-left">
+        <span class="wb-title">📝 报告编辑工作台</span>
+      </div>
+      <div class="wb-topbar-right">
+        <button class="wb-btn" onclick="saveWB()">💾 保存版本</button>
+        <button class="wb-btn wb-btn-primary" onclick="exportDoc()">📄 导出文档</button>
+        <button class="wb-back-btn" onclick="closeWorkbench()">← 返回</button>
+      </div>
+    </div>
+    <div class="wb-format-toolbar" id="wbFormatToolbar">
+      <button class="fmt-btn" onclick="fmtCmd('bold')" title="加粗"><b>B</b></button>
+      <button class="fmt-btn" onclick="fmtCmd('italic')" title="斜体"><i>I</i></button>
+      <button class="fmt-btn" onclick="fmtCmd('underline')" title="下划线"><u>U</u></button>
+      <span class="fmt-sep"></span>
+      <select class="fmt-select" id="fmtFontSize" onchange="fmtCmd('fontSize', this.value)">
+        <option value="3">小</option>
+        <option value="4" selected>标准</option>
+        <option value="5">大</option>
+        <option value="6">特大</option>
+      </select>
+      <span class="fmt-sep"></span>
+      <button class="fmt-btn" onclick="fmtCmd('justifyLeft')" title="左对齐">≡</button>
+      <button class="fmt-btn" onclick="fmtCmd('justifyCenter')" title="居中">≡</button>
+      <button class="fmt-btn" onclick="fmtCmd('justifyRight')" title="右对齐">≡</button>
+      <button class="fmt-btn" onclick="fmtCmd('insertUnorderedList')" title="列表">☰</button>
+      <span class="fmt-sep"></span>
+      <button class="fmt-btn" onclick="toggleWBVersion()" title="版本历史">🕐 历史版本 <span id="vbArrow">▼</span></button>
+    </div>
+    <div class="wb-version-list" id="wbVersionList" style="display:none;"></div>
+    <div class="wb-body-full" id="wbBody"></div>
+    <div class="wb-chat-area">
+      <div class="wb-chat-input-wrap">
+        <textarea class="wb-chat-input" id="wbChatInput" rows="1" placeholder="输入指令，继续修改报告内容..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWbChat()}"></textarea>
+        <button class="wb-chat-send" onclick="sendWbChat()">➤</button>
+      </div>
+    </div>
+  </div>
+  <div class="wb-toast" id="wbToast"></div>
+<!-- Context Menu -->
+<div class="context-menu" id="contextMenu">
+  <div class="context-menu-item" data-action="rename">✏️ 重命名</div>
+  <div class="context-menu-item" data-action="delete">🗑️ 删除</div>
+  <div class="context-menu-sep"></div>
+  <div class="context-menu-item" data-action="copy" id="copyMenuItem">📋 复制文件路径</div>
+</div>
 <script>
-const API_BASE = "http://43.142.147.110:8001/api";
+
+// ========== Context Menu (Right Click) ==========
+var _contextTarget = null;
+var _contextType = null; // 'folder' or 'file'
+
+document.addEventListener('contextmenu', function(e) {
+  var folderItem = e.target.closest('.folder-item');
+  var fileItem = e.target.closest('.file-item');
+  
+  if (folderItem || fileItem) {
+    e.preventDefault();
+    _contextTarget = folderItem || fileItem;
+    _contextType = folderItem ? 'folder' : 'file';
+    
+    var menu = document.getElementById('contextMenu');
+    menu.style.display = 'block';
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+    
+    // Update copy label
+    var copyItem = menu.querySelector('[data-action="copy"]');
+    if (copyItem) {
+      copyItem.textContent = _contextType === 'folder' ? '📋 复制目录' : '📋 复制文件路径';
+    }
+  } else {
+    document.getElementById('contextMenu').style.display = 'none';
+  }
+});
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.context-menu')) {
+    document.getElementById('contextMenu').style.display = 'none';
+  }
+});
+
+document.getElementById('contextMenu').addEventListener('click', async function(e) {
+  var item = e.target.closest('.context-menu-item');
+  if (!item || !_contextTarget) return;
+  
+  var action = item.dataset.action;
+  document.getElementById('contextMenu').style.display = 'none';
+  
+  if (action === 'rename') {
+    var oldText = _contextTarget.textContent.trim();
+    // Extract name (remove icon, file count)
+    var oldName = oldText.replace(/^[📁📄]\s*/, '').replace(/\s*\d+$/, '').trim();
+    var newName = prompt('请输入新名称：', oldName);
+    if (!newName || !newName.trim()) return;
+    
+    if (_contextType === 'folder') {
+      var folderId = _contextTarget.dataset.folderId;
+      if (folderId) {
+        try {
+          var r = await fetch(API_BASE + '/folders/rename', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({folder_id: folderId, name: newName.trim()})
+          });
+          var d = await r.json();
+          if (d.status === 'ok') loadFolders();
+          else alert('重命名失败: ' + (d.message || ''));
+        } catch(err) {
+          alert('重命名失败: ' + err.message);
+        }
+      }
+    } else {
+      // File rename via backend API
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
+      try {
+        var r = await fetch(API_BASE + '/knowledge/rename', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({old_name: fileName, new_name: newName.trim()})
+        });
+        var d = await r.json();
+        if (d.status === 'ok') loadFolders();
+        else alert('重命名失败: ' + (d.message || ''));
+      } catch(err) {
+        alert('重命名失败: ' + err.message);
+      }
+    }
+  } else if (action === 'delete') {
+    var delText = _contextTarget.textContent.trim();
+    if (!confirm('确定要删除"' + delText.replace(/^[📁📄]\s*/, '') + '"吗？')) return;
+    
+    if (_contextType === 'folder') {
+      var folderId = _contextTarget.dataset.folderId;
+      if (folderId) {
+        try {
+          var r = await fetch(API_BASE + '/folders/' + folderId, {method: 'DELETE'});
+          loadFolders();
+          updateContextInfo();
+        } catch(err) {
+          alert('删除失败: ' + err.message);
+        }
+      }
+    } else {
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
+      try {
+        var r = await fetch(API_BASE + '/knowledge/' + encodeURIComponent(fileName), {method: 'DELETE'});
+        loadFolders();
+        updateContextInfo();
+      } catch(err) {
+        alert('删除失败: ' + err.message);
+      }
+    }
+  } else if (action === 'copy') {
+    if (_contextType === 'file') {
+      // Copy actual file path from backend
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
+      try {
+        var r = await fetch(API_BASE + '/knowledge/path?source=' + encodeURIComponent(fileName));
+        var d = await r.json();
+        if (d.status === 'ok' && d.path) {
+          try { await navigator.clipboard.writeText(d.path); }
+          catch(err) {
+            var ta = document.createElement('textarea');
+            ta.value = d.path;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+          }
+        }
+      } catch(err) {
+        var text = fileName;
+        try { await navigator.clipboard.writeText(text); }
+        catch(err2) {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+      }
+    } else {
+      // Folder: copy folder name
+      var text = _contextTarget.textContent.trim().replace(/^📁\s*/, '').replace(/\s*\d+$/, '').trim();
+      try { await navigator.clipboard.writeText(text); }
+      catch(err) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+    }
+  }
+});
+
+// 4. Update buildHistoricalReports to use API for real outlines
+var _origBuildReports = buildHistoricalReports;
+buildHistoricalReports = async function() {
+  await _origBuildReports();
+  
+  // Try to enrich outlines with real document structure
+  if (historicalReports.length > 0) {
+    for (var ri = 0; ri < historicalReports.length; ri++) {
+      var r = historicalReports[ri];
+      if (r.source && r.source !== 'system') {
+        try {
+          var resp = await fetch(API_BASE + '/knowledge/outline', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({source: r.source})
+          });
+          var data = await resp.json();
+          if (data.status === 'ok' && data.outline && data.outline.length > 0) {
+            r.outline = data.outline;
+          }
+        } catch(e) {
+          // Keep existing outline
+        }
+      }
+    }
+  }
+};
+
+
+
+const API_BASE = "https://beginning-lite-stress-also.trycloudflare.com/api";
 let sessionId = 'demo_' + Date.now();
 let currentMode = '自由对话';
 let insightCandidates = [];
@@ -339,9 +577,8 @@ function renderCharts(charts) {
 
 function renderTable(table) {
   if (!table || !table.rows || !table.rows.length) return '';
-  const rows = table.rows;
-  const header = rows[0];
-  const data = rows.slice(1);
+  const header = table.headers || table.rows[0];
+  const data = table.headers ? table.rows : table.rows.slice(1);
   const source = table.source || '数据源';
   let html = '<div class="data-table" title="来源: ' + source + '"><div style="font-size:10px;color:#94a3b8;padding:2px 0 4px;">📎 ' + source + '</div><table><thead><tr>';
   header.forEach(h => { html += '<th>' + h + '</th>'; });
@@ -447,7 +684,8 @@ async function sendMessage() {
   
   // Call API
   try {
-    const result = await apiPost('/chat', {text: text, session_id: sessionId});
+    const folderId = window._currentFolder || '';
+    const result = await apiPost('/chat', {text: text, session_id: sessionId, folder_id: folderId});
     const data = result.data;
     
     addIntentBar(['① 原始输入捕获 ✓', '② 意图改写 ✓', '③ 槽位提取 ✓', '④ 模式匹配 ✓', '⑤ 调度执行 ✓'], 5);
@@ -470,7 +708,7 @@ async function sendMessage() {
         handleReportResponse(data);
         break;
       default:
-        addMessage('ai', '💬 ' + (data.response || getFreeChatResponse(text)));
+        addMessage('ai', '💬 ' + (data.response || data.data.response || '知识库为空，请先上传文档'));
     }
   } catch (e) {
     const tb = document.getElementById('thinkingBubble');
@@ -482,31 +720,36 @@ async function sendMessage() {
 
 function handleDataResponse(data) {
   let html = '';
+  var hasContent = false;
+  
   if (data.data && data.data.charts) {
     html += renderCharts(data.data.charts);
+    hasContent = true;
   }
   if (data.data && data.data.tables) {
-    data.data.tables.forEach(t => { html += renderTable(t); });
-  }
-  // Excel download button
-  if (data.data && data.data.excel_b64) {
-    html += '<div style="margin:8px 0;"><button style="padding:6px 16px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;" onclick="downloadExcel(\'' + data.data.excel_b64 + '\')">📥 导出Excel</button></div>';
+    data.data.tables.forEach(function(t) {
+      t.source = t.source || '知识库';
+      html += renderTable(t);
+      if (t.rows && t.rows.length > 0) hasContent = true;
+    });
   }
   
-  let summary = '📊 **数据分析结果**';
-  if (data.data && data.data.datasets) {
-    summary += '\n已查询 ' + data.data.datasets.length + ' 个数据源';
+  // Show response text if no structured data
+  if (!hasContent) {
+    var respText = (data.data && data.data.response) || '📊 未找到相关结构化数据。请尝试更具体的查询，或上传包含相关数据的文档。';
+    if (data.response) respText = data.response;
+    html += '<div style="padding:12px 16px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;font-size:14px;line-height:1.7;">' + respText.replace(/\n/g, '<br>') + '</div>';
   }
-  // Add data source traceability
-  if (data.data && data.data.tables) {
-    for (var _ti = 0; _ti < data.data.tables.length; _ti++) {
-      data.data.tables[_ti].source = data.data.tables[_ti].source || '北京NEV市场分析.docx';
-    }
+  
+  var summary = '📊 **数据分析结果**';
+  if (data.data && data.data.datasets && data.data.datasets.length > 0) {
+    summary += '\n数据来源: ' + data.data.datasets.map(function(d){return d.name;}).join(', ');
   }
-  // Add insight button
+  
+  // Add insight and report buttons
   html += '<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">' +
     '<button style="padding:8px 20px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'基于这些数据分析结果，提炼核心观点\';sendMessage()">💡 提炼核心观点</button>' +
-    '<button style="padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'帮我写一份完整的分析报告\';sendMessage()">📝 生成报告</button>' +
+    '<button style="padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;" onclick="document.getElementById(\'inputBox\').value=\'基于当前数据生成报告段落\';sendMessage()">📝 生成报告</button>' +
     '</div>';
   addMessage('ai', summary, html);
 }
@@ -619,6 +862,63 @@ function sendSuggestion(text) {
   sendMessage();
 }
 
+// Trigger a mode directly without displaying a user question
+function triggerMode(mode) {
+  var folderId = window._currentFolder || '';
+  var folderName = '';
+  var activeFolder = document.querySelector('.folder-item.active');
+  if (activeFolder) {
+    folderName = activeFolder.textContent.trim().replace(/\d+$/, '').trim();
+  }
+  
+  var command = '';
+  var label = '';
+  
+  switch(mode) {
+    case 'analyze':
+      command = '请分析' + (folderName ? '文件夹【' + folderName + '】' : '当前') + '中的材料，提取关键数据并生成数据表格，包括人口画像、消费特征、市场趋势等维度';
+      label = '数据分析';
+      break;
+    case 'insight':
+      command = '基于' + (folderName ? '文件夹【' + folderName + '】' : '当前材料') + '中的数据，提炼核心观点和关键洞察';
+      label = '核心观点提炼';
+      break;
+    case 'chat':
+      command = '请介绍' + (folderName ? '文件夹【' + folderName + '】' : '当前') + '中的材料内容和关键信息';
+      label = '自由对话';
+      break;
+    case 'report':
+      command = '根据分析结果和采纳的观点，生成一份完整的报告';
+      label = '报告撰写';
+      break;
+  }
+  
+  // Show mode activation (not as a user question)
+  addMessage('ai', '\ud83d\udd0d **' + label + '模式已启动**\n正在基于当前文件夹的材料进行分析...');
+  
+  // Hide welcome screen
+  var welcome = document.querySelector('.welcome');
+  if (welcome) welcome.style.display = 'none';
+  
+  // Send contextual command
+  setTimeout(async function() {
+    try {
+      var result = await apiPost('/chat', {text: command, session_id: sessionId, folder_id: folderId});
+      var data = result.data;
+      updateMode(data.mode);
+      lastResponse = data;
+      switch (data.mode) {
+        case '数据分析': handleDataResponse(data); break;
+        case '核心观点提炼': handleInsightResponse(data); break;
+        case '报告撰写': handleReportResponse(data); break;
+        default: handleDataResponse(data); break;
+      }
+    } catch(e) {
+      addMessage('ai', '\u64cd\u4f5c\u5931\u8d25: ' + e.message);
+    }
+  }, 500);
+}
+
 // Demo paths
 document.getElementById('demoPath1').addEventListener('click', async function() {
   addMessage('user', '📋 演示路径1：北京NEV画像分析→观点提炼→报告');
@@ -725,20 +1025,121 @@ document.getElementById('sidebarSearch').addEventListener('input', function() {
   }
   
 // ===== Historical Reports Mock Data =====
-const historicalReports = [
-  { id: 'hr_1', title: '2025年Q4北京NEV市场分析报告', date: '2025-12-15', similarity: 0.92,
-    source: '北京NEV市场分析.docx',
-    outline: ['市场概况', '用户画像分析', '竞争格局', '趋势预测'],
-    viewpoints: ['北京新能源渗透率突破45%，领先全国', '26-40岁高学历白领为核心用户群', '比亚迪/特斯拉/小米构成第一梯队'] },
-  { id: 'hr_2', title: '2026年1月中国汽车出口月报', date: '2026-02-10', similarity: 0.85,
-    source: '汽车产业国际化研究月报第12期.pdf',
-    outline: ['出口总览', '区域分析', '品牌表现', '政策影响'],
-    viewpoints: ['2025年11月出口量创历史新高', '东南亚市场增速最快', '新能源出口占比首次超40%'] },
-  { id: 'hr_3', title: '2025年度品牌监测报告', date: '2026-01-20', similarity: 0.78,
-    source: '品牌监测报告-样例.pptx',
-    outline: ['品牌声量', '用户口碑', '竞品对比', '改进建议'],
-    viewpoints: ['品牌认知度提升12个百分点', '智能化配置成用户最关注因素', '售后服务满意度有待提高'] }
-];
+let historicalReports = [];
+
+// Generate sidebar context from knowledge base and current session
+async function buildHistoricalReports() {
+  try {
+    // Get chat history for context
+    var contextQuery = '';
+    try {
+      var msgs = document.querySelectorAll('#chatArea .msg.user .bubble');
+      if (msgs.length > 0) {
+        contextQuery = msgs[msgs.length - 1].textContent.trim().substring(0, 100);
+      }
+    } catch(e) {}
+    
+    // Search knowledge base
+    var files = [];
+    if (contextQuery) {
+      try {
+        var folderFilter = window._currentFolder ? '&folder_id=' + encodeURIComponent(window._currentFolder) : '';
+        var sr = await fetch(API_BASE + '/knowledge/search?q=' + encodeURIComponent(contextQuery) + '&top_k=3' + folderFilter);
+        var sd = await sr.json();
+        var sm = {};
+        (sd.results || []).forEach(function(r) {
+          if (!sm[r.source]) sm[r.source] = { name: r.source, snippets: [] };
+          sm[r.source].snippets.push((r.text || '').substring(0, 60));
+        });
+        files = Object.values(sm);
+      } catch(e) { console.warn('Search failed'); }
+    }
+    
+    // Always get full file list for fallback
+    try {
+      var listFolderFilter = window._currentFolder ? '?folder_id=' + encodeURIComponent(window._currentFolder) : '';
+      var lr = await fetch(API_BASE + '/knowledge/list' + listFolderFilter);
+      var ld = await lr.json();
+      var allFiles = ld.files || [];
+      // Merge search results with full list
+      var existingNames = {};
+      files.forEach(function(f) { existingNames[f.name] = true; });
+      allFiles.forEach(function(f) {
+        if (!existingNames[f.name]) {
+          files.push({ name: f.name, snippets: ['文档共 ' + f.chunks + ' 个片段'] });
+        }
+      });
+    } catch(e) {}
+    
+    // Get insight candidates (if any from conversation)
+    var viewpointTitles = [];
+    if (window._lastInsightCandidates && window._lastInsightCandidates.length > 0) {
+      viewpointTitles = window._lastInsightCandidates.map(function(v) { return v.title; }).slice(0, 4);
+    }
+    
+    // Build reports
+    historicalReports = files.map(function(f, idx) {
+      var name = f.name || 'untitled';
+      var title = name.lastIndexOf('.') >= 0 ? name.slice(0, name.lastIndexOf('.')) : name;
+      
+      // Generate outline from snippets or default sections
+      var outline = [];
+      if (f.snippets && f.snippets.length > 0) {
+        outline = f.snippets.slice(0, 4).map(function(s) {
+          return s.length > 35 ? s.substring(0, 35) + '...' : s;
+        });
+      }
+      // Add default outline items if we have none but file has content
+      if (outline.length === 0 && viewpointTitles.length === 0) {
+        if (name.indexOf('北京') >= 0) {
+          outline = ['用户基础画像', '用户行为画像', '消费需求特征', '市场趋势洞察'];
+        } else if (name.indexOf('出口') >= 0 || name.indexOf('月报') >= 0) {
+          outline = ['出口总量分析', '区域分布', '车型结构', '趋势预测'];
+        } else if (name.indexOf('产业研究') >= 0) {
+          outline = ['技术创新趋势', '市场竞争格局', '政策环境分析', '产业链洞察'];
+        } else {
+          outline = ['数据概览', '关键指标', '趋势分析'];
+        }
+      }
+      
+      // Use conversation viewpoints if available
+      var viewpoints = viewpointTitles.length > 0 ? viewpointTitles : [];
+      
+      return {
+        id: 'hr_' + idx,
+        title: title,
+        date: new Date().toISOString().slice(0, 10),
+        similarity: 0.85 - idx * 0.08,
+        source: name,
+        outline: outline,
+        viewpoints: viewpoints
+      };
+    });
+    
+    // If still empty, add demo reports
+    if (historicalReports.length === 0) {
+      historicalReports = [
+        { id: 'hr_d1', title: '北京NEV市场分析', date: '2026-07-24', similarity: 0.9, source: '北京NEV市场分析.docx', outline: ['用户基础画像', '用户行为画像', '消费需求特征'], viewpoints: viewpointTitles },
+        { id: 'hr_d2', title: '中国汽车出口月报', date: '2026-07-24', similarity: 0.8, source: '中国汽车出口月报.txt', outline: ['出口总量分析', '区域分布', '车型结构'], viewpoints: viewpointTitles }
+      ];
+    }
+    
+    // Sidebar rendering handled by openWorkbench() .then() callback
+    // Sidebar rendering handled by openWorkbench() .then() callback
+  } catch(e) {
+    console.warn('Failed:', e);
+    historicalReports = [];
+  }
+}
+
+// Store last insight candidates for context
+var _origHandleInsight = handleInsightResponse;
+handleInsightResponse = function(data) {
+  if (data && data.insight && data.insight.candidates) {
+    window._lastInsightCandidates = data.insight.candidates;
+  }
+  if (_origHandleInsight) _origHandleInsight(data);
+};
 
 let _savedSidebarHTML = '';
 let _draggedData = null;
@@ -748,38 +1149,43 @@ function renderWBSidebar() {
   if (!sb) return;
   _savedSidebarHTML = sb.innerHTML;
   
-  var html = '<div class="sidebar-header" style="border-bottom-color:#3b82f6;"><h1>📚 相似历史报告</h1><p>基于当前上下文推荐的报告</p></div>';
+  var html = '<div class="sidebar-header" style="border-bottom-color:#3b82f6;"><h1>📚 知识库文件</h1><p>基于当前对话上下文的材料</p></div>';
   html += '<div class="wb-sidebar-list">';
   
   for (var ri = 0; ri < historicalReports.length; ri++) {
     var r = historicalReports[ri];
-    html += '<div class="wb-sidebar-card">';
-    html += '<div class="wb-sidebar-card-header">';
-    html += '<div class="wb-sidebar-title" title="来源: ' + r.source + '">' + r.title + '</div>';
-    html += '<span class="wb-sidebar-sim">' + Math.round(r.similarity * 100) + '%</span>';
-    html += '</div>';
-    html += '<div class="wb-sidebar-date">' + r.date + ' · ' + r.source + '</div>';
-    
-    // Outline (draggable)
-    html += '<div class="wb-sidebar-section-label">📋 大纲</div>';
-    html += '<div class="wb-sidebar-items">';
-    for (var oi = 0; oi < r.outline.length; oi++) {
-      html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="outline" data-report="' + r.id + '" data-content="' + r.outline[oi] + '" title="拖拽到工作台">📄 ' + r.outline[oi] + '</div>';
-    }
-    html += '</div>';
-    
-    // Viewpoints (draggable)
-    html += '<div class="wb-sidebar-section-label">💡 核心观点</div>';
-    html += '<div class="wb-sidebar-items">';
-    for (var vi = 0; vi < r.viewpoints.length; vi++) {
-      html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="viewpoint" data-report="' + r.id + '" data-content="' + r.viewpoints[vi] + '" title="拖拽到工作台">💡 ' + r.viewpoints[vi] + '</div>';
-    }
-    html += '</div>';
-    
-    html += '</div>';
-  }
+    // Only show card if it has actual content (outline or viewpoints from conversation)
+    if (r.outline && r.outline.length > 0 || r.viewpoints && r.viewpoints.length > 0) {
+      html += '<div class="wb-sidebar-card">';
+      html += '<div class="wb-sidebar-card-header">';
+      html += '<div class="wb-sidebar-title" title="来源: ' + r.source + '">' + r.title + '</div>';
+      html += '<span class="wb-sidebar-sim">' + Math.round(r.similarity * 100) + '%</span>';
+      html += '</div>';
+      html += '<div class="wb-sidebar-date">' + r.date + ' · ' + r.source + '</div>';
+      
+      if (r.outline && r.outline.length > 0) {
+        html += '<div class="wb-sidebar-section-label">📋 大纲</div>';
+        html += '<div class="wb-sidebar-items">';
+        for (var oi = 0; oi < r.outline.length; oi++) {
+          html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="outline" data-report="' + r.id + '" data-content="' + r.outline[oi] + '" title="拖拽到工作台">📄 ' + r.outline[oi] + '</div>';
+        }
+        html += '</div>';
+      }
+      
+      if (r.viewpoints && r.viewpoints.length > 0) {
+        html += '<div class="wb-sidebar-section-label">💡 核心观点</div>';
+        html += '<div class="wb-sidebar-items">';
+        for (var vi = 0; vi < r.viewpoints.length; vi++) {
+          html += '<div class="wb-sidebar-item draggable-item" draggable="true" data-type="viewpoint" data-report="' + r.id + '" data-content="' + r.viewpoints[vi] + '" title="拖拽到工作台">💡 ' + r.viewpoints[vi] + '</div>';
+        }
+        html += '</div>';
+      }
+      
+      html += '</div>';  // close card
+    }  // end if has content
+  }  // end for
   
-  html += '</div>';
+  html += '</div>';  // close list
   html += '<div class="sidebar-footer" style="border-top-color:#d0e3f0;"><span>📌 拖拽大纲/观点到工作台</span></div>';
   
   sb.innerHTML = html;
@@ -941,7 +1347,11 @@ function setupDropZone() {
     document.querySelector('.main').style.display = 'none';
     document.getElementById('workbenchPanel').classList.add('active');
     document.getElementById('wbToast').style.display = 'none';
-    renderWBSidebar();
+    var self = this;
+    // Build dynamic reports from knowledge base + context, then render
+    Promise.resolve(buildHistoricalReports()).then(function() {
+      renderWBSidebar();
+    });
     renderWorkbench();
     setupDropZone();
   }
@@ -1097,48 +1507,322 @@ function setupDropZone() {
     if (e.key === 'Escape') closeWorkbench();
   });
 
-</script>
 
-<!-- Workbench Panel (replaces main area) -->
-  <div class="workbench-panel" id="workbenchPanel">
-    <div class="wb-topbar">
-      <div class="wb-topbar-left">
-        <span class="wb-title">📝 报告编辑工作台</span>
-      </div>
-      <div class="wb-topbar-right">
-        <button class="wb-btn" onclick="saveWB()">💾 保存版本</button>
-        <button class="wb-btn wb-btn-primary" onclick="exportDoc()">📄 导出文档</button>
-        <button class="wb-back-btn" onclick="closeWorkbench()">← 返回</button>
-      </div>
-    </div>
-    <div class="wb-format-toolbar" id="wbFormatToolbar">
-      <button class="fmt-btn" onclick="fmtCmd('bold')" title="加粗"><b>B</b></button>
-      <button class="fmt-btn" onclick="fmtCmd('italic')" title="斜体"><i>I</i></button>
-      <button class="fmt-btn" onclick="fmtCmd('underline')" title="下划线"><u>U</u></button>
-      <span class="fmt-sep"></span>
-      <select class="fmt-select" id="fmtFontSize" onchange="fmtCmd('fontSize', this.value)">
-        <option value="3">小</option>
-        <option value="4" selected>标准</option>
-        <option value="5">大</option>
-        <option value="6">特大</option>
-      </select>
-      <span class="fmt-sep"></span>
-      <button class="fmt-btn" onclick="fmtCmd('justifyLeft')" title="左对齐">≡</button>
-      <button class="fmt-btn" onclick="fmtCmd('justifyCenter')" title="居中">≡</button>
-      <button class="fmt-btn" onclick="fmtCmd('justifyRight')" title="右对齐">≡</button>
-      <button class="fmt-btn" onclick="fmtCmd('insertUnorderedList')" title="列表">☰</button>
-      <span class="fmt-sep"></span>
-      <button class="fmt-btn" onclick="toggleWBVersion()" title="版本历史">🕐 历史版本 <span id="vbArrow">▼</span></button>
-    </div>
-    <div class="wb-version-list" id="wbVersionList" style="display:none;"></div>
-    <div class="wb-body-full" id="wbBody"></div>
-    <div class="wb-chat-area">
-      <div class="wb-chat-input-wrap">
-        <textarea class="wb-chat-input" id="wbChatInput" rows="1" placeholder="输入指令，继续修改报告内容..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWbChat()}"></textarea>
-        <button class="wb-chat-send" onclick="sendWbChat()">➤</button>
-      </div>
-    </div>
-  </div>
-  <div class="wb-toast" id="wbToast"></div>
+
+// ========== Folder & Upload Management ==========
+async function loadFolders() {
+  try {
+    const resp = await fetch(API_BASE + '/folders/list');
+    const data = await resp.json();
+    renderFolders(data.data);
+  } catch(e) {
+    console.error('Load folders failed:', e);
+  }
+}
+
+function renderFolders(folderData) {
+  const tree = document.getElementById('folderTree');
+  if (!folderData || !folderData.folders) return;
+  
+  tree.innerHTML = '';
+  folderData.folders.forEach((folder, fi) => {
+    const folderDiv = document.createElement('div');
+    folderDiv.className = 'folder-item' + (fi === 0 ? ' active' : '');
+    folderDiv.dataset.folderId = folder.id;
+    folderDiv.innerHTML = '<span class="icon">📁</span> ' + folder.name +
+      '<span class="count">' + (folder.files ? folder.files.length : 0) + '</span>';
+    folderDiv.onclick = function() {
+      document.querySelectorAll('.folder-item').forEach(el => el.classList.remove('active'));
+      this.classList.add('active');
+      window._currentFolder = folder.id;
+      updateContextInfo();
+    };
+    tree.appendChild(folderDiv);
+    
+    // Show files in this folder
+    if (folder.file_details && folder.file_details.length > 0) {
+      const subDiv = document.createElement('div');
+      subDiv.className = 'sub-items';
+      subDiv.style.paddingLeft = '20px';
+      folder.file_details.forEach(file => {
+        const fileDiv = document.createElement('div');
+        fileDiv.className = 'file-item';
+        fileDiv.style.cssText = 'padding:4px 12px;font-size:12px;color:#6b879e;cursor:default;display:flex;align-items:center;gap:4px;';
+        fileDiv.innerHTML = '📄 ' + file.name + 
+          (file.chunks > 0 ? '<span style="margin-left:auto;font-size:10px;color:#94a3b8;">' + file.chunks + '段</span>' : '');
+        subDiv.appendChild(fileDiv);
+      });
+      tree.appendChild(subDiv);
+    }
+  });
+}
+
+// Initialize UI handlers when DOM is ready
+function initUIHandlers() {
+  // Upload files
+  var uploadBtn = document.getElementById('uploadBtn');
+  if (uploadBtn) {
+    uploadBtn.addEventListener('click', function() {
+      document.getElementById('fileInput').click();
+    });
+  }
+  
+  document.getElementById('fileInput').addEventListener('change', async function(e) {
+    const files = e.target.files;
+    if (!files.length) return;
+  
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', window._currentFolder || 'demo');
+    
+    try {
+      const resp = await fetch(API_BASE + '/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const result = await resp.json();
+      if (result.status === 'ok') {
+        addMessage('ai', '📄 文件 **' + file.name + '** 上传成功！\n\n' + 
+          (result.analysis && result.analysis.summary ? result.analysis.summary : '已自动解析并加入知识库。'));
+      } else {
+        addMessage('ai', '⚠️ 上传失败: ' + (result.message || '未知错误'));
+      }
+    } catch(err) {
+      addMessage('ai', '⚠️ 上传失败: ' + err.message);
+    }
+  }
+  
+  // Refresh folder list
+  await loadFolders();
+  updateContextInfo();
+  e.target.value = '';
+});
+
+// New folder
+  var newFolderBtn = document.getElementById('newFolderBtn');
+  if (newFolderBtn) {
+    newFolderBtn.addEventListener('click', function() {
+      const name = prompt('请输入新文件夹名称：');
+  if (!name || !name.trim()) return;
+  
+  fetch(API_BASE + '/folders/create', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name: name.trim()})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      loadFolders();
+      addMessage('ai', '📁 文件夹 ' + name.trim() + ' 已创建');
+    } else {
+      addMessage('ai', '⚠️ ' + (data.message || '创建失败'));
+    }
+  })
+  .catch(err => addMessage('ai', '⚠️ 创建失败: ' + err.message));
+});
+  }
+
+
+
+// Seed demo data on first load
+}
+function updateContextInfo() {
+  const el = document.querySelector('.context-info');
+  if (el) {
+    const activeFolder = document.querySelector('.folder-item.active');
+    const folderName = activeFolder ? activeFolder.textContent.trim().replace(/\d+$/, '').trim() : '全部';
+    const total = document.querySelectorAll('.file-item').length;
+    el.textContent = folderName + ' · ' + total + ' 个文件';
+  }
+}
+
+
+
+
+// Try to init when DOM is ready (script is at bottom of body)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() {
+    initUIHandlers();
+    initDemoData();
+  });
+} else {
+  initUIHandlers();
+  initDemoData();
+}
+
+async function initDemoData() {
+  try {
+    const resp = await fetch(API_BASE + '/demo/seed', {method: 'POST'});
+    const data = await resp.json();
+    if (data.status === 'ok' && data.files) {
+      console.log('Demo data seeded:', data.files);
+    }
+  } catch(e) {
+    console.log('Demo seed skipped:', e.message);
+  }
+  await loadFolders();
+  updateContextInfo();
+}
+
+// Override init
+// Initialize immediately (script runs at bottom of body, DOM is ready)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDemoData);
+} else {
+  initDemoData();
+}
+
+// ========== Context Menu (Right Click) ==========
+var _contextTarget = null;
+var _contextType = null; // 'folder' or 'file'
+
+document.addEventListener('contextmenu', function(e) {
+  var folderItem = e.target.closest('.folder-item');
+  var fileItem = e.target.closest('.file-item');
+  
+  if (folderItem || fileItem) {
+    e.preventDefault();
+    _contextTarget = folderItem || fileItem;
+    _contextType = folderItem ? 'folder' : 'file';
+    
+    var menu = document.getElementById('contextMenu');
+    menu.style.display = 'block';
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+    
+    // Update copy label
+    var copyItem = menu.querySelector('[data-action="copy"]');
+    if (copyItem) {
+      copyItem.textContent = _contextType === 'folder' ? '📋 复制目录' : '📋 复制文件路径';
+    }
+  } else {
+    document.getElementById('contextMenu').style.display = 'none';
+  }
+});
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.context-menu')) {
+    document.getElementById('contextMenu').style.display = 'none';
+  }
+});
+
+document.getElementById('contextMenu').addEventListener('click', async function(e) {
+  var item = e.target.closest('.context-menu-item');
+  if (!item || !_contextTarget) return;
+  
+  var action = item.dataset.action;
+  document.getElementById('contextMenu').style.display = 'none';
+  
+  if (action === 'rename') {
+    var oldText = _contextTarget.textContent.trim();
+    // Extract name (remove icon, file count)
+    var oldName = oldText.replace(/^[📁📄]\s*/, '').replace(/\s*\d+$/, '').trim();
+    var newName = prompt('请输入新名称：', oldName);
+    if (!newName || !newName.trim()) return;
+    
+    if (_contextType === 'folder') {
+      var folderId = _contextTarget.dataset.folderId;
+      if (folderId) {
+        try {
+          var r = await fetch(API_BASE + '/folders/rename', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({folder_id: folderId, name: newName.trim()})
+          });
+          var d = await r.json();
+          if (d.status === 'ok') loadFolders();
+          else alert('重命名失败: ' + (d.message || ''));
+        } catch(err) {
+          alert('重命名失败: ' + err.message);
+        }
+      }
+    } else {
+      // File rename via backend API
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
+      try {
+        var r = await fetch(API_BASE + '/knowledge/rename', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({old_name: fileName, new_name: newName.trim()})
+        });
+        var d = await r.json();
+        if (d.status === 'ok') loadFolders();
+        else alert('重命名失败: ' + (d.message || ''));
+      } catch(err) {
+        alert('重命名失败: ' + err.message);
+      }
+    }
+  } else if (action === 'delete') {
+    var delText = _contextTarget.textContent.trim();
+    if (!confirm('确定要删除"' + delText.replace(/^[📁📄]\s*/, '') + '"吗？')) return;
+    
+    if (_contextType === 'folder') {
+      var folderId = _contextTarget.dataset.folderId;
+      if (folderId) {
+        try {
+          var r = await fetch(API_BASE + '/folders/' + folderId, {method: 'DELETE'});
+          loadFolders();
+          updateContextInfo();
+        } catch(err) {
+          alert('删除失败: ' + err.message);
+        }
+      }
+    } else {
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
+      try {
+        var r = await fetch(API_BASE + '/knowledge/' + encodeURIComponent(fileName), {method: 'DELETE'});
+        loadFolders();
+        updateContextInfo();
+      } catch(err) {
+        alert('删除失败: ' + err.message);
+      }
+    }
+  } else if (action === 'copy') {
+    if (_contextType === 'file') {
+      // Copy actual file path from backend
+      var fileName = _contextTarget.textContent.trim().replace(/^📄\s*/, '').replace(/\s*\d+段$/, '').trim();
+      try {
+        var r = await fetch(API_BASE + '/knowledge/path?source=' + encodeURIComponent(fileName));
+        var d = await r.json();
+        if (d.status === 'ok' && d.path) {
+          try { await navigator.clipboard.writeText(d.path); }
+          catch(err) {
+            var ta = document.createElement('textarea');
+            ta.value = d.path;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+          }
+        }
+      } catch(err) {
+        var text = fileName;
+        try { await navigator.clipboard.writeText(text); }
+        catch(err2) {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+      }
+    } else {
+      // Folder: copy folder name
+      var text = _contextTarget.textContent.trim().replace(/^📁\s*/, '').replace(/\s*\d+$/, '').trim();
+      try { await navigator.clipboard.writeText(text); }
+      catch(err) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+    }
+}
+});
+
+</script>
 </body>
 </html>
