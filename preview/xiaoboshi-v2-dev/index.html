@@ -57,7 +57,7 @@
 </head>
 <body><div id="app"></div><script>
 const $=id=>document.getElementById(id);
-const icons={book:'▤',spark:'✦',file:'▧',ppt:'▣',link:'⌁',chat:'◌',quiz:'✓',task:'≡',check:'✓',upload:'↑',clock:'◷',risk:'!',sync:'↻',more:'⋯',home:'⌂',back:'‹',collapse:'‹',expand:'›',drag:'⠿',edit:'✎'};
+const icons={book:'▤',spark:'✦',file:'▧',ppt:'▣',link:'⌁',chat:'◌',quiz:'✓',task:'≡',check:'✓',upload:'↑',clock:'◷',risk:'!',sync:'↻',more:'⋯',home:'⌂',back:'‹',collapse:'‹',expand:'›',drag:'⠿',edit:'✎',copy:'⧉'};
 const planOptions={
 intro:[
  {name:'双雪景对比导入',time:'5 分钟',source:'两段雪景视频 / 真实教案',confidence:'92%',lines:['呈现《江雪》清冷孤寂的雪景，再播放北国长城、黄土高原的壮阔雪景。','提问：“同样是写雪，两组画面给你的感受有何不同？”学生先写下一个感受词，再说明画面依据。','从“清冷孤寂”与“壮阔豪迈”的差异进入《沁园春·雪》，板书课题与作者。']},
@@ -141,7 +141,7 @@ sectionEl.querySelectorAll('[data-sim-react]').forEach(b=>b.onclick=()=>chooseRe
 sectionEl.querySelectorAll('[data-sim-end]').forEach(b=>b.onclick=()=>endSimClassroom(b.dataset.simEnd));
 sectionEl.querySelectorAll('[data-solution]').forEach(b=>b.onclick=()=>showSolutionPrompt());
 }
- if($('mainDoc'))bindLesson();const cs=$('chatScroll');if(cs)cs.scrollTop=cs.scrollHeight
+ state.sections.forEach(s=>bindSectionEvents(s)); if($('mainDoc'))bindLesson();const cs=$('chatScroll');if(cs)cs.scrollTop=cs.scrollHeight
 }
 function bindLesson(){
  document.querySelectorAll('[data-line]').forEach(el=>el.onblur=()=>{const [id,j]=el.dataset.line.split('-');const sec=state.sections.find(x=>x.id===id);if(!sec)return;const lines=getSectionLines(sec);if(lines[+j]!==el.innerText.trim()){lines[+j]=el.innerText.trim();state.dirty.add(el.dataset.line);toast('已保护这处人工修改，后续不会自动覆盖')}});document.querySelectorAll('[data-ai-action]').forEach(b=>b.onclick=()=>showCompare(b.dataset.sectionId,b.dataset.aiAction));
