@@ -672,6 +672,18 @@ Object.assign(window, { CoursewareWorkspace });
 // workspace_lesson.jsx — 写教案：真实成稿的教学设计工作台
 // 左侧对话驱动，右侧生成一份结构完整、可直接编辑的教学设计文档。
 const { useState: lS, useEffect: lE, useRef: lR } = React;
+// ---- 学情 / 备课设置常量 ----
+const SETUP_GROUPS = [
+  { key: "base", label: "班级基础", optional: "可跳过", opts: ["基础较弱", "基础一般", "基础较好"] },
+];
+const PERIOD_OPTIONS = ["1 课时", "2 课时"];
+const STYLE_OPTIONS = ["素养启发式", "情景任务式"];
+const LESSON_FILES = [
+  { key: "format", name: "格式要求 / 教案框架文件", desc: "上传学校或区里的教案模板，确保生成格式一致", required: true },
+  { key: "reference", name: "参考资料 / 教材分析", desc: "课程标准、教材说明、往年教学设计等", required: false },
+  { key: "courseware", name: "已有课件 / 素材", desc: "PPT、图片、视频等课堂素材", required: false },
+];
+
 
 // ---- 从自然语言里解析课题信息 ----
 function parseLessonQuery(q) {
@@ -1211,6 +1223,11 @@ function LessonWorkspace({ scenario, query, onHome, onSwitch, fromIntent, resume
   const [savedDocs, setSavedDocs] = lS(stored.savedDocs || []);
   const [savedOpen, setSavedOpen] = lS(false);
   const [pickTextbook, setPickTextbook] = lS(false);
+  // 学情/备课设置（右侧抽屉）
+  const [setupInputs, setSetupInputs] = lS(stored.setupInputs || { base: "基础一般", periods: "2 课时", style: "素养启发式", files: ["format"] });
+  const [setupOpen, setSetupOpen] = lS(stored.setupOpen ?? true);
+  // 检查卡片（导出前）
+  const [auditOpen, setAuditOpen] = lS(false);
 
   const greet = <span>好的，我来帮你<b style={{ color: "var(--brand-deep)" }}>写教案</b>。告诉我课题，或者在右侧选好教材章节，我先给你列个大纲。</span>;
 
@@ -1312,7 +1329,7 @@ function LessonWorkspace({ scenario, query, onHome, onSwitch, fromIntent, resume
 
   // 持久化
   lE(() => { window.ChatSession.save(window.freezeChat(messages)); }, [messages]);
-  lE(() => { window.ChatSession.scratch.lesson = { doc, q: initialQ, docCat, docType, savedDocs, textbook }; }, [doc, docCat, docType, savedDocs, textbook]);
+  lE(() => { window.ChatSession.scratch.lesson = { doc, q: initialQ, docCat, docType, savedDocs, textbook, setupInputs, setupOpen }; }, [doc, docCat, docType, savedDocs, textbook, setupInputs, setupOpen]);
 
   const handleSend = (text, files) => {
     setMessages((m) => [...m, { role: "user", text, files }, { role: "ai", typing: true }]);
@@ -1352,7 +1369,16 @@ function LessonWorkspace({ scenario, query, onHome, onSwitch, fromIntent, resume
     send(`${textbook.edition}${lzGrade(textbook)}${textbook.subject}《${topic}》${docType}`);
   };
 
-  const exportDoc = () => { setToast("已开始下载（演示）— 实际产品中将下载文档文件"); setTimeout(() => setToast(null), 2600); };
+  const exportDoc = () => { setAuditOpen(true); };
+  const startFromSetup = () => {
+    setSetupOpen(false);
+    if (rawQ || meta?.topic) {
+      proposeOutline(rawQ || meta?.topic);
+    } else {
+      setMessages((m) => [...m, { role: "ai", node: <span>学情已记录。请告诉我课题，或直接在右侧选好教材章节，我先给你列个大纲。</span> }]);
+    }
+  };
+  const closeSetup = () => setSetupOpen(false);
   // 返回上一层级：离开当前文档，回到「写教案」选择页。离开前自动留存，方便从「接着上次」找回。
   const goBack = () => {
     if (doc) {
@@ -1440,7 +1466,21 @@ function LessonWorkspace({ scenario, query, onHome, onSwitch, fromIntent, resume
           ) : outline ? (
             <LessonOutlinePanel meta={meta} docType={docType} outline={outline} setOutline={setOutline} onConfirm={confirmOutline} mobile={mobile} />
           ) : !doc ? (
-            <LessonStartPage textbook={textbook} docType={docType} loggedIn={loggedIn} savedDocs={savedDocs} onWrite={writeSection} onPickTextbook={() => setPickTextbook(true)} onExample={(c) => send(c)} onOpenSaved={openSaved} mobile={mobile} />
+            <LessonStartPage
+              textbook={textbook}
+              docType={docType}
+              savedDocs={savedDocs}
+              setupOpen={setupOpen}
+              setupInputs={setupInputs}
+              setSetupInputs={setSetupInputs}
+              onGenerate={startFromSetup}
+              onCloseSetup={closeSetup}
+              onWrite={writeSection}
+              onPickTextbook={() => setPickTextbook(true)}
+              onExample={(c) => send(c)}
+              onOpenSaved={openSaved}
+              mobile={mobile}
+            />
           ) : (
             <article ref={docRef} style={{ maxWidth: 800, margin: "0 auto", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 16, boxShadow: "var(--shadow-card, 0 10px 30px -18px rgba(30,40,60,.18))", padding: mobile ? "22px 18px" : "34px 42px" }}>
             <header style={{ textAlign: "center", marginBottom: 22 }}>
@@ -1463,6 +1503,13 @@ function LessonWorkspace({ scenario, query, onHome, onSwitch, fromIntent, resume
         {toast && (
           <div style={{ position: "absolute", bottom: 22, left: "50%", transform: "translateX(-50%)", background: "oklch(0.3 0.01 260 / .95)", color: "#fff", fontSize: 12.5, fontWeight: 600, padding: "9px 16px", borderRadius: 11, zIndex: 40, whiteSpace: "nowrap" }}>{toast}</div>
         )}
+        {auditOpen && (
+          <LessonAuditModal
+            inputs={setupInputs}
+            onClose={() => setAuditOpen(false)}
+            onExport={() => { setAuditOpen(false); setToast("已开始下载（演示）— 实际产品中将下载文档文件"); setTimeout(() => setToast(null), 2600); }}
+          />
+        )}
         {/* 切换教材抽屉：学段 / 学科 / 版本 / 册别 → 章节目录 */}
         <div onClick={() => setPickTextbook(false)} style={{ position: "fixed", inset: 0, zIndex: 84, background: "rgba(20,16,10,.42)", backdropFilter: "blur(2px)", opacity: pickTextbook ? 1 : 0, pointerEvents: pickTextbook ? "auto" : "none", transition: "opacity .2s" }} />
         <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 85, width: mobile ? "100%" : "min(560px, 94vw)", background: "var(--canvas)", boxShadow: "-20px 0 60px -30px rgba(0,0,0,.5)", transform: pickTextbook ? "translateX(0)" : "translateX(102%)", transition: "transform .26s cubic-bezier(.22,1,.36,1)", display: "flex", flexDirection: "column" }}>
@@ -1484,12 +1531,11 @@ function LessonWorkspace({ scenario, query, onHome, onSwitch, fromIntent, resume
 }
 
 // ---- 写教案启动页（右侧辅助区）：对话优先，章节目录近顶部、按需展开 ----
-function LessonStartPage({ textbook, docType, loggedIn, savedDocs, onWrite, onPickTextbook, onExample, onOpenSaved, mobile }) {
+function LessonStartPage({ textbook, docType, savedDocs, setupOpen, setupInputs, setSetupInputs, onGenerate, onPickTextbook, onExample, onOpenSaved, mobile, onCloseSetup }) {
   const catalog = lzCatalog(textbook);
   const [catOpen, setCatOpen] = lS(false);
   const firstSec = (catalog[0] && catalog[0].secs[0]) || "本节";
   const secondSec = (catalog[0] && catalog[0].secs[1]) || (catalog[1] && catalog[1].secs[0]) || firstSec;
-  // 自然语言示例 —— 桥：教用户怎么向左侧对话框开口
   const examples = [
     `备《${firstSec}》的${docType}`,
     `${secondSec}，重点突出探究活动`,
@@ -1499,13 +1545,24 @@ function LessonStartPage({ textbook, docType, loggedIn, savedDocs, onWrite, onPi
 
   return (
     <div className="home-fade" style={{ height: "100%", display: "grid", placeItems: "center", padding: mobile ? 16 : 24 }}>
-    <div style={{ width: "min(540px,100%)" }}>
+    <div style={{ width: "min(560px,100%)" }}>
       {/* Hero */}
-      <div style={{ textAlign: "center", marginBottom: 16 }}>
+      <div style={{ textAlign: "center", marginBottom: 18 }}>
         <div style={{ display: "inline-flex", marginBottom: 13 }}><ScenarioGlyph icon="lesson" hue={320} size={52} active /></div>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--ink)", margin: "0 0 6px" }}>来写教案吧</h2>
         <p style={{ fontSize: 13.5, color: "var(--ink-2)", margin: 0, lineHeight: 1.6 }}>在左侧告诉我课题或描述写教案的需求，也可以直接选择教材章节</p>
       </div>
+
+      {/* 学情 / 备课设置卡片 */}
+      {setupOpen && (
+        <LessonSetup
+          inputs={setupInputs}
+          setInputs={setSetupInputs}
+          onGenerate={onGenerate}
+          onClose={onCloseSetup}
+          mobile={mobile}
+        />
+      )}
 
       {/* 本册目录 or 选教材入口 */}
       {textbook && textbook._chosen ? (
@@ -1655,7 +1712,147 @@ function LessonTextbookPicker({ current, onApply, onWrite, docType, mobile }) {
   );
 }
 
-Object.assign(window, { LessonWorkspace });
+
+// ---- 学情 / 备课设置卡片（工作台右侧栏内嵌） ----
+function LessonSetup({ inputs, setInputs, onGenerate, onClose, mobile }) {
+  const toggleFile = (key) => {
+    setInputs((s) => {
+      const has = (s.files || []).includes(key);
+      const next = has ? s.files.filter((k) => k !== key) : [...(s.files || []), key];
+      return { ...s, files: next };
+    });
+  };
+  const setValue = (key, val) => setInputs((s) => ({ ...s, [key]: val }));
+  const hasFormat = (inputs.files || []).includes("format");
+  const Section = ({ label, optional, children }) => (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 13, fontWeight: 750, color: "var(--ink)", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        {label}
+        {optional && <span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 500 }}>{optional}</span>}
+      </div>
+      {children}
+    </div>
+  );
+  const Chip = ({ opts, value, onClick }) => (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      {opts.map((o) => {
+        const active = value === o;
+        return (
+          <button key={o} onClick={() => onClick(o)} style={{ padding: "7px 13px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-zh)", border: active ? "1px solid var(--brand)" : "1px solid var(--line)", background: active ? "var(--brand-soft)" : "var(--surface)", color: active ? "var(--brand-deep)" : "var(--ink-2)", transition: "all .15s", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {active && <Icon name="check" size={13} />}{o}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 16, overflow: "hidden", marginBottom: 18, boxShadow: "var(--shadow-card)" }}>
+      <div style={{ padding: "18px 18px 14px", borderBottom: "1px solid var(--line)" }}>
+        <h3 style={{ margin: "0 0 5px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>先了解这节课</h3>
+        <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.55 }}>只保留影响课堂设计的关键信息；不确定的内容可以跳过。</p>
+      </div>
+      <div style={{ padding: "18px 18px 8px" }}>
+        <Section label="班级基础" optional="可跳过">
+          <Chip opts={SETUP_GROUPS[0].opts} value={inputs.base} onClick={(v) => setValue("base", v)} />
+        </Section>
+        <Section label="课时长度" optional="可跳过">
+          <Chip opts={PERIOD_OPTIONS} value={inputs.periods} onClick={(v) => setValue("periods", v)} />
+        </Section>
+        <Section label="备课风格" optional="可跳过">
+          <Chip opts={STYLE_OPTIONS} value={inputs.style} onClick={(v) => setValue("style", v)} />
+        </Section>
+        <Section label="格式要求 / 教案框架文件" optional="请先上传">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {LESSON_FILES.filter((f) => f.required).map((f) => (
+              <button key={f.key} onClick={() => toggleFile(f.key)} style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "flex-start", gap: 10, padding: 12, borderRadius: 11, border: hasFormat ? "1px solid #9dd9c0" : "1px dashed var(--line)", background: hasFormat ? "#edf9f4" : "var(--surface-2)", cursor: "pointer", transition: "all .15s" }}>
+                <span style={{ width: 22, height: 22, borderRadius: 7, background: hasFormat ? "#1f9d67" : "var(--surface)", border: "1px solid var(--line)", display: "grid", placeItems: "center", color: "#fff", flexShrink: 0, marginTop: 1 }}>
+                  {hasFormat ? <Icon name="check" size={14} /> : <Icon name="upload" size={13} />}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{f.name}</div>
+                  <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 2 }}>{f.desc}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </Section>
+        <Section label="已有资料" optional="小博士已完成识别">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {LESSON_FILES.filter((f) => !f.required).map((f) => {
+              const checked = (inputs.files || []).includes(f.key);
+              return (
+                <button key={f.key} onClick={() => toggleFile(f.key)} style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "flex-start", gap: 10, padding: 12, borderRadius: 11, border: checked ? "1px solid #9dd9c0" : "1px dashed var(--line)", background: checked ? "#edf9f4" : "var(--surface-2)", cursor: "pointer", transition: "all .15s" }}>
+                  <span style={{ width: 22, height: 22, borderRadius: 7, background: checked ? "#1f9d67" : "var(--surface)", border: "1px solid var(--line)", display: "grid", placeItems: "center", color: "#fff", flexShrink: 0, marginTop: 1 }}>
+                    {checked ? <Icon name="check" size={14} /> : <Icon name="upload" size={13} />}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{f.name}</div>
+                    <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 2 }}>{f.desc}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </Section>
+      </div>
+      <div style={{ padding: "14px 18px", borderTop: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 12, color: "var(--ink-3)" }}>所有信息后续均可修改</span>
+        <div style={{ display: "flex", gap: 10 }}>
+          <Btn size="sm" kind="ghost" onClick={onClose}>跳过</Btn>
+          <Btn size="sm" kind="primary" icon="spark" onClick={onGenerate}>生成教案</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---- 导出前检查卡片 ----
+function LessonAuditModal({ inputs, onClose, onExport }) {
+  const formatReady = (inputs.files || []).includes("format");
+  const items = [
+    { ok: true, title: "两课时任务分配清晰", desc: "第一课时聚焦上阕与朗读，第二课时聚焦评史、明志与整合。" },
+    { ok: true, title: "教学目标与活动对应", desc: "朗读、意象赏析、评史思辨和拓展表达均有课堂任务承接。" },
+    { ok: formatReady, title: "格式要求文件是否准备好", desc: "当前教案已按格式要求文件的结构校验，可继续导出。", warn: true },
+    { ok: true, title: "资料来源置信度已达标", desc: "参考资料、格式要求文件和原课件均已用于本次备课。" },
+  ];
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(26,35,48,.32)", display: "grid", placeItems: "center", padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "min(520px, 100%)", maxHeight: "90vh", overflow: "auto", background: "var(--surface)", borderRadius: 16, boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: "17px 20px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>导出前检查</h2>
+          <button onClick={onClose} style={{ border: "none", background: "transparent", color: "var(--ink-3)", fontSize: 20, cursor: "pointer" }}>×</button>
+        </div>
+        <div style={{ padding: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 15, padding: 14, background: "#edf9f4", borderRadius: 12, marginBottom: 14 }}>
+            <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#fff", display: "grid", placeItems: "center", color: "#1f9d67", fontWeight: 800, fontSize: 17 }}>91</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>教案结构完整，可继续导出</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {items.map((it, i) => (
+              <div key={i} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: 12, display: "flex", gap: 10, background: it.warn && !it.ok ? "#fffdf8" : "var(--surface)", borderColor: it.warn && !it.ok ? "#ffdba3" : "var(--line)" }}>
+                <span style={{ width: 22, height: 22, borderRadius: "50%", background: it.ok ? "#edf9f4" : "var(--surface-2)", display: "grid", placeItems: "center", color: it.ok ? "#1f9d67" : "oklch(0.6 0.16 55)", flexShrink: 0 }}>
+                  {it.ok ? <Icon name="check" size={14} /> : <Icon name="alert" size={14} />}
+                </span>
+                <div>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink)", marginBottom: 3 }}>{it.title}</div>
+                  <div style={{ fontSize: 11, color: "var(--ink-3)", lineHeight: 1.5 }}>{it.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ padding: "13px 20px", borderTop: "1px solid var(--line)", display: "flex", justifyContent: "flex-end", gap: 10 }}>
+          <Btn size="sm" kind="ghost" onClick={onClose}>继续修改</Btn>
+          <Btn size="sm" kind="primary" onClick={onExport}>继续导出</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { LessonWorkspace, LessonSetup, LessonAuditModal });
 
 
 // ======== workspace_mindmap.jsx ========
