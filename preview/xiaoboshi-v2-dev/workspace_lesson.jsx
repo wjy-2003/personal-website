@@ -1,6 +1,18 @@
 // workspace_lesson.jsx — 写教案：真实成稿的教学设计工作台
 // 左侧对话驱动，右侧生成一份结构完整、可直接编辑的教学设计文档。
 const { useState: lS, useEffect: lE, useRef: lR } = React;
+// ---- 学情 / 备课设置常量 ----
+const SETUP_GROUPS = [
+  { key: "base", label: "班级基础", optional: "可跳过", opts: ["基础较弱", "基础一般", "基础较好"] },
+];
+const PERIOD_OPTIONS = ["1 课时", "2 课时"];
+const STYLE_OPTIONS = ["素养启发式", "情景任务式"];
+const LESSON_FILES = [
+  { key: "format", name: "格式要求 / 教案框架文件", desc: "上传学校或区里的教案模板，确保生成格式一致", required: true },
+  { key: "reference", name: "参考资料 / 教材分析", desc: "课程标准、教材说明、往年教学设计等", required: false },
+  { key: "courseware", name: "已有课件 / 素材", desc: "PPT、图片、视频等课堂素材", required: false },
+];
+
 
 // ---- 从自然语言里解析课题信息 ----
 function parseLessonQuery(q) {
@@ -786,6 +798,7 @@ function LessonWorkspace({ scenario, query, onHome, onSwitch, fromIntent, resume
             <LessonStartPage
               textbook={textbook}
               docType={docType}
+              savedDocs={savedDocs}
               setupOpen={setupOpen}
               setupInputs={setupInputs}
               setSetupInputs={setSetupInputs}
@@ -847,7 +860,7 @@ function LessonWorkspace({ scenario, query, onHome, onSwitch, fromIntent, resume
 }
 
 // ---- 写教案启动页（右侧辅助区）：对话优先，章节目录近顶部、按需展开 ----
-function LessonStartPage({ textbook, docType, setupOpen, setupInputs, setSetupInputs, onGenerate, onPickTextbook, onExample, onOpenSaved, mobile, onCloseSetup }) {
+function LessonStartPage({ textbook, docType, savedDocs, setupOpen, setupInputs, setSetupInputs, onGenerate, onPickTextbook, onExample, onOpenSaved, mobile, onCloseSetup }) {
   const catalog = lzCatalog(textbook);
   const [catOpen, setCatOpen] = lS(false);
   const firstSec = (catalog[0] && catalog[0].secs[0]) || "本节";
@@ -857,6 +870,7 @@ function LessonStartPage({ textbook, docType, setupOpen, setupInputs, setSetupIn
     `${secondSec}，重点突出探究活动`,
     `这一节的重难点该怎么处理`,
   ];
+  const recents = (savedDocs || []).slice(-3).reverse();
 
   return (
     <div className="home-fade" style={{ height: "100%", display: "grid", placeItems: "center", padding: mobile ? 16 : 24 }}>
@@ -1039,7 +1053,6 @@ function LessonSetup({ inputs, setInputs, onGenerate, onClose, mobile }) {
   };
   const setValue = (key, val) => setInputs((s) => ({ ...s, [key]: val }));
   const hasFormat = (inputs.files || []).includes("format");
-
   const Section = ({ label, optional, children }) => (
     <div style={{ marginBottom: 20 }}>
       <div style={{ fontSize: 13, fontWeight: 750, color: "var(--ink)", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
