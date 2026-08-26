@@ -152,7 +152,6 @@ function HomeConversation({ value, setValue, onSubmit, onPick, onResume, loggedI
   const S = window.AIDATA.SCENARIOS;
   const EX = window.AIDATA.HOME_EXAMPLES || [];
   const mobile = useIsMobile();
-  const onWriteLesson = () => onPick && onPick("lesson");
   // rotating ghost example drawn from real teacher prompts (Tab to fill)
   const phs = ["人教版七年级上《有理数》同步练习，含解析", "按湖北中考结构出一份物理中考模拟卷", "外研版英语必修二 Unit3 早读课件，精美一些", "九年级 二次函数 思维导图", "光反应和暗反应有什么区别？"];
   const [phi, setPhi] = useState(0);
@@ -213,44 +212,7 @@ function HomeConversation({ value, setValue, onSubmit, onPick, onResume, loggedI
           </button>
         ))}
       </div>
-      {/* 写教案快速入口卡片 */}
-      <div style={{ maxWidth: 720, margin: "0 auto", marginTop: 32, padding: "0 16px" }}>
-        <div
-          onClick={onWriteLesson}
-          style={{
-            background: "var(--surface)",
-            border: "1.5px solid var(--brand-soft-border)",
-            borderRadius: 16,
-            padding: "18px 22px",
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            cursor: "pointer",
-            transition: "box-shadow .2s, border-color .2s, transform .2s",
-            boxShadow: "0 1px 4px oklch(0.4 0.08 260 / .06)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "var(--brand)";
-            e.currentTarget.style.boxShadow = "0 8px 24px -8px " + accentFor("book", 0.5);
-            e.currentTarget.style.transform = "translateY(-2px)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "var(--brand-soft-border)";
-            e.currentTarget.style.boxShadow = "0 1px 4px oklch(0.4 0.08 260 / .06)";
-            e.currentTarget.style.transform = "none";
-          }}
-        >
-          <div style={{ width: 40, height: 40, borderRadius: 11, background: "var(--brand-soft)", border: "1px solid var(--brand-soft-border)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-            <CIcon name="book" size={22} active />
-          </div>
-          <div style={{ textAlign: "left", flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: "var(--ink)", marginBottom: 3 }}>智能写教案</div>
-            <div style={{ fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.45 }}>选择学科、学段、版本，快速生成完整教学设计</div>
-          </div>
-          <Icon name="chevron" size={18} style={{ color: "var(--ink-3)", flexShrink: 0 }} />
-        </div>
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", alignItems: "center", marginTop: 32, maxWidth: 760, marginLeft: "auto", marginRight: "auto" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", alignItems: "center", marginTop: 48, maxWidth: 760, marginLeft: "auto", marginRight: "auto" }}>
         <span style={{ fontSize: 12, color: "var(--ink-3)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="spark" size={13} /> 老师们在问</span>
         {EX.slice(0, mobile ? 3 : 5).map((ex, i) => (
           <button key={i} onClick={() => onSubmit(ex.t)} className="chip-pop ex-chip" style={{ animationDelay: `${i * 0.04}s`, maxWidth: "100%", padding: "7px 14px", borderRadius: 999, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--ink-3)", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-zh)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ex.t}</button>
