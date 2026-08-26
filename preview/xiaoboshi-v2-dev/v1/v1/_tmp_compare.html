@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="design_doc_mode" content="canvas">
+<title>首页对比稿 · 设计师0714 vs 修正版</title>
+<style>
+:root{--brand:#2f73e0;--brand-deep:#2257ad;--brand-soft:#eaf1fc;--brand-soft-border:#c6d9f5;--canvas:#fafafa;--surface:#fff;--surface-2:#f4f5f7;--ink:#2b2e36;--ink-2:#5c626e;--ink-3:#8a909c;--line:#e7e8ec;}
+body{margin:0;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+a{color:var(--brand);text-decoration:none}a:hover{color:var(--brand-deep)}
+.frame{position:absolute;width:1440px;height:1080px;background:var(--surface);border-radius:6px;overflow:hidden;box-shadow:0 2px 18px rgba(20,30,60,.10);display:flex;}
+.frame-label{position:absolute;font-size:15px;font-weight:700;color:#555;font-family:system-ui;white-space:nowrap;}
+.frame-label small{font-weight:500;color:#999;margin-left:10px}
+/* ---------- sidebar ---------- */
+.side{width:300px;flex-shrink:0;border-right:1px solid var(--line);background:#fcfcfd;display:flex;flex-direction:column;padding:18px 16px 14px;box-sizing:border-box;}
+.logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;color:var(--ink);padding:2px 6px 16px;}
+.logo .mark{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;font-size:15px;font-weight:800;}
+.newchat{display:flex;align-items:center;justify-content:center;gap:6px;height:40px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:600;color:var(--ink);margin-bottom:14px;}
+.nav{display:flex;flex-direction:column;gap:2px;}
+.nav-it{display:flex;align-items:center;gap:10px;height:38px;padding:0 10px;border-radius:9px;font-size:13.5px;color:var(--ink-2);font-weight:500;}
+.nav-it svg{width:16px;height:16px;flex-shrink:0}
+.hist{margin-top:22px;flex:1;min-height:0;}
+.hist h4{font-size:12px;color:var(--ink-3);font-weight:600;margin:0 10px 8px;}
+.h-it{padding:8px 10px;border-radius:9px;}
+.h-it b{display:block;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.h-it span{font-size:11.5px;color:var(--ink-3);}
+.user{display:flex;align-items:center;gap:10px;padding:10px 6px 0;border-top:1px solid var(--line);}
+.user .ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f6c76f,#e88f6a);flex-shrink:0}
+.user b{font-size:13.5px;color:var(--ink);display:block}
+.user span{font-size:11.5px;color:var(--ink-3)}
+/* ---------- main ---------- */
+.main{flex:1;display:flex;flex-direction:column;align-items:center;overflow:hidden;background:radial-gradient(60% 42% at 50% 30%,#f4f8ff 0%,#fff 70%);}
+.hero{width:820px;display:flex;flex-direction:column;align-items:center;}
+h1.big{font-size:36px;font-weight:800;color:var(--ink);margin:0 0 10px;letter-spacing:.5px;}
+.sub{font-size:15px;color:var(--ink-2);margin:0 0 30px;}
+.composer{width:100%;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 32px rgba(30,60,120,.08);padding:20px 20px 14px;box-sizing:border-box;}
+.composer .ph{font-size:15px;color:var(--ink-3);min-height:52px;}
+.composer .bar{display:flex;align-items:center;gap:12px;}
+.composer .bar .hint{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-3);}
+.composer .send{margin-left:auto;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;}
+/* scene buttons */
+.scenes{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:center;}
+.sc{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 16px;font-size:13.5px;font-weight:600;color:var(--ink);}
+.sc svg{width:17px;height:17px}
+.asks{margin-top:34px;display:flex;gap:10px;align-items:flex-start;width:100%;}
+.asks .lab{font-size:13px;color:var(--ink-3);font-weight:600;white-space:nowrap;padding-top:7px;}
+.asks .chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{font-size:12.5px;color:var(--ink-2);background:var(--surface-2);border-radius:999px;padding:7px 14px;}
+/* authority strip */
+.auth{width:820px;}
+.auth .cap{display:flex;align-items:center;gap:10px;justify-content:center;font-size:13px;font-weight:700;margin-bottom:12px;}
+.auth .cap i{flex:1;max-width:60px;height:1px;display:block;}
+.auth .row{display:flex;border-radius:16px;padding:16px 10px;border:1px solid;}
+.auth .cell{flex:1;text-align:center;padding:2px 12px;border-right:1px solid;}
+.auth .cell:last-child{border-right:none;}
+.auth .n{font-size:19px;font-weight:800;}
+.auth .l{font-size:12px;color:var(--ink-3);margin-top:2px;font-weight:600;}
+.foot{font-size:11.5px;color:var(--ink-3);margin-top:12px;text-align:center;}
+/* ============ A: designer 0714 ============ */
+.vA .logo .mark{background:#6c5ce7;}
+.vA .nav-it.on{background:#efeafe;color:#6c5ce7;font-weight:700;}
+.vA .main{padding-top:190px;}
+.vA .composer .send{background:#333;}
+.vA .sc .g{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:#fff;}
+.vA .auth{margin-top:96px;}
+.vA .auth .cap{color:#c07a1f;}
+.vA .auth .cap i{background:#f2ce9a;}
+.vA .auth .row{background:#fdf6e8;border-color:#f2e2bd;}
+.vA .auth .cell{border-color:#f2e2bd;}
+.vA .auth .n{color:#e08a1e;}
+/* ============ B: corrected ============ */
+.vB .logo .mark{background:var(--brand);}
+.vB .nav-it.on{background:var(--brand-soft);color:var(--brand-deep);font-weight:700;}
+.vB .main{justify-content:center;padding-top:0;}
+.vB .composer{border-color:var(--brand-soft-border);}
+.vB .composer .send{background:var(--brand);}
+.vB .scenes{gap:9px;width:940px;}
+.vB .sc{padding:12px 15px;border-radius:13px;font-size:14px;box-shadow:0 1px 4px rgba(30,60,120,.05);}
+.vB .sc:hover{border-color:var(--brand-soft-border)}
+.vB .sc .g{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand-deep);}
+.vB .asks .chips{gap:8px 8px;}
+.vB .chip{background:#fff;border:1px solid var(--line);color:var(--ink-2);}
+.vB .auth{margin-top:64px;}
+.vB .auth .cap{color:var(--ink-2);}
+.vB .auth .cap i{background:var(--line);}
+.vB .auth .row{background:#fbfcfe;border-color:var(--line);}
+.vB .auth .cell{border-color:var(--line);}
+.vB .auth .n{color:var(--brand-deep);}
+.vB .user span{color:var(--ink-3);}
+/* ============ C: on B, tweaks ============ */
+.vC .logo .mark{background:var(--brand);}
+.vC .nav-it.on{background:var(--brand-soft);color:var(--brand-deep);font-weight:700;}
+.vC .main{justify-content:center;padding-top:0;}
+.vC .composer{border-color:var(--brand-soft-border);}
+.vC .composer .send{background:var(--brand);}
+.vC .scenes{gap:9px;width:940px;}
+.vC .sc{padding:12px 15px;border-radius:13px;font-size:14px;box-shadow:0 1px 4px rgba(30,60,120,.05);}
+.vC .sc .g{width:20px;height:20px;display:grid;place-items:center;}
+.vC .sc .g svg{width:20px;height:20px;}
+.vC .chip{background:#fff;border:1px solid var(--line);color:var(--ink-2);}
+.vC .auth{margin-top:64px;}
+.vC .auth .pill{display:flex;align-items:center;gap:18px;padding:11px 26px;border-radius:999px;background:linear-gradient(180deg,#fdfaf1,#faf4e2);border:1px solid #efe2be;box-shadow:0 1px 6px rgba(160,120,30,.06);white-space:nowrap;}
+.vC .auth .pill .cap2{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#a06a10;}
+.vC .auth .pill .cap2 svg{flex-shrink:0;}
+.vC .auth .pill .div{width:1px;height:18px;background:#eaddb8;}
+.vC .auth .pill .st{font-size:12px;color:var(--ink-2);display:flex;align-items:baseline;gap:5px;}
+.vC .auth .pill .st b{font-size:14.5px;font-weight:800;color:#b47a12;}
+.vC .auth .foot{margin-top:8px;font-size:11px;}
+.vC .more{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-3);padding:8px 10px;}
+.vC .asks{flex-direction:column;align-items:center;gap:10px;}
+.vC .asks .lab{padding-top:0;}
+.vC .asks .chips{justify-content:center;}
+.vC .hist{display:flex;flex-direction:column;min-height:0;}
+.vC .hist h4{display:flex;align-items:center;justify-content:space-between;}
+.vC .hist h4 a{font-size:12px;font-weight:500;}
+.vC .hist .list{flex:1;min-height:0;overflow-y:auto;}
+.vC .h-it{display:flex;gap:9px;align-items:flex-start;}
+.vC .h-it svg{width:15px;height:15px;color:#a6acb8;flex-shrink:0;margin-top:3px;}
+.vC .h-it div{min-width:0;}
+.vC .user .ava{background:#e7effc;display:grid;place-items:center;color:var(--brand);font-size:14px;font-weight:700;}
+.vC .user .opt{margin-left:auto;color:var(--ink-3);}
+.vC .logo{display:flex;align-items:center;}
+.vC .logo .collapse{margin-left:auto;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--ink-3);}
+.vC .side{border-right:none;background:#f4f6f9;}
+.vC .newchat{border:none;box-shadow:0 1px 3px rgba(30,40,70,.08);}
+.vC .user{border-top:none;background:#fff;border-radius:12px;padding:8px 10px;margin-top:10px;}
+.vC .composer .send{width:40px;height:40px;}
+.vC .sc{padding:8px 15px;}
+.vC .main{position:relative;}
+.vC .auth{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);margin-top:0;width:auto;}
+/* ============ M: mobile (C 规格) ============ */
+.frame.vM{width:390px;height:844px;flex-direction:column;background:#fff;}
+.vM .mtop{display:flex;align-items:center;gap:10px;padding:12px 16px;}
+.vM .mtop .burger{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2);}
+.vM .mtop .mark{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800;}
+.vM .mtop b{font-size:16px;color:var(--ink);}
+.vM .mtop .plus{margin-left:auto;width:34px;height:34px;border-radius:50%;background:var(--brand-soft);color:var(--brand-deep);display:grid;place-items:center;font-size:18px;font-weight:600;}
+.vM .mbody{flex:1;display:flex;flex-direction:column;padding:0 20px;overflow:hidden;}
+.vM h1.big{font-size:24px;margin:46px 0 8px;text-align:center;}
+.vM .sub{font-size:13px;text-align:center;margin:0 0 22px;line-height:1.6;}
+.vM .composer{padding:16px 16px 12px;border-radius:16px;}
+.vM .composer .ph{font-size:14px;min-height:40px;}
+.vM .composer .send{width:38px;height:38px;background:var(--brand);}
+.vM .composer .hint{font-size:12px;}
+.vM .mscenes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px;}
+.vM .msc{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:12px;font-weight:600;color:var(--ink);box-shadow:0 1px 4px rgba(30,60,120,.04);}
+.vM .msc svg{width:20px;height:20px;}
+.vM .masks{margin-top:22px;}
+.vM .masks .lab{font-size:12px;color:var(--ink-3);font-weight:600;text-align:center;margin-bottom:9px;}
+.vM .mchips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin:0 -20px;padding-left:20px;padding-right:20px;}
+.vM .mchips .chip{flex-shrink:0;background:#fff;border:1px solid var(--line);}
+.vM .mauth{margin-top:auto;padding:0 0 14px;}
+.vM .mauth .pill{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 14px;border-radius:14px;background:linear-gradient(180deg,#fdfaf1,#faf4e2);border:1px solid #efe2be;}
+.vM .mauth .cap2{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#a06a10;}
+.vM .mauth .sts{display:flex;gap:14px;font-size:11px;color:var(--ink-2);}
+.vM .mauth .sts b{font-size:12.5px;font-weight:800;color:#b47a12;margin-right:3px;}
+.vM .mauth .foot{margin-top:8px;font-size:10.5px;text-align:center;color:var(--ink-3);}
+/* annotation card */
+.note{position:absolute;width:360px;background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:18px 22px;font-family:system-ui;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.note h3{margin:0 0 10px;font-size:15px;color:#333;}
+.note ul{margin:0;padding-left:18px;color:#555;font-size:13px;line-height:1.7;}
+</style>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#2f73e0"/><text x="50" y="62" font-size="34" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="700">对比</text></svg></template>
+</head>
+<body>
+<div class="frame-label" style="left:60px;top:20px;">A · 设计师版（0714 还原）<small>紫色侧栏选中 / 橙色信任条 / 内容偏上</small></div>
+<div class="frame vA" style="left:60px;top:56px;">
+  <aside class="side">
+    <div class="logo"><span class="mark">博</span>AI小博士</div>
+    <div class="newchat">＋ 新对话</div>
+    <nav class="nav">
+      <div class="nav-it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>我的记忆</div>
+      <div class="nav-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M8 9h8M8 13h6"></path></svg>我的内容</div>
+      <div class="nav-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14l-1.5 11h-11z"></path><path d="M9 8a3 3 0 0 1 6 0"></path></svg>资源篮</div>
+      <div class="nav-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>学科网智能搜索</div>
+      <div class="nav-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l4 4v14H6z"></path><path d="M9 12h6M9 16h6"></path></svg>产品文档</div>
+    </nav>
+    <div class="hist">
+      <h4>历史对话</h4>
+      <div class="h-it"><b>《有理数》随堂练习卷</b><span>今天 · 再把第5题换成应用题</span></div>
+      <div class="h-it"><b>《整式的加减》互动课件</b><span>昨天 · 加一个抢答环节</span></div>
+      <div class="h-it"><b>问：光反应和暗反应的区别</b><span>三天前 · 已标注教材P103–P104</span></div>
+      <div class="h-it"><b>一元一次方程 同步微课</b><span>上周 · 收藏了5个资源</span></div>
+      <div class="h-it"><b>《数轴》教案（情境导入）</b><span>上周 · 导出为word</span></div>
+    </div>
+    <div class="user"><span class="ava"></span><div><b>杨老师</b><span>剩余创作次数：<b style="display:inline;color:#6c5ce7;">300</b></span></div></div>
+  </aside>
+  <main class="main">
+    <div class="hero">
+      <h1 class="big">老师好，今天想准备点什么？</h1>
+      <p class="sub">说出你的需求，我会从 <a>学科网资源</a> 出发，陪你一起完成</p>
+      <div class="composer">
+        <div class="ph">九年级 二次函数 思维导图</div>
+        <div class="bar"><span class="hint">📎</span><span class="hint">🔔 AI自动识别场景</span><span class="send">↑</span></div>
+      </div>
+      <div class="scenes">
+        <span class="sc"><span class="g" style="background:#22b07d;">找</span>找资源</span>
+        <span class="sc"><span class="g" style="background:#e0842f;">卷</span>出卷子</span>
+        <span class="sc"><span class="g" style="background:#2f73e0;">课</span>做课件</span>
+        <span class="sc"><span class="g" style="background:#12a5b8;">教</span>写教案</span>
+        <span class="sc"><span class="g" style="background:#16b3a0;">材</span>问教材</span>
+        <span class="sc"><span class="g" style="background:#e0662f;">导</span>画导图</span>
+        <span class="sc"><span class="g" style="background:#d84b4b;">改</span>改作业</span>
+      </div>
+      <div class="asks">
+        <span class="lab">老师们在问：</span>
+        <div class="chips">
+          <span class="chip">人教版七年级上《有理数》同步练习，含解析</span>
+          <span class="chip">按湖北中考结构出一份物理中考模拟卷</span>
+          <span class="chip">外研版英语必修二 Unit3早读课件，精美一些</span>
+          <span class="chip">北师大版八下 平行四边形的判定 教学设计</span>
+          <span class="chip">九年级 二次函数 思维导图</span>
+        </div>
+      </div>
+      <div class="auth">
+        <div class="cap"><i></i>小博士的每一份生成，背后都有学科网资源库支撑<i></i></div>
+        <div class="row">
+          <div class="cell"><div class="n">2000万+</div><div class="l">精品资源</div></div>
+          <div class="cell"><div class="n">20年</div><div class="l">教研沉淀</div></div>
+          <div class="cell"><div class="n">三审三校</div><div class="l">质量把关</div></div>
+          <div class="cell"><div class="n">全学段</div><div class="l">学科覆盖</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="frame-label" style="left:1580px;top:20px;">B · 修正版<small>品牌蓝收敛 / 垂直居中 / 场景入口加重 / 细节调整</small></div>
+<div class="frame vB" style="left:1580px;top:56px;">
+  <aside class="side">
+    <div class="logo"><span class="mark">博</span>AI小博士</div>
+    <div class="newchat">＋ 新对话</div>
+    <nav class="nav">
+      <div class="nav-it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>我的记忆</div>
+      <div class="nav-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M8 9h8M8 13h6"></path></svg>我的内容</div>
+      <div class="nav-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14l-1.5 11h-11z"></path><path d="M9 8a3 3 0 0 1 6 0"></path></svg>资源篮</div>
+      <div class="nav-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>学科网智能搜索</div>
+    </nav>
+    <div class="hist">
+      <h4>历史对话</h4>
+      <div class="h-it"><b>《有理数》随堂练习卷</b><span>今天 · 再把第5题换成应用题</span></div>
+      <div class="h-it"><b>《整式的加减》互动课件</b><span>昨天 · 加一个抢答环节</span></div>
+      <div class="h-it"><b>问：光反应和暗反应的区别</b><span>三天前 · 已标注教材P103–P104</span></div>
+      <div class="h-it"><b>一元一次方程 同步微课</b><span>上周 · 收藏了5个资源</span></div>
+      <div class="h-it"><b>《数轴》教案（情境导入）</b><span>上周 · 导出为word</span></div>
+    </div>
+    <div class="user"><span class="ava"></span><div style="flex:1"><b>杨老师</b><span>初中数学 · 人教版</span></div></div>
+  </aside>
+  <main class="main">
+    <div class="hero">
+      <h1 class="big">老师好，今天想准备点什么？</h1>
+      <p class="sub">说出你的需求，我会从 <a>学科网资源</a> 出发，陪你一起完成</p>
+      <div class="composer">
+        <div class="ph">九年级 二次函数 思维导图</div>
+        <div class="bar"><span class="hint">📎</span><span class="hint">✦ AI自动识别场景</span><span class="send">↑</span></div>
+      </div>
+      <div class="scenes">
+        <span class="sc"><span class="g">找</span>找资源</span>
+        <span class="sc"><span class="g">卷</span>出卷子</span>
+        <span class="sc"><span class="g">课</span>做课件</span>
+        <span class="sc"><span class="g">教</span>写教案</span>
+        <span class="sc"><span class="g">材</span>问教材</span>
+        <span class="sc"><span class="g">导</span>画导图</span>
+        <span class="sc"><span class="g">改</span>改作业</span>
+      </div>
+      <div class="asks">
+        <span class="lab">老师们在问：</span>
+        <div class="chips">
+          <span class="chip">人教版七年级上《有理数》同步练习，含解析</span>
+          <span class="chip">按湖北中考结构出一份物理中考模拟卷</span>
+          <span class="chip">外研版英语必修二 Unit3早读课件，精美一些</span>
+          <span class="chip">北师大版八下 平行四边形的判定 教学设计</span>
+          <span class="chip">九年级 二次函数 思维导图</span>
+        </div>
+      </div>
+      <div class="auth">
+        <div class="cap"><i></i>小博士的每一份生成，背后都有学科网资源库支撑<i></i></div>
+        <div class="row">
+          <div class="cell"><div class="n">2000万+</div><div class="l">精品资源</div></div>
+          <div class="cell"><div class="n">20年</div><div class="l">教研沉淀</div></div>
+          <div class="cell"><div class="n">三审三校</div><div class="l">质量把关</div></div>
+          <div class="cell"><div class="n">全学段</div><div class="l">学科覆盖</div></div>
+        </div>
+        <div class="foot">AI 内容仅供教研参考，请结合实际教学进行调整</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="note" style="left:1580px;top:1180px;">
+  <h3>B 版改了什么</h3>
+  <ul>
+    <li><b>色彩收敛</b>：紫色 logo/选中态 → 品牌蓝；橙色信任条 → 中性底 + 蓝色数字；七个场景图标彩虹色 → 统一浅蓝底</li>
+    <li><b>垂直节奏</b>：整组内容垂直居中，消除下半屏大面积空白</li>
+    <li><b>场景入口加重</b>：按钮加高、图标加大、加投影，和示例 chip 拉开层级</li>
+    <li><b>示例 chip</b>：灰底 → 白底描边，与背景区分更清楚</li>
+    <li><b>侧栏</b>：移除「产品文档」内部入口；「剩余创作次数：300」→ 展示学科偏好，额度信息收进头像菜单</li>
+    <li><b>补回</b>：底部「AI 内容仅供教研参考」免责声明（0714 稿丢了）</li>
+  </ul>
+</div>
+<div class="frame-label" style="left:3100px;top:20px;">C · B 版基础上调整<small>去智能搜索 / 历史对话有「更多」/ 彩色场景图标 / 金黄信任条</small></div>
+<div class="frame vC" style="left:3100px;top:56px;">
+  <aside class="side">
+    <div class="logo"><span class="mark">博</span>AI小博士<span class="collapse"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"></rect><path d="M9.5 4.5v15"></path><path d="m15.5 9.5-2.5 2.5 2.5 2.5"></path></svg></span></div>
+    <div class="newchat">＋ 新对话</div>
+    <nav class="nav">
+      <div class="nav-it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5A2.5 2.5 0 0 0 7 4.9a2.8 2.8 0 0 0-2.3 2.9A2.6 2.6 0 0 0 3.5 10.2a2.6 2.6 0 0 0 1 4.1A2.8 2.8 0 0 0 7 19.1 2.5 2.5 0 0 0 12 19z"></path><path d="M12 4.5A2.5 2.5 0 0 1 17 4.9a2.8 2.8 0 0 1 2.3 2.9 2.6 2.6 0 0 1 1.2 2.4 2.6 2.6 0 0 1-1 4.1A2.8 2.8 0 0 1 17 19.1 2.5 2.5 0 0 1 12 19z"></path><path d="M12 13c-.9 1-2.1 1.3-3.1 1M12 13c.9 1 2.1 1.3 3.1 1M9 7.5c-.4 1-.2 2.1.5 2.9M15 7.5c.4 1 .2 2.1-.5 2.9"></path></svg>我的记忆</div>
+      <div class="nav-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M8.5 9.5h7M8.5 13.5h5"></path></svg>我的内容</div>
+      <div class="nav-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.5 11.5a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.2L21 8H6"></path><circle cx="10" cy="20.2" r="1.3"></circle><circle cx="17.5" cy="20.2" r="1.3"></circle></svg>资源篮</div>
+    </nav>
+    <div class="hist">
+      <h4>历史对话<a>全部</a></h4>
+      <div class="list">
+      <div class="h-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h11v14a3 3 0 0 1-3 3H5.5a2.5 2.5 0 0 0 2.5-2.5z"></path><path d="M7 3.5a2.5 2.5 0 0 0-2.5 2.5v12.5A2.5 2.5 0 0 0 7 21"></path><path d="M10.5 8h4.5M10.5 11.5h2.5"></path></svg><div><b>《有理数》随堂练习卷</b><span>今天 · 再把第5题换成应用题</span></div></div>
+      <div class="h-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M9.5 4v16"></path><path d="M14.5 10v4M12.5 12h4"></path></svg><div><b>《整式的加减》互动课件</b><span>昨天 · 加一个抢答环节</span></div></div>
+      <div class="h-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v16.5H6.5A1.5 1.5 0 0 0 5 21z"></path><path d="M19 16.5H6.5A1.5 1.5 0 0 0 5 18"></path></svg><div><b>问：光反应和暗反应的区别</b><span>三天前 · 已标注教材P103–P104</span></div></div>
+      <div class="h-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"></circle><path d="m20.5 20.5-3.6-3.6"></path></svg><div><b>一元一次方程 同步微课</b><span>上周 · 收藏了5个资源</span></div></div>
+      <div class="h-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12v6a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 18V7.5A2.5 2.5 0 0 1 7.5 5H13"></path><path d="m13.3 11.2 5.6-5.6a1.63 1.63 0 0 0-2.3-2.3L11 8.9l-.7 3z"></path><path d="M9 15.5h4"></path></svg><div><b>《数轴》教案（情境导入）</b><span>上周 · 导出为word</span></div></div>
+      <div class="h-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="6" rx="3"></rect><rect x="13" y="14" width="8" height="6" rx="3"></rect><path d="M11 7h4a2 2 0 0 1 2 2v5M13 17H9a2 2 0 0 1-2-2v-5"></path></svg><div><b>二次函数 知识导图</b><span>上周 · 已保存到我的内容</span></div></div>
+      <div class="h-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="16" rx="2"></rect><path d="M9 5V3.5h6V5"></path><path d="M9 13h6M9 17h3.5"></path></svg><div><b>八年级作业批改（第二次）</b><span>两周前 · 导出成绩单</span></div></div>
+      </div>
+    </div>
+    <div class="user"><span class="ava">李</span><div style="flex:1"><b>李老师</b><span>初中数学</span></div><span class="opt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M8 12h8M11 17h2"></path></svg></span></div>
+  </aside>
+  <main class="main">
+    <div class="hero">
+      <h1 class="big">老师好，有什么我能帮你的？</h1>
+      <p class="sub">说出你的需求，我会从 <a>学科网资源</a> 出发，陪你一起完成</p>
+      <div class="composer">
+        <div class="ph">九年级 二次函数 思维导图</div>
+        <div class="bar"><span class="hint">📎</span><span class="hint">✦ AI自动识别场景</span><span class="send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"></path><path d="m6 11.5 6-6 6 6"></path></svg></span></div>
+      </div>
+      <div class="scenes">
+        <span class="sc"><span class="g"><svg viewBox="0 0 24 24" fill="none" stroke="#22b07d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"></circle><path d="M7.5 11h1.3l1.2-2.4 1.5 4.4 1.2-2h1.8"></path><path d="m20.5 20.5-3.6-3.6"></path></svg></span>找资源</span>
+        <span class="sc"><span class="g"><svg viewBox="0 0 24 24" fill="none" stroke="#7c5cf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h11v14a3 3 0 0 1-3 3H5.5a2.5 2.5 0 0 0 2.5-2.5z"></path><path d="M7 3.5a2.5 2.5 0 0 0-2.5 2.5v12.5A2.5 2.5 0 0 0 7 21"></path><path d="M10.5 8h4.5M10.5 11.5h2.5"></path></svg></span>出卷子</span>
+        <span class="sc"><span class="g"><svg viewBox="0 0 24 24" fill="none" stroke="#f08c1e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M9.5 4v16"></path><path d="M14.5 10v4M12.5 12h4"></path></svg></span>做课件</span>
+        <span class="sc"><span class="g"><svg viewBox="0 0 24 24" fill="none" stroke="#2f8ee0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12v6a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 18V7.5A2.5 2.5 0 0 1 7.5 5H13"></path><path d="m13.3 11.2 5.6-5.6a1.63 1.63 0 0 0-2.3-2.3L11 8.9l-.7 3z"></path><path d="M9 15.5h4"></path></svg></span>写教案</span>
+        <span class="sc"><span class="g"><svg viewBox="0 0 24 24" fill="none" stroke="#2eb872" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8A3.5 3.5 0 0 1 8 4.5h8A3.5 3.5 0 0 1 19.5 8v8a3.5 3.5 0 0 1-3.5 3.5H8A3.5 3.5 0 0 1 4.5 16z"></path><path d="M9.5 4.5V10l2.25-1.7L14 10V4.5"></path><path d="M13 15.5h3"></path></svg></span>问教材</span>
+        <span class="sc"><span class="g"><svg viewBox="0 0 24 24" fill="none" stroke="#f08c1e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="6" rx="3"></rect><rect x="13" y="14" width="8" height="6" rx="3"></rect><path d="M11 7h4a2 2 0 0 1 2 2v5M13 17H9a2 2 0 0 1-2-2v-5"></path></svg></span>画导图</span>
+        <span class="sc"><span class="g"><svg viewBox="0 0 24 24" fill="none" stroke="#e8564f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="16" rx="2"></rect><path d="M9 5V3.5h6V5"></path><path d="M9 13h6M9 17h3.5"></path></svg></span>改作业</span>
+      </div>
+      <div class="asks">
+        <span class="lab">老师们在问：</span>
+        <div class="chips">
+          <span class="chip">人教版七年级上《有理数》同步练习，含解析</span>
+          <span class="chip">按湖北中考结构出一份物理中考模拟卷</span>
+          <span class="chip">外研版英语必修二 Unit3早读课件，精美一些</span>
+          <span class="chip">北师大版八下 平行四边形的判定 教学设计</span>
+          <span class="chip">九年级 二次函数 思维导图</span>
+        </div>
+      </div>
+      <div class="auth">
+        <div class="pill">
+          <span class="cap2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"></path><path d="m9 11.5 2 2 4-4"></path></svg>每一份生成，都有学科网资源库支撑</span>
+          <span class="div"></span>
+          <span class="st"><b>2000万+</b>精品资源</span>
+          <span class="st"><b>20年</b>教研沉淀</span>
+          <span class="st"><b>三审三校</b>质量把关</span>
+          <span class="st"><b>全学段</b>覆盖</span>
+        </div>
+        <div class="foot">AI 内容仅供教研参考，请结合实际教学进行调整</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="note" style="left:4620px;top:56px;">
+  <h3>C 版在 B 基础上改了什么</h3>
+  <ul>
+    <li><b>标题</b>：改为「老师好，有什么我能帮你的？」</li>
+    <li><b>侧栏菜单</b>：去掉智能搜索；记忆图标换成大脑+时钟的记忆语义；资源篮换购物车图标</li>
+    <li><b>历史对话</b>：标题行右侧「全部」入口；列表占满侧栏下部可滚动；每条前加灰色场景图标</li>
+    <li><b>老师们在问</b>：整体居中排列</li>
+    <li><b>左下角</b>：换成蓝底字母头像「李老师 · 初中数学」+ 右侧设置入口</li>
+    <li><b>场景图标</b>：彩色描边线性图标（绿/紫/橙/蓝/红）</li>
+    <li><b>信任条</b>：收成置底胶囊条：淡金底 + 盾牌背书语 + 琥珀色数字，比卡片轻、比纯文字脚注有分量</li>
+    <li><b>发送按钮</b>：箭头加粗加大，更像可点击的发送</li>
+    <li><b>减线条</b>：侧栏去掉右分割线和用户区上分割线，改用浅灰底色分区，用户区收成白卡片</li>
+  </ul>
+</div>
+<div class="frame-label" style="left:5040px;top:20px;">C · 小屏幕（390×844）<small>侧栏收进汉堡菜单 / 场景 4列宫格 / 示例横滑 / 信任条双行</small></div>
+<div class="frame vM" style="left:5040px;top:56px;">
+  <div class="mtop">
+    <span class="burger"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></span>
+    <span class="mark">博</span><b>AI小博士</b>
+    <span class="plus">＋</span>
+  </div>
+  <div class="mbody">
+    <h1 class="big">老师好，有什么我能帮你的？</h1>
+    <p class="sub">说出你的需求，我会从 <a>学科网资源</a> 出发陪你完成</p>
+    <div class="composer">
+      <div class="ph">九年级 二次函数 思维导图</div>
+      <div class="bar"><span class="hint">📎</span><span class="hint">✦ AI自动识别场景</span><span class="send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"></path><path d="m6 11.5 6-6 6 6"></path></svg></span></div>
+    </div>
+    <div class="mscenes">
+      <span class="msc"><svg viewBox="0 0 24 24" fill="none" stroke="#22b07d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"></circle><path d="M7.5 11h1.3l1.2-2.4 1.5 4.4 1.2-2h1.8"></path><path d="m20.5 20.5-3.6-3.6"></path></svg>找资源</span>
+      <span class="msc"><svg viewBox="0 0 24 24" fill="none" stroke="#7c5cf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h11v14a3 3 0 0 1-3 3H5.5a2.5 2.5 0 0 0 2.5-2.5z"></path><path d="M7 3.5a2.5 2.5 0 0 0-2.5 2.5v12.5A2.5 2.5 0 0 0 7 21"></path><path d="M10.5 8h4.5M10.5 11.5h2.5"></path></svg>出卷子</span>
+      <span class="msc"><svg viewBox="0 0 24 24" fill="none" stroke="#f08c1e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M9.5 4v16"></path><path d="M14.5 10v4M12.5 12h4"></path></svg>做课件</span>
+      <span class="msc"><svg viewBox="0 0 24 24" fill="none" stroke="#2f8ee0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12v6a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 18V7.5A2.5 2.5 0 0 1 7.5 5H13"></path><path d="m13.3 11.2 5.6-5.6a1.63 1.63 0 0 0-2.3-2.3L11 8.9l-.7 3z"></path><path d="M9 15.5h4"></path></svg>写教案</span>
+      <span class="msc"><svg viewBox="0 0 24 24" fill="none" stroke="#2eb872" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8A3.5 3.5 0 0 1 8 4.5h8A3.5 3.5 0 0 1 19.5 8v8a3.5 3.5 0 0 1-3.5 3.5H8A3.5 3.5 0 0 1 4.5 16z"></path><path d="M9.5 4.5V10l2.25-1.7L14 10V4.5"></path><path d="M13 15.5h3"></path></svg>问教材</span>
+      <span class="msc"><svg viewBox="0 0 24 24" fill="none" stroke="#f08c1e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="6" rx="3"></rect><rect x="13" y="14" width="8" height="6" rx="3"></rect><path d="M11 7h4a2 2 0 0 1 2 2v5M13 17H9a2 2 0 0 1-2-2v-5"></path></svg>画导图</span>
+      <span class="msc"><svg viewBox="0 0 24 24" fill="none" stroke="#e8564f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="16" rx="2"></rect><path d="M9 5V3.5h6V5"></path><path d="M9 13h6M9 17h3.5"></path></svg>改作业</span>
+    </div>
+    <div class="masks">
+      <div class="lab">老师们在问</div>
+      <div class="mchips">
+        <span class="chip">人教版七上《有理数》同步练习</span>
+        <span class="chip">物理中考模拟卷</span>
+        <span class="chip">Unit3 早读课件</span>
+        <span class="chip">平行四边形教学设计</span>
+      </div>
+    </div>
+    <div class="mauth">
+      <div class="pill">
+        <span class="cap2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"></path><path d="m9 11.5 2 2 4-4"></path></svg>每一份生成，都有学科网资源库支撑</span>
+        <span class="sts"><span><b>2000万+</b>资源</span><span><b>20年</b>教研</span><span><b>三审三校</b></span><span><b>全学段</b></span></span>
+      </div>
+      <div class="foot">AI 内容仅供教研参考，请结合实际教学调整</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

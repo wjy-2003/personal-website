@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>问教材场景 · 详细设计 — AI 小博士</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="../assets/favicon-192.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/apple-touch-icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;700;900&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --serif: "Noto Serif SC", "Songti SC", serif;
+    --num: "Nunito", "Noto Sans SC", sans-serif;
+    --brand: #1591c2; --brand-deep: #0f6d96; --brand-soft: #e8f5fb; --brand-line: #c2e3f1;
+    --tb: #1591c2; --tb-soft: #e8f5fb; --tb-line: #c2e3f1; --tb-ink: #0f6d96;
+    --ink: #1c2430; --ink-2: #45505f; --ink-3: #6b7686; --ink-4: #9aa3b0;
+    --line: #e4e7ec; --line-2: #eef0f3; --paper: #ffffff; --desk: #eceae3;
+    --accent: #e8743b; --green: #16a37b; --violet: #7a5cf0; --pink: #d23f66;
+    --auth-ink: #167a56; --auth-bg: #e7f6ef; --auth-border: #bfe6d4;
+    --maxw: 880px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: var(--font); background: var(--desk); color: var(--ink); -webkit-font-smoothing: antialiased; line-height: 1.72; font-size: 15px; }
+
+  .shell { display: flex; align-items: flex-start; gap: 0; }
+  .toc { position: sticky; top: 0; align-self: flex-start; width: 286px; height: 100vh; flex-shrink: 0; background: #0f2734; color: #aecadb; padding: 30px 22px 40px; overflow-y: auto; font-size: 13px; }
+  .toc-brand { display: flex; align-items: center; gap: 11px; margin-bottom: 6px; }
+  .toc-logo { width: 42px; height: 42px; border-radius: 12px; background: var(--tb); color: #fff; display: grid; place-items: center; font-weight: 900; font-size: 22px; flex-shrink: 0; font-family: var(--serif); }
+  .toc-brand h1 { font-size: 15px; color: #fff; margin: 0; font-weight: 800; letter-spacing: .2px; }
+  .toc-brand p { font-size: 11px; color: #6e93a6; margin: 2px 0 0; font-weight: 600; }
+  .toc-meta { font-size: 11px; color: #5f8094; border-top: 1px solid #1d3d4e; border-bottom: 1px solid #1d3d4e; padding: 12px 2px; margin: 18px 0 16px; display: flex; flex-direction: column; gap: 5px; }
+  .toc-meta span b { color: #9bbccd; font-weight: 700; }
+  .toc nav { display: flex; flex-direction: column; gap: 1px; }
+  .toc .grp { font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; color: #547489; font-weight: 800; margin: 18px 0 7px; padding-left: 11px; }
+  .toc a { color: #9bbccd; text-decoration: none; padding: 6px 11px; border-radius: 8px; display: block; transition: all .15s; font-weight: 500; }
+  .toc a:hover { background: #163847; color: #fff; }
+  .toc a.sub { padding-left: 22px; font-size: 12px; color: #7ba0b3; }
+  .toc a.active { background: var(--tb); color: #fff; }
+  .toc .back { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #7ba0b3; margin-top: 22px; padding: 8px 11px; border: 1px solid #1d3d4e; border-radius: 8px; }
+  .toc .back:hover { background: #163847; color: #fff; }
+
+  .pages { flex: 1; min-width: 0; padding: 40px 40px 80px; display: flex; flex-direction: column; align-items: center; gap: 30px; }
+  .page { width: 100%; max-width: var(--maxw); background: var(--paper); border-radius: 4px; box-shadow: 0 2px 14px rgba(20,30,50,0.09); padding: 64px 72px; }
+
+  .cover { padding: 0; overflow: hidden; }
+  .cover-top { background: linear-gradient(155deg, #1aa0d0, #0d6188 90%); color: #fff; padding: 70px 72px 56px; position: relative; }
+  .cover-top::after { content: ""; position: absolute; inset: 0; background: radial-gradient(520px 280px at 86% -10%, rgba(255,255,255,.18), transparent 70%); pointer-events: none; }
+  .cover-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; background: rgba(255,255,255,.16); padding: 6px 14px; border-radius: 999px; margin-bottom: 24px; }
+  .cover-top h1 { font-size: 36px; font-weight: 900; margin: 0 0 12px; letter-spacing: -.5px; line-height: 1.2; }
+  .cover-top .sub { font-size: 16px; font-weight: 500; color: #cfeaf6; margin: 0; max-width: 560px; }
+  .cover-bottom { padding: 34px 72px 52px; }
+  .cover-info { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 30px; }
+  .cover-info div { font-size: 13px; }
+  .cover-info .k { color: var(--ink-4); font-size: 11.5px; font-weight: 700; letter-spacing: .5px; margin-bottom: 2px; }
+  .cover-info .v { color: var(--ink); font-weight: 600; }
+
+  .part-tag { display: inline-flex; align-items: center; gap: 9px; font-family: var(--num); font-weight: 800; font-size: 13px; letter-spacing: 1px; color: var(--tb); background: var(--tb-soft); padding: 6px 14px; border-radius: 999px; margin-bottom: 18px; }
+  h2.part { font-size: 28px; font-weight: 900; color: var(--ink); margin: 0 0 10px; letter-spacing: -.4px; }
+  .part-lead { font-size: 15px; color: var(--ink-2); margin: 0 0 8px; line-height: 1.75; }
+  .part-divider { height: 4px; width: 54px; background: var(--tb); border-radius: 2px; margin: 22px 0 0; }
+
+  h3.sec { font-size: 21px; font-weight: 800; color: var(--ink); margin: 50px 0 8px; padding-top: 8px; letter-spacing: -.2px; scroll-margin-top: 20px; }
+  h3.sec:first-of-type { margin-top: 8px; }
+  h3.sec .idx { color: var(--tb); font-family: var(--num); font-weight: 900; margin-right: 10px; }
+  h4.sub { font-size: 16.5px; font-weight: 800; color: var(--ink); margin: 30px 0 8px; }
+  h5.sub2 { font-size: 14.5px; font-weight: 800; color: var(--tb-ink); margin: 22px 0 6px; }
+  .sec-note { font-size: 14px; color: var(--ink-2); margin: 0 0 14px; }
+  p { margin: 0 0 13px; }
+  b, strong { color: var(--ink); font-weight: 700; }
+  em { color: var(--tb-ink); font-style: normal; font-weight: 700; }
+  code { font-family: var(--num), monospace; font-size: 12.5px; background: #f2f4f7; color: var(--tb-ink); padding: 1.5px 6px; border-radius: 5px; font-weight: 700; }
+  a.xref { color: var(--brand); text-decoration: none; border-bottom: 1px solid var(--brand-line); font-weight: 600; }
+
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--ink-4); }
+  ul.clean { list-style: none; padding-left: 0; }
+  ul.clean > li { position: relative; padding-left: 22px; }
+  ul.clean > li::before { content: ""; position: absolute; left: 4px; top: 10px; width: 6px; height: 6px; border-radius: 2px; background: var(--tb); }
+
+  .note { border-left: 3px solid var(--brand); background: var(--brand-soft); border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 18px 0; font-size: 13.5px; color: var(--ink-2); }
+  .note.tb { border-color: var(--tb); background: var(--tb-soft); }
+  .note.warn { border-color: var(--accent); background: #fdf1ea; }
+  .note.ok { border-color: var(--green); background: #ecf8f3; }
+  .note .nt { font-weight: 800; color: var(--ink); display: block; margin-bottom: 3px; font-size: 13px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 18px; font-size: 13px; }
+  th { background: #f6f8fa; text-align: left; font-weight: 800; color: var(--ink-2); padding: 10px 13px; border-bottom: 2px solid var(--line); font-size: 12.5px; }
+  td { padding: 9px 13px; border-bottom: 1px solid var(--line-2); color: var(--ink-2); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td b { color: var(--ink); }
+  .tbl-wrap { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 16px 0 18px; }
+  .tbl-wrap table { margin: 0; }
+  .tbl-wrap th:first-child, .tbl-wrap td:first-child { padding-left: 16px; }
+
+  .pill { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 999px; font-family: var(--font); white-space: nowrap; }
+  .pill.tb { background: #e1f3fb; color: #0f6d96; }
+  .pill.find { background: #e7f6ef; color: #167a56; }
+  .pill.paper { background: #fbede4; color: #b65324; }
+  .pill.cw { background: #ece9fc; color: #5a44c4; }
+  .pill.lesson { background: #fbe8f0; color: #b22a59; }
+  .pill.mind { background: #eef6e3; color: #5a7a25; }
+  .pill.gen { background: #eceef3; color: #515b6b; }
+  .pill.gray { background: #eef0f3; color: var(--ink-3); }
+  .pill.a { background: #e1f3fb; color: #0f6d96; }
+  .pill.b { background: #fdf0e8; color: #b65324; }
+  .pill.c { background: #ece9fc; color: #5a44c4; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px; }
+  .card .ic { width: 34px; height: 34px; border-radius: 9px; background: var(--tb-soft); color: var(--tb); display: grid; place-items: center; font-weight: 900; margin-bottom: 11px; font-family: var(--num); font-size: 16px; }
+  .card h4 { font-size: 15px; margin: 0 0 5px; color: var(--ink); }
+  .card p { font-size: 12.5px; color: var(--ink-3); margin: 0; line-height: 1.6; }
+
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 18px 0; }
+  .step { display: flex; gap: 16px; }
+  .step .rail { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .step .dot { width: 30px; height: 30px; border-radius: 50%; background: var(--tb); color: #fff; display: grid; place-items: center; font-family: var(--num); font-weight: 900; font-size: 14px; flex-shrink: 0; }
+  .step .line { width: 2px; flex: 1; background: var(--line); margin: 4px 0; min-height: 8px; }
+  .step:last-child .line { display: none; }
+  .step .body { padding-bottom: 22px; flex: 1; }
+  .step .body h4 { margin: 4px 0 4px; font-size: 15px; }
+  .step .body p { margin: 0; font-size: 13px; color: var(--ink-3); }
+
+  .schem { border: 1px solid var(--line); border-radius: 12px; background: #fafbfc; padding: 20px; margin: 18px 0; }
+  .schem .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .schem .row:last-child { margin-bottom: 0; }
+  .schem .box { background: #fff; border: 1px solid var(--line); border-radius: 9px; padding: 9px 14px; font-size: 12.5px; font-weight: 700; color: var(--ink-2); text-align: center; }
+  .schem .box.brand { background: var(--tb); border-color: var(--tb); color: #fff; }
+  .schem .box.soft { background: var(--tb-soft); border-color: var(--tb-line); color: var(--tb-ink); }
+  .schem .lbl { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--ink-4); margin-bottom: 8px; }
+  .schem .arrow { text-align: center; color: var(--ink-4); font-size: 16px; margin: 2px 0; }
+
+  .spec { border: 1px solid var(--line); border-radius: 12px; margin: 18px 0; overflow: hidden; }
+  .spec > .spec-h { background: #f6f8fa; padding: 12px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .spec > .spec-h .id { font-family: var(--num); font-weight: 900; font-size: 12px; color: #fff; background: var(--tb); padding: 2px 9px; border-radius: 6px; }
+  .spec > .spec-h h4 { margin: 0; font-size: 15px; }
+  .spec-b { padding: 16px 18px; }
+  .spec-b table { margin: 0; }
+  .spec-b th { width: 130px; background: transparent; border-bottom: 1px solid var(--line-2); color: var(--ink-3); font-size: 12px; vertical-align: top; padding-left: 0; }
+  .spec-b td { border-bottom: 1px solid var(--line-2); padding-left: 0; }
+  .spec-b tr:last-child th, .spec-b tr:last-child td { border-bottom: none; }
+
+  .foot { text-align: center; font-size: 12px; color: var(--ink-4); margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); }
+
+  /* chat mock for the 回答与依据 section */
+  .chatmock { border: 1px solid var(--line); border-radius: 14px; background: #fafbfc; padding: 18px; margin: 16px 0; }
+  .cm-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .cm-bubble { background: linear-gradient(180deg,#26a6d4,#1591c2); color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; font-size: 13px; font-weight: 500; max-width: 70%; }
+  .cm-ai { display: flex; gap: 9px; align-items: flex-start; }
+  .cm-av { width: 26px; height: 26px; border-radius: 8px; background: var(--tb-soft); border: 1px solid var(--tb-line); display: grid; place-items: center; color: var(--tb); flex-shrink: 0; font-size: 13px; }
+  .cm-ab { background: #fff; border: 1px solid var(--line); padding: 11px 13px; border-radius: 4px 14px 14px 14px; font-size: 13px; color: var(--ink-2); max-width: 84%; }
+  .cm-cite { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 3px 9px; border-radius: 999px; background: var(--auth-bg); border: 1px solid var(--auth-border); color: var(--auth-ink); font-size: 11px; font-weight: 700; }
+  .cm-cand { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 5px 10px; border-radius: 8px; background: #fdf6ea; border: 1px solid #f0dcb4; color: #8a6516; font-size: 11.5px; font-weight: 600; }
+  .basis-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
+  .basis-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 9px; font-size: 12px; font-weight: 700; border: 1px solid var(--line); background: #fff; color: var(--ink-2); }
+
+  @media (max-width: 1080px) {
+    .toc { display: none; }
+    .pages { padding: 18px 14px 50px; }
+    .page { padding: 38px 24px; }
+    .cover-top, .cover-bottom { padding-left: 28px; padding-right: 28px; }
+    .grid2, .grid3, .cover-info { grid-template-columns: 1fr; }
+  }
+  @media print {
+    @page { margin: 0.7in; size: A4; }
+    body { background: #fff; font-size: 11.5pt; line-height: 1.6; }
+    .toc { display: none; }
+    .pages { padding: 0; gap: 0; display: block; }
+    .page { box-shadow: none; border-radius: 0; max-width: none; width: 100%; padding: 0; margin: 0; break-after: page; }
+    .page:last-child { break-after: auto; }
+    .cover-top { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pill, .part-tag, .note, .schem .box.brand, .schem .box.soft, .step .dot, .spec-h .id, .toc-logo, .card .ic, th, .cm-bubble, .cm-cite, .basis-chip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2.part, h3.sec, h4.sub { break-after: avoid; }
+    table, .spec, .card, .note, .step, li, tr, .schem, .chatmock { break-inside: avoid; }
+    a.xref { color: var(--ink); border: none; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="toc">
+    <div class="toc-brand">
+      <div class="toc-logo"><img src="../assets/logo-cap-white.png" alt="" style="width:26px;height:auto;display:block"/></div>
+      <div>
+        <h1>问教材 · 详细设计</h1>
+        <p>AI 小博士 · 场景子文档</p>
+      </div>
+    </div>
+    <div class="toc-meta">
+      <span><b>版本</b> v1.0</span>
+      <span><b>日期</b> 2026-06-16</span>
+      <span><b>状态</b> 设计基线（含设想标注）</span>
+    </div>
+    <nav id="toc-nav">
+      <div class="grp">业务流程</div>
+      <a href="#s1">1 · 场景定位与边界</a>
+      <a href="#s2">2 · 端到端流程总览</a>
+      <a href="#s3">3 · 前台交互层</a>
+      <a href="#s4">4 · 意图路由层</a>
+      <a href="#s5">5 · 内部处理层</a>
+      <a href="#s6">6 · 后续动作与跨场景流转</a>
+      <div class="grp">回答与依据</div>
+      <a href="#s7">7 · 回答结构与依据透明</a>
+      <a class="sub" href="#s7-1">7.1 核心交互原则</a>
+      <a class="sub" href="#s7-2">7.2 问题类型体系</a>
+      <a class="sub" href="#s7-3">7.3 依据类型与文案</a>
+      <a class="sub" href="#s7-4">7.4 引用溯源与原文</a>
+      <a class="sub" href="#s7-5">7.5 切换教材与重答</a>
+      <div class="grp">落地实现</div>
+      <a href="#s8">8 · 系统架构与里程碑</a>
+      <a href="#s9">9 · 异常分支与关键原则</a>
+      <a href="#s10">10 · 原型实现状态对照</a>
+      <a class="back" href="产品设计文档.html">← 返回产品设计文档</a>
+    </nav>
+  </aside>
+
+  <main class="pages">
+    <!-- COVER -->
+    <section class="page cover">
+      <div class="cover-top">
+        <span class="cover-badge">📖 场景详细设计 · 问教材</span>
+        <h1>问教材场景 · 详细设计</h1>
+        <p class="sub">从全局路由命中问教材（或主动进入），到围绕教材知识的一次提问—检索—有据回答—二次加工与跨场景流转的端到端设计。以 <code>workspace_textbook</code> 原型为事实底座。</p>
+      </div>
+      <div class="cover-bottom">
+        <div class="cover-info">
+          <div><div class="k">场景定位</div><div class="v">围绕教材知识的轻量问答（有据可依）</div></div>
+          <div><div class="k">工作台形态</div><div class="v">左侧对话 + 右侧「这本教材」（依据 / 目录）· 可拖拽分栏</div></div>
+          <div><div class="k">核心契约</div><div class="v">依据透明、不确定性透明、引用可追溯</div></div>
+          <div><div class="k">关联原型</div><div class="v">workspace_textbook.jsx · workspace_textbook_answers.jsx</div></div>
+          <div><div class="k">关联文档</div><div class="v">问教材实现步骤与系统提示词 / RAG 策略 / 前端 PRD</div></div>
+          <div><div class="k">实现状态</div><div class="v">前端交互已实现（mock）；教材库与 RAG 底座待建</div></div>
+        </div>
+        <div class="note tb" style="margin-bottom:0">
+          <span class="nt">阅读约定</span>原型已实现的部分作为事实描述；属于设计设想、尚未实现的部分在文中明确标注「<b>（设想）</b>」。本文是产品设计文档 <a class="xref" href="产品设计文档.html#s2-3">§2.3 问教材（WS-4）</a> 的场景级展开，并承接《问教材场景-实现步骤与系统提示词》主口径。
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 业务流程 ============ -->
+    <section class="page">
+      <span class="part-tag">PART A · 业务流程</span>
+      <h2 class="part">问教材端到端业务流程</h2>
+      <p class="part-lead">问教材承接的是教师围绕<b>教材知识、学科概念、课标内容、课堂讲解对象</b>的轻量提问。它的差异化不在「LLM 知道多少」，而在于把问题理解清楚、把<b>教材依据</b>组织清楚、把回答讲清楚——一句话原则：<em>先保证回答有据可依，再追求讲得漂亮</em>。</p>
+      <div class="part-divider"></div>
+
+      <h3 class="sec" id="s1"><span class="idx">1</span>场景定位与边界</h3>
+      <p>问教材是小博士的<b>知识解释</b>场景：教师已经有一个关于教材/学科的问题，系统的职责是<b>基于教材依据把它讲清楚</b>，而不是找现成资源、也不是直接产出完整教学产物。一句话定位——<b>「问知识、要讲解，来问教材」</b>。</p>
+      <h4 class="sub">纳入与不纳入</h4>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>维度</th><th><span class="pill tb">问教材负责</span></th><th>不在本场景</th></tr></thead>
+          <tbody>
+            <tr><td><b>用户当前要什么</b></td><td>对教材知识 / 概念 / 课堂讲解对象的理解</td><td>找现成资源 · 生成完整产物 · 解题给答案</td></tr>
+            <tr><td><b>典型输入</b></td><td>「光反应和暗反应有什么区别」「这页怎么讲」</td><td>「找一份三角函数试卷」「出一份卷子」「这道题答案是什么」</td></tr>
+            <tr><td><b>系统产出</b></td><td>有教材依据的结构化讲解（可二次加工成卡片）</td><td>资源列表 · AI 生成的卷子/课件/教案 · 题目解析</td></tr>
+            <tr><td><b>不做什么</b></td><td colspan="2">不凭空声称「教材中指出」、不替代资源检索、不直接生成完整产物——只理解、检索教材依据、讲清楚。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4 class="sub">与相邻场景的边界</h4>
+      <p>问教材要划清的是「<b>要理解知识</b>」与「<b>要现成资源 / 要新产物 / 要题目答案</b>」之间的界：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>相邻场景</th><th>区别（它要什么）</th><th>衔接关系</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill find">找资源</span></td><td>要已有成品文件，而非知识讲解</td><td>回答后「查看相关资源」可<b>流出</b>到找资源；找资源也可反向流入</td></tr>
+            <tr><td><span class="pill paper">出卷子</span> <span class="pill lesson">写教案</span> <span class="pill mind">画导图</span></td><td>要 AI 新生成产物，而非讲清知识</td><td>「出几道练习题 / 生成导图」等后续动作 <b>handoff</b> 到对应场景（见 <a class="xref" href="#s6">§6</a>）</td></tr>
+            <tr><td><span class="pill gray">题目解析</span></td><td>给出题目的答案/解法</td><td>「这道题考哪个知识点、对应教材哪里」留在问教材；「答案/怎么做」转题目解析</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><span class="nt">易混的三条线</span>① <b>考法分析</b>（怎么考）留问教材，<b>出题</b>转出卷子；② <b>教学设计启发</b>（怎么导入/活动建议）留问教材，<b>完整教案</b>转写教案；③ <b>题目知识点定位</b>（考哪个点）留问教材，<b>题目解析</b>（答案/解法）转题目解析。详见 <a class="xref" href="产品设计文档.html#s2-2">主文档 §2.2 意图识别</a>。</div>
+      <p class="sec-note"><b>覆盖范围：</b>从全局路由命中问教材（或用户主动进入）开始，到一次有据回答呈现、提供二次加工与跨场景流转为止，包含正常链路与异常分支。</p>
+
+      <h3 class="sec" id="s2"><span class="idx">2</span>端到端流程总览</h3>
+      <p>一次完整交互由<b>六层</b>串起：路由层 → Agent 层 → 教材上下文层 → RAG 层 → 生成层 → 展示层。主线如下：</p>
+      <div class="flow">
+        <div class="step"><div class="rail"><div class="dot">1</div><div class="line"></div></div><div class="body"><h4>用户入口</h4><p>点「问教材」 / 路由命中 / 从找资源等场景流入。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">2</div><div class="line"></div></div><div class="body"><h4>冷启动或带问题进入</h4><p>无输入 → 教材选择器（不限教材 / 继续上次 / 选一本 / 勾选多本）；有输入 → 直接解析。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">3</div><div class="line"></div></div><div class="body"><h4>输入解析</h4><p>识别学科、学段、知识主题、问题类型、输出深度、指代关系、是否有上传内容。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">4</div><div class="line"></div></div><div class="body"><h4>追问判断（克制）</h4><p>主题缺失 / 指代无对象 / 图片识别不清时，才追问一轮；否则直接答。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">5</div><div class="line"></div></div><div class="body"><h4>教材上下文判断</h4><p>指定教材 / 多本教材 / 上传内容 / 候选教材 / 通用知识，决定 RAG 范围与依据文案。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">6</div><div class="line"></div></div><div class="body"><h4>RAG 检索与可靠性判断</h4><p>知识点召回 → 章节片段召回 → 重排 → 判断能否引用，不足则降级通用知识。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">7</div><div class="line"></div></div><div class="body"><h4>动态回答 + 依据 + 后续动作</h4><p>按问题类型选结构 → 标注依据类型 → 给 2–4 个后续动作（部分 handoff）。</p></div></div>
+      </div>
+
+      <h3 class="sec" id="s3"><span class="idx">3</span>前台交互层</h3>
+      <h4 class="sub">3.1 场景入口</h4>
+      <ul class="clean">
+        <li>用户主动点击首页 / 工作台「<b>问教材</b>」入口；</li>
+        <li>在通用输入框输入带知识理解意图的句子，由<b>全局意图路由</b>命中问教材；</li>
+        <li>从找资源、做课件等场景的相关入口流入，带着学科 / 主题上下文。</li>
+      </ul>
+      <p>采用「<b>左侧对话 + 右侧「这本教材」</b>」的双栏工作台：右侧分<b>教材身份栏 + 两个视图（教材依据 / 教材目录）</b>，顶部场景切换栏可切到其他场景。</p>
+
+      <h4 class="sub">3.2 冷启动教材选择器（无输入进入）</h4>
+      <p>进入但还没提问时，展示教材选择器，四条路径并存：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>路径</th><th>含义</th><th>后续</th></tr></thead>
+          <tbody>
+            <tr><td><b>不限教材直接问</b></td><td>不锁定版本，先答；依据标注为候选/通用</td><td>随时可在顶部「选择教材」锁定</td></tr>
+            <tr><td><b>继续上次</b>（登录态）</td><td>按记忆里常看的教材打开，定位到上次章节</td><td>资源篮/记忆驱动，登录可用</td></tr>
+            <tr><td><b>选择一本教材</b></td><td>学段→学科→版本→册次逐级选定</td><td>基于指定教材 RAG，依据=「基于：…」</td></tr>
+            <tr><td><b>勾选多本教材</b></td><td>跨年级/跨版本综合复习或对比</td><td>多本分别检索，依据=「已对照 N 本」</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sec-note">示例问题可点击直接发起一次提问（不限教材时先以候选/通用作答）。</p>
+
+      <h4 class="sub">3.3 输入、上传与累积上下文</h4>
+      <p>输入框接受自然语言提问与<b>截图/附件上传</b>（教材页、讲义片段）。系统识别学科、学段并累积到会话上下文，使「这页怎么讲」「再深一点」等模糊跟进也能正确解析。上传内容<b>优先级最高</b>，识别不清时请用户重新上传或补文字，<b>禁止猜测图片内容</b>。</p>
+
+      <h3 class="sec" id="s4"><span class="idx">4</span>意图路由层</h3>
+      <p>全局意图路由综合动作词、知识词、附件类型、上下文判断主场景。与问教材直接相关的判定：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>路由结果</th><th>命中条件</th><th>典型输入</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill tb">命中问教材</span></td><td>问概念/定理/原因/区别/课堂讲解对象；短知识点（如「三角函数」「光合作用」）默认进入</td><td>「X 是什么 / 为什么 / 有什么区别 / 这页怎么讲」</td></tr>
+            <tr><td><span class="pill find">不命中（找资源）</span></td><td>找、下载、有没有现成资源</td><td>「找 X 课件 / 下载 X 试卷」</td></tr>
+            <tr><td><span class="pill gray">不命中（题目解析）</span></td><td>给出题干/选项/截图，要答案、解析、怎么做</td><td>「这道题怎么做 / 答案是什么」</td></tr>
+            <tr><td><span class="pill gen">不命中（生成 / 通用）</span></td><td>明确要生成产物，或非教学</td><td>「出一份卷子 / 写教案 / 今天天气」</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><span class="nt">混合意图</span>「知识 + 资源」（如「X 有哪些重点？有没有课件？」）<b>先问教材回答重点，再把「查看相关资源」作为后续动作</b>；「知识 + 生成」转生成场景。置信度低时轻量确认，不直接执行错误场景。详见 <a class="xref" href="产品设计文档.html#s2-2">主文档 §2.2</a>。</div>
+
+      <h3 class="sec" id="s5"><span class="idx">5</span>内部处理层</h3>
+      <h4 class="sub">5.1 输入解析</h4>
+      <p>命中后把输入解析为后续可用的结构化信息：<b>学科、学段/年级、知识主题、问题类型、输出深度、是否有指代（这个/这页/这道题）、是否有上传内容、是否需要追问</b>。问题类型体系见 <a class="xref" href="#s7-2">§7.2</a>。</p>
+
+      <h4 class="sub">5.2 追问 / 澄清判断（克制）</h4>
+      <p>只有<b>缺失信息会影响准确回答</b>时才追问，最多一轮；否则直接答。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>当前情况</th><th>是否追问</th><th>处理方式</th></tr></thead>
+          <tbody>
+            <tr><td>主题明确、学科可稳定推断</td><td>否</td><td>直接进入回答</td></tr>
+            <tr><td>主题缺失（如「帮我讲一下」）</td><td>是</td><td>追问学科 + 知识主题，给结构化选项并保留自由输入</td></tr>
+            <tr><td>有指代但无对象（「这个怎么证明」无上文/附件）</td><td>是</td><td>请上传截图或补充文本</td></tr>
+            <tr><td>要求按某版教材但未选具体教材</td><td>是</td><td>引导打开教材选择器</td></tr>
+            <tr><td>图片识别不清</td><td>是</td><td>请重新上传清晰图片或补文字，<b>不猜图</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="sub">5.3 教材上下文判断</h4>
+      <p>决定本轮回答<b>基于什么</b>，并直接决定依据文案（见 <a class="xref" href="#s7-3">§7.3</a>）。优先级：</p>
+      <ul class="clean">
+        <li><b>上传内容</b> 优先级最高；</li>
+        <li>已选<b>一本教材</b> → 基于指定教材检索；</li>
+        <li>选了<b>多本教材</b> → 分别检索，跨教材对照；</li>
+        <li>未指定但能识别学科学段 → <b>候选教材</b>，不得断言某一具体版本；</li>
+        <li>无可靠上下文 → <b>通用学科知识</b>，必须标注。</li>
+      </ul>
+
+      <h4 class="sub">5.4 RAG 检索与可靠性判断</h4>
+      <p>检索是<b>确定性工程 + 向量检索</b>，不交给 LLM 编造出处：query rewrite → 分层召回（先知识点/目录定位，再章节片段）→ 多本教材分别检索 → 片段重排 → <b>可靠性判断</b>（能否引用，否则降级通用知识）→ 引用清洗（把 v3 末尾来源编号转成结构化 citation）。</p>
+      <div class="note tb"><span class="nt">依据可追溯 ——「凭空不答」</span>教材版本、章节、页码、原文摘录<b>必须来自检索返回</b>。可靠性不足时降级为通用知识回答并明示，<b>绝不强行引用</b>。这是问教材区别于普通 AI 问答的关键。</div>
+
+      <h4 class="sub">5.5 回答生成与依据</h4>
+      <p>先给直接答案，再按问题类型选结构（见 <a class="xref" href="#s7-2">§7.2</a>）；结论必须能被引用片段支撑；明确<b>依据类型</b>；默认控制在教师可快速阅读的长度，要求详细时再展开；结尾给 2–4 个后续动作。</p>
+
+      <h4 class="sub">5.6 后续动作编排</h4>
+      <p>留在问教材内（展开解释、举例、生成知识卡片）或 handoff 到其他场景（查看相关资源、生成导图、出练习题）——见 <a class="xref" href="#s6">§6</a>。</p>
+
+      <h3 class="sec" id="s6"><span class="idx">6</span>后续动作与跨场景流转</h3>
+      <p>问教材回答完成后，自然衔接下一步教学动作。动作必须<b>承接当前答案与依据</b>，不脱离原回答重新发散：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>动作</th><th>去向</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>展开解释 / 举个例子</td><td><span class="pill tb">问教材</span></td><td>继续围绕当前依据讲深，留在本场景</td></tr>
+            <tr><td>生成知识卡片</td><td><span class="pill tb">问教材二次加工</span></td><td>把当前回答整理成卡片，<b>继承本回答依据</b>，可嵌入课件 / 供学生复习</td></tr>
+            <tr><td>查看相关资源</td><td><span class="pill find">找资源</span></td><td>带上知识主题、学科、学段</td></tr>
+            <tr><td>生成知识导图</td><td><span class="pill mind">画导图</span></td><td>带上当前回答摘要与依据</td></tr>
+            <tr><td>出几道练习题</td><td><span class="pill paper">出卷子</span></td><td>带上知识主题、难度、教材</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><span class="nt">handoff 含义</span>切换到另一个场景<b>只改右侧面板</b>，左侧对话线索不中断——用户感知为「同一位助手继续」。知识卡片是当前回答的<b>二次加工</b>，不是新一轮无依据生成。详见 <a class="xref" href="产品设计文档.html#s2-4">主文档 §2.4 会话与多轮迭代模型</a>。</div>
+      <div class="foot">问教材场景 · 详细设计 — AI 小博士　|　PART A · 业务流程</div>
+    </section>
+
+    <!-- ============ 回答与依据 ============ -->
+    <section class="page">
+      <span class="part-tag">PART B · 回答与依据</span>
+      <h2 class="part" id="s7">回答结构与依据透明</h2>
+      <p class="part-lead">问教材的回答不是「一种长相」，而是<b>按问题类型动态选结构</b>，并把「<b>基于什么作答</b>」明明白白地标出来。本节定义问题类型体系、依据类型与文案、引用溯源与切换教材重答。</p>
+      <div class="part-divider"></div>
+
+      <h3 class="sec" id="s7-1"><span class="idx">7.1</span>核心交互原则</h3>
+      <p>遵循「<b>一条会话贯穿</b>」：右侧「这本教材」面板提供<b>教材依据</b>（跟随回答）与<b>教材目录</b>（翻书）两个视图；回答正文用上标 <code>[1][2]</code> 关联右侧引用卡片，点击可打开教材原文扫描页。两条透明原则贯穿始终：</p>
+      <div class="grid2">
+        <div class="card"><div class="ic">①</div><h4>依据透明</h4><p>每条回答都说明基于什么——指定教材 / 上传内容 / 候选教材 / 通用知识 / 多本教材，不让用户误会来源。</p></div>
+        <div class="card"><div class="ic">②</div><h4>不确定性透明</h4><p>候选教材、通用知识、识别不清都明说；能引用才显示教材出处，不足则降级并标注。</p></div>
+      </div>
+      <div class="chatmock">
+        <div class="cm-row"><div class="cm-bubble">光反应和暗反应有什么区别？</div></div>
+        <div class="cm-ai"><span class="cm-av">🤖</span><div class="cm-ab"><b style="color:#0f6d96">对比分析</b> · 光反应「见光、放氧、产能」，暗反应「固碳、还原、耗能」，按场所/条件/物质/能量四维对照最清楚……<div class="cm-cite">🛡 基于：人教版 · 高中生物 · 必修1 · 第5章第4节 · 2 处引用</div></div></div>
+      </div>
+      <div class="chatmock">
+        <div class="cm-row"><div class="cm-bubble">三角函数是什么？（未选教材）</div></div>
+        <div class="cm-ai"><span class="cm-av">🤖</span><div class="cm-ab"><b style="color:#0f6d96">概念解释</b> · 三角函数是以角为自变量、以单位圆上点坐标为函数值的一类函数……<div class="cm-cand">⚠ 可能关联教材内容。选择具体版本后可获得更贴合课本的解释</div></div></div>
+      </div>
+      <p class="sec-note">原型表现：<code>workspace_textbook_answers</code> 按问题类型生成动态结构；依据条按 grounded（指定/多本/上传，绿色可溯）与非 grounded（候选/通用，黄色提示）两种样式区分。</p>
+
+      <h3 class="sec" id="s7-2"><span class="idx">7.2</span>问题类型体系</h3>
+      <p>问题类型用于选择<b>回答结构</b>与<b>知识卡片结构</b>。完整体系为 <b>14 个业务类型 + 3 个兜底类型</b>，原型已<b>全部实现并配有典型问题 mock</b>，提问后即按对应结构作答。</p>
+      <h4 class="sub">14 业务类型 + 3 兜底类型（原型均已实现，自动分类）</h4>
+      <p>原型已把<b>全部 17 个类型</b>落地：分类器按「具体意图在前、通用理解在后」的优先级命中，每类对应一套<b>回答结构</b>和一张<b>知识卡片结构</b>。下表给出类型、典型问法与回答结构。</p>
+      <h5 class="sub2">A · 知识理解类（6）</h5>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>类型</th><th>典型问法（mock）</th><th>回答结构</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill a">概念解释</span></td><td>三角函数是什么 / X 的定义（兜底默认）</td><td>定义 → 出处 → 要点 → 示例 → 易错</td></tr>
+            <tr><td><span class="pill a">原因解释</span></td><td>为什么会产生感应电流 / X 的原因</td><td>结论 → 原因链 → 情境还原 → 误区</td></tr>
+            <tr><td><span class="pill a">原理机制</span></td><td>酶催化的原理是什么 / X 的工作原理</td><td>结论 → 出处 → 机制步骤 → 易错</td></tr>
+            <tr><td><span class="pill a">对比分析</span></td><td>光反应和暗反应有什么区别</td><td>总体区别 → 维度对比表 → 易混点 → 记忆法</td></tr>
+            <tr><td><span class="pill a">归纳总结</span></td><td>环境描写有哪些作用 / X 的特点</td><td>总括 → 分点 → 场景 → 示例</td></tr>
+            <tr><td><span class="pill a">应用理解</span></td><td>函数怎么用来解决实际问题</td><td>场景 → 知识点 → 例子 → 提醒</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h5 class="sub2">B · 辨析与结构类（3）</h5>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>类型</th><th>典型问法（mock）</th><th>回答结构</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill b">易错辨析</span></td><td>失重是不是就没有重力了 / X 对吗</td><td>结论 → 误解vs正解表 → 辨析 → 记忆法</td></tr>
+            <tr><td><span class="pill b">知识脉络</span></td><td>函数这一章的知识脉络是怎样的</td><td>总括 → 脉络链 → 节点要点 → 提醒</td></tr>
+            <tr><td><span class="pill b">题目知识点定位</span></td><td>这道题考什么知识点</td><td>考点 → 对应教材 → 转「题目解析」</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h5 class="sub2">C · 教材与教学类（5）</h5>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>类型</th><th>典型问法（mock）</th><th>回答结构</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill c">教材定位</span></td><td>勾股定理在教材哪一节</td><td>直答位置 → 出处 → 周边导航（可开原文）</td></tr>
+            <tr><td><span class="pill c">教材解读</span></td><td>这一节编者为什么这样安排</td><td>编排意图 → 出处 → 重难点 → 示例</td></tr>
+            <tr><td><span class="pill c">课堂讲解</span></td><td>这节课怎么给学生讲清楚</td><td>讲解思路 → 分步 → 课堂活动 → 提醒</td></tr>
+            <tr><td><span class="pill c">教学设计启发</span></td><td>这节课怎么导入 / 有什么活动设计</td><td>思路 → 导入/活动/小结 → 建议（可转写教案）</td></tr>
+            <tr><td><span class="pill c">考法分析</span></td><td>这个知识点中考怎么考</td><td>总括 → 常见考法 → 题型×考点表 → 易错</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h5 class="sub2">D · 兜底类型（3）</h5>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>类型</th><th>触发</th><th>处理</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill gray">泛知识问答</span></td><td>未绑定教材的通用学科问题</td><td>直答 → 要点 → 明示「通用知识」并引导选教材</td></tr>
+            <tr><td><span class="pill gray">教材相关未分类</span></td><td>与教材相关但意图不明确</td><td>先给一个回答 + 轻引导补充</td></tr>
+            <tr><td><span class="pill gray">需要澄清</span></td><td>「帮我讲讲」等无主题输入</td><td>不硬答，反问方向 + 列出可能想问的几类</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note ok"><span class="nt">原型现状</span>以上 <b>17 类全部在交互原型中实现</b>：每类有典型问题作为 mock 数据，提问后会展示对应的<b>问题类型标签 + 回答结构</b>；分类器优先级为「题目定位 / 教材定位 / 考法 / 教学设计 / 课堂讲解 / 教材解读 / 知识脉络 / 易错辨析 → 对比 / 原理 / 原因 / 归纳 / 应用 → 概念（兜底）」。完整体系与提示词口径见《问教材实现步骤与系统提示词》§5.0 / §5.11。</div>
+
+      <h4 class="sub">7.2.1 知识卡片：每类回答的二次加工</h4>
+      <p>每个回答都可一键「<b>生成知识卡片</b>」——把当前回答<b>浓缩</b>成一张可嵌课件 / 供学生复习的卡片，<b>继承该回答的依据</b>（不另起一轮无依据生成）。卡片结构随问题类型自动适配，从回答 blocks 提炼：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>来源回答含</th><th>卡片呈现</th><th>适用类型（举例）</th></tr></thead>
+          <tbody>
+            <tr><td>对比表（table）</td><td>紧凑对比表</td><td>对比分析、易错辨析、考法分析</td></tr>
+            <tr><td>原因/机制/脉络链（chain）</td><td>编号步骤流</td><td>原因解释、原理机制、知识脉络</td></tr>
+            <tr><td>分点（points）</td><td>要点清单</td><td>概念、归纳、应用、教材解读、课堂讲解、教学设计、考法</td></tr>
+            <tr><td>note / pitfall</td><td>卡片底部「记忆 / 易错」条</td><td>全部</td></tr>
+            <tr><td>basis 依据</td><td>卡片页脚溯源条（绿色可溯 / 黄色通用）</td><td>全部</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sec-note">卡片标题取问题主体 + 类型标签；点击「生成知识卡片」弹出卡片模态，支持「复制文本 / 存入我的内容」。这样保证「回答按 17 类、卡片也按 17 类」一一对应，不再出现回答细分而卡片只剩少数模板的断层。</p>
+
+      <h3 class="sec" id="s7-3"><span class="idx">7.3</span>依据类型与文案</h3>
+      <p>依据类型由 <a class="xref" href="#s5">§5.3</a> 教材上下文判断决定，直接对应用户可见文案，且<b>真实反映来源</b>——不把系统推断说成用户已指定，不把通用知识说成教材内容。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>依据类型</th><th>可溯源</th><th>展示文案</th></tr></thead>
+          <tbody>
+            <tr><td><b>指定教材</b></td><td>是（绿色）</td><td>基于：人教版 · 高中生物 · 必修1 · 第 X 章</td></tr>
+            <tr><td><b>上传内容</b></td><td>是（绿色）</td><td>根据你上传的教材页整理</td></tr>
+            <tr><td><b>多本教材</b></td><td>是（绿色）</td><td>已对照 3 本教材内容，分别标注出处</td></tr>
+            <tr><td><b>候选教材</b></td><td>否（黄色）</td><td>可能关联教材内容。选择具体版本后可获得更贴合课本的解释</td></tr>
+            <tr><td><b>通用知识</b></td><td>否（黄色）</td><td>当前按通用学科知识回答。选择教材后可获得更贴合课本的解释</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="basis-row">
+        <span class="basis-chip" style="background:var(--auth-bg);border-color:var(--auth-border);color:var(--auth-ink)">🛡 指定 / 上传 / 多本 → 绿色可溯条 + N 处引用</span>
+        <span class="basis-chip" style="background:#fdf6ea;border-color:#f0dcb4;color:#8a6516">⚠ 候选 / 通用 → 黄色提示条，不声称教材原文</span>
+      </div>
+
+      <h3 class="sec" id="s7-4"><span class="idx">7.4</span>引用溯源与教材原文</h3>
+      <p>右侧「教材依据」视图显示引用卡片，每条含 <b>来源（版本·学科·册次）、定位（章节·页码）、原文摘录</b>，点击可打开<b>教材原文扫描页</b>。citation 对象：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>字段</th><th>含义</th></tr></thead>
+          <tbody>
+            <tr><td><code>citation_id</code></td><td>与正文上标 [1][2] 对应</td></tr>
+            <tr><td><code>source</code></td><td>人教版 · 高中生物 · 必修1</td></tr>
+            <tr><td><code>loc</code></td><td>第5章 第4节 · P103</td></tr>
+            <tr><td><code>quote</code> / <code>image_url</code></td><td>可展示原文摘录 / 扫描页地址</td></tr>
+            <tr><td><code>textbook_id / chapter_id / section_id</code></td><td>回链定位</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note warn"><span class="nt">关键防护</span>① v3 的<b>原始来源编号</b>（如 <code>####0,2</code>）不能直接暴露，需解析成结构化 citation；② 候选 / 通用回答的引用标为「可能关联」，不作为教材原文依据；③ 回答中出现的每个引用编号都必须能在 citations 集合内找到（防幻觉校验）。</div>
+
+      <h3 class="sec" id="s7-5"><span class="idx">7.5</span>切换教材与重新回答</h3>
+      <p>切换教材<b>不静默改写</b>旧答案：切换后保留历史回答、落一条分隔，并提供一个显式的「<b>按新教材重新回答</b>」入口，点击后基于新教材范围重新检索作答，旧答案仍在历史里可回看。</p>
+      <div class="chatmock">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="flex:1;height:1px;background:var(--line)"></span><span style="font-size:11.5px;font-weight:700;color:var(--ink-3);background:#fff;border:1px solid var(--line);padding:4px 12px;border-radius:999px">🔄 已切换教材 · 北师大版 数学 · 七年级上册</span><span style="flex:1;height:1px;background:var(--line)"></span></div>
+        <div class="cm-ai"><span class="cm-av">🤖</span><div class="cm-ab">已切换到 <b style="color:#0f6d96">北师大版 数学 · 七年级上册</b>。要按新教材重新回答上一个问题吗？<span style="color:var(--ink-3)">（旧答案会保留）</span><div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:9px;background:var(--tb);color:#fff;font-size:12.5px;font-weight:700">🔄 按新教材重新回答</div></div></div>
+      </div>
+      <p class="sec-note">原型已实现：切换教材后若已有回答，落「已切换」分隔条并追加「按新教材重新回答」卡片，点击即以新教材重新作答。</p>
+      <div class="foot">问教材场景 · 详细设计 — AI 小博士　|　PART B · 回答与依据</div>
+    </section>
+
+    <!-- ============ 落地实现 ============ -->
+    <section class="page">
+      <span class="part-tag">PART C · 落地实现</span>
+      <h2 class="part">系统架构、里程碑与实现状态</h2>
+      <p class="part-lead">问教材里 <b>LLM 不应凭记忆讲教材</b>。真正形成可信度的是教材库、目录、原文、上传内容和可追溯引用。LLM 只做三件事：把问题理解清楚、把依据组织清楚、把回答讲清楚。约 80% 工作量在<b>教材数据与 RAG 底座</b>，系统提示词是最薄、最后、最易改的一层。一句话原则：<b>先把数据和 RAG 做实，再写 Agent 和提示词。</b></p>
+      <div class="part-divider"></div>
+
+      <h3 class="sec" id="s8"><span class="idx">8</span>系统架构与里程碑</h3>
+      <h4 class="sub">8.1 六层架构（职责严格分离）</h4>
+      <div class="schem">
+        <div class="lbl">路由层 · LLM 触点①</div>
+        <div class="row"><div class="box soft">全局意图路由：这句话进不进「问教材」</div></div>
+        <div class="arrow">▼ 命中问教材</div>
+        <div class="lbl">Agent 层 · LLM 触点②（核心）</div>
+        <div class="row"><div class="box brand">解析 → 追问决策 → 教材上下文判断 → 调 RAG/生成 → 后续动作</div></div>
+        <div class="arrow">▼ 调 textbook_retrieve</div>
+        <div class="lbl">教材上下文层</div>
+        <div class="row"><div class="box">指定 / 多本 / 上传 / 候选 / 通用</div></div>
+        <div class="arrow">▼</div>
+        <div class="lbl">RAG 层 · LLM 触点③（可靠性）· 确定性工程 + 向量检索</div>
+        <div class="row"><div class="box">知识点召回 · 章节片段召回 · 重排 · 可靠性判断 · 引用清洗</div></div>
+        <div class="arrow">▼</div>
+        <div class="lbl">生成层 · LLM 触点④/⑤</div>
+        <div class="row"><div class="box">动态回答结构 · 依据文案 · 知识卡片 · 后续动作</div></div>
+        <div class="arrow">▼</div>
+        <div class="lbl">展示层</div>
+        <div class="row"><div class="box">教材选择 · 教材目录 · 教材依据 · 原文查看 · handoff</div></div>
+      </div>
+      <div class="note"><span class="nt">关键分工纪律</span><b>教材依据、章节、页码、原文片段一律来自 RAG 层或教材服务，不交给 LLM 编造；上下文类型必须明确标注；追问要克制；后续动作继承当前依据。</b></div>
+
+      <h4 class="sub">8.2 实现步骤与里程碑（按落地顺序）</h4>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>阶段</th><th>核心产出</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td><b>阶段 0</b> 教材数据与 RAG 底座</td><td>教材元数据 schema · 目录结构 · 正文结构化 · 向量/关键词索引 · 上传识别 · 引用对象模型</td><td>最难、先做；原型与真实系统最大鸿沟</td></tr>
+            <tr><td><b>阶段 1</b> 全局意图路由层</td><td>路由分类 · 混合意图规则 · 低置信度确认 · 场景手动切换</td><td>输出 {场景, 置信度, 依据}</td></tr>
+            <tr><td><b>阶段 2</b> 问教材 Agent</td><td>输入解析 · 追问决策 · 教材上下文判断 · RAG 调用编排 · 后续动作编排</td><td>LLM 为控制中枢（或代码中枢备选）</td></tr>
+            <tr><td><b>阶段 3</b> RAG 与可靠性</td><td>query rewrite · 分层召回 · 多本对比 · 片段重排 · 可靠性判断 · 引用清洗</td><td>确定性工程 + 向量检索</td></tr>
+            <tr><td><b>阶段 4</b> 回答生成与二次加工</td><td>动态模板 · 依据文案 · 知识卡片 · 防幻觉校验</td><td>出处必须在 citation 集合内</td></tr>
+            <tr><td><b>阶段 5</b> 前端展示与状态</td><td>冷启动选择器 · 输入区 · 右侧教材面板 · 移动端抽屉 · 原文查看 · 切换重答</td><td>原型已基本实现</td></tr>
+            <tr><td><b>阶段 6</b> 灰度与评估</td><td>路由命中率 · 追问准确率 · 检索命中率 · 依据覆盖率 · 引用准确率 · 幻觉率 · 教研抽检</td><td>幻觉率应趋零</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="sub">8.3 五处 LLM 触点</h4>
+      <p>不要用一个大 prompt 包圆（避免上下文污染、职责混乱，且各触点可独立选型）：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>触点</th><th>所在层</th><th>职责</th></tr></thead>
+          <tbody>
+            <tr><td>① 全局路由</td><td>路由层</td><td>判断进不进问教材</td></tr>
+            <tr><td>② 问教材 Agent</td><td>Agent 层</td><td>解析、追问、上下文判断、工具编排</td></tr>
+            <tr><td>③ 可靠性评估</td><td>RAG 层/生成前</td><td>判断能否引用教材，否则降级</td></tr>
+            <tr><td>④ 回答生成</td><td>生成层</td><td>基于依据生成动态结构回答</td></tr>
+            <tr><td>⑤ 二次加工</td><td>生成层</td><td>知识卡片、讲义版、后续动作</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sec-note">各触点系统提示词草稿（路由、Agent、可靠性、回答生成、依据文案、知识卡片等）见《问教材场景-实现步骤与系统提示词》§5，上线前需结合真实数据与模型表现迭代。</p>
+
+      <h3 class="sec" id="s9"><span class="idx">9</span>异常分支与关键原则</h3>
+      <h4 class="sub">9.1 异常与降级分支</h4>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>异常</th><th>触发</th><th>处理</th></tr></thead>
+          <tbody>
+            <tr><td><b>未登录</b></td><td>登录态不可用</td><td>不影响通用问教材；记忆、继续上次、个性化不可用</td></tr>
+            <tr><td><b>图片识别不清</b></td><td>OCR 置信度低</td><td>请重新上传或补文字，<b>不编造</b></td></tr>
+            <tr><td><b>知识库无匹配</b></td><td>检索不到可靠片段</td><td>降级通用知识回答并标注</td></tr>
+            <tr><td><b>教材版本差异</b></td><td>版本影响答案</td><td>先答候选/通用，再引导选具体教材</td></tr>
+            <tr><td><b>上传与已选教材冲突</b></td><td>上传页与当前教材不一致</td><td>以上传内容为上下文，提示可能差异</td></tr>
+            <tr><td><b>来源编号未解析</b></td><td>出现原始 <code>####0,2</code></td><td>前端隐藏，后端解析为 citation</td></tr>
+            <tr><td><b>引用不支撑结论</b></td><td>可靠性低</td><td>删除引用或降级通用回答</td></tr>
+            <tr><td><b>用户要找资源/生成产物</b></td><td>「有没有课件」「出卷子」</td><td>handoff 到对应场景</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4 class="sub">9.2 关键原则回顾</h4>
+      <div class="grid2">
+        <div class="card"><div class="ic">①</div><h4>依据透明</h4><p>每次回答都说明基于什么，指定/上传/多本可溯，候选/通用明示不确定。</p></div>
+        <div class="card"><div class="ic">②</div><h4>引用可追溯</h4><p>教材依据必须能回链教材原文，出处不由 LLM 编造。</p></div>
+        <div class="card"><div class="ic">③</div><h4>追问克制</h4><p>最多一轮，能答先答；缺最小必要信息时才追问。</p></div>
+        <div class="card"><div class="ic">④</div><h4>后续动作不断线</h4><p>回答后自然衔接资源、导图、练习、卡片；卡片继承原依据，不重新发散。</p></div>
+      </div>
+
+      <h3 class="sec" id="s10"><span class="idx">10</span>原型实现状态对照</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>环节</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>冷启动教材选择器（不限教材 / 继续上次 / 选一本 / 勾选多本）</td><td><span class="pill tb">原型已实现</span></td></tr>
+            <tr><td>问题类型自动分类与动态回答结构（14 业务类型 + 3 兑底，均有 mock）</td><td><span class="pill tb">原型已实现</span></td></tr>
+            <tr><td>各类型知识卡片（点击生成·结构随类型适配·继承回答依据）</td><td><span class="pill tb">原型已实现</span></td></tr>
+            <tr><td>多学科测试数据（光合作用·对比 / 三角函数·概念 / 电磁感应·原因 / 环境描写·归纳）</td><td><span class="pill tb">原型已实现</span></td></tr>
+            <tr><td>依据类型区分（指定/上传/多本 可溯 · 候选/通用 提示）</td><td><span class="pill tb">原型已实现</span></td></tr>
+            <tr><td>右侧教材依据 / 教材目录两视图 · 引用卡片 · 教材原文扫描页</td><td><span class="pill tb">原型已实现</span></td></tr>
+            <tr><td>跨教材对比（多本分别标注出处）</td><td><span class="pill tb">原型已实现</span></td></tr>
+            <tr><td>切换教材后保留旧答案 + 「按新教材重新回答」</td><td><span class="pill tb">原型已实现</span></td></tr>
+            <tr><td>后续动作（展开/举例/生成知识卡片留场景内 · 查看相关资源/导图/练习题 handoff）</td><td><span class="pill tb">原型已实现</span></td></tr>
+            <tr><td>上传截图/附件提问（输入支持上传；OCR 识别与「这页怎么讲」基于上传内容作答）</td><td><span class="pill gray">部分（上传 UI 已实现，OCR 待建）</span></td></tr>
+            <tr><td>完整 14+3 问题类型与对应知识卡片模板</td><td><span class="pill tb">原型已实现</span></td></tr>
+            <tr><td>教材 RAG 底座、citation 清洗、可靠性判断、textbook-chat v2/v3 接入</td><td><span class="pill gray">待建（阶段 0–4）</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note ok"><span class="nt">文档分工</span>本文为问教材<b>场景级详细设计</b>，聚合业务流程、回答与依据、落地实现三部分。落地主口径见《问教材场景-实现步骤与系统提示词》；产品全局设计见 <a class="xref" href="产品设计文档.html">《AI 小博士 · 产品设计文档》</a>；意图路由见其 <a class="xref" href="产品设计文档.html#s2-2">§2.2</a>；姊妹场景见 <a class="xref" href="场景详细设计-找资源.html">《找资源场景·详细设计》</a>。</div>
+      <div class="foot">问教材场景 · 详细设计 — AI 小博士　|　PART C · 落地实现　·　文档结束</div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const links = [...document.querySelectorAll('#toc-nav a')].filter(a => a.getAttribute('href').startsWith('#'));
+  const map = links.map(a => ({ a, el: document.querySelector(a.getAttribute('href')) })).filter(x => x.el);
+  const onScroll = () => {
+    let cur = map[0];
+    const y = window.scrollY + 120;
+    for (const m of map) { if (m.el.offsetTop <= y) cur = m; }
+    links.forEach(a => a.classList.remove('active'));
+    if (cur) cur.a.classList.add('active');
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+</body>
+</html>

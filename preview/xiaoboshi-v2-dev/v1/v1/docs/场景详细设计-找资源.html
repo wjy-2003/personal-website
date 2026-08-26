@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>找资源场景 · 详细设计 — AI 小博士</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="../assets/favicon-192.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/apple-touch-icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;700;900&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --serif: "Noto Serif SC", "Songti SC", serif;
+    --num: "Nunito", "Noto Sans SC", sans-serif;
+    --brand: #2f73e0; --brand-deep: #1f4f9e; --brand-soft: #eef4fd; --brand-line: #cfe0f7;
+    --find: #16a37b; --find-soft: #ecf8f3; --find-line: #c7e8da;
+    --ink: #1c2430; --ink-2: #45505f; --ink-3: #6b7686; --ink-4: #9aa3b0;
+    --line: #e4e7ec; --line-2: #eef0f3; --paper: #ffffff; --desk: #eceae3;
+    --accent: #e8743b; --green: #16a37b; --violet: #7a5cf0; --pink: #d23f66;
+    --maxw: 880px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: var(--font); background: var(--desk); color: var(--ink); -webkit-font-smoothing: antialiased; line-height: 1.72; font-size: 15px; }
+
+  .shell { display: flex; align-items: flex-start; gap: 0; }
+  .toc { position: sticky; top: 0; align-self: flex-start; width: 286px; height: 100vh; flex-shrink: 0; background: #14241d; color: #b8c8c0; padding: 30px 22px 40px; overflow-y: auto; font-size: 13px; }
+  .toc-brand { display: flex; align-items: center; gap: 11px; margin-bottom: 6px; }
+  .toc-logo { width: 42px; height: 42px; border-radius: 12px; background: var(--find); color: #fff; display: grid; place-items: center; font-weight: 900; font-size: 22px; flex-shrink: 0; font-family: var(--serif); }
+  .toc-brand h1 { font-size: 15px; color: #fff; margin: 0; font-weight: 800; letter-spacing: .2px; }
+  .toc-brand p { font-size: 11px; color: #7f9389; margin: 2px 0 0; font-weight: 600; }
+  .toc-meta { font-size: 11px; color: #698075; border-top: 1px solid #243a31; border-bottom: 1px solid #243a31; padding: 12px 2px; margin: 18px 0 16px; display: flex; flex-direction: column; gap: 5px; }
+  .toc-meta span b { color: #a6bbb1; font-weight: 700; }
+  .toc nav { display: flex; flex-direction: column; gap: 1px; }
+  .toc .grp { font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; color: #5b7269; font-weight: 800; margin: 18px 0 7px; padding-left: 11px; }
+  .toc a { color: #a7bab1; text-decoration: none; padding: 6px 11px; border-radius: 8px; display: block; transition: all .15s; font-weight: 500; }
+  .toc a:hover { background: #1d3329; color: #fff; }
+  .toc a.sub { padding-left: 22px; font-size: 12px; color: #84988e; }
+  .toc a.active { background: var(--find); color: #fff; }
+  .toc .back { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #84988e; margin-top: 22px; padding: 8px 11px; border: 1px solid #243a31; border-radius: 8px; }
+  .toc .back:hover { background: #1d3329; color: #fff; }
+
+  .pages { flex: 1; min-width: 0; padding: 40px 40px 80px; display: flex; flex-direction: column; align-items: center; gap: 30px; }
+  .page { width: 100%; max-width: var(--maxw); background: var(--paper); border-radius: 4px; box-shadow: 0 2px 14px rgba(20,30,50,0.09); padding: 64px 72px; }
+
+  .cover { padding: 0; overflow: hidden; }
+  .cover-top { background: linear-gradient(155deg, #1d9e74, #127a58 88%); color: #fff; padding: 70px 72px 56px; position: relative; }
+  .cover-top::after { content: ""; position: absolute; inset: 0; background: radial-gradient(520px 280px at 86% -10%, rgba(255,255,255,.16), transparent 70%); pointer-events: none; }
+  .cover-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; background: rgba(255,255,255,.16); padding: 6px 14px; border-radius: 999px; margin-bottom: 24px; }
+  .cover-top h1 { font-size: 36px; font-weight: 900; margin: 0 0 12px; letter-spacing: -.5px; line-height: 1.2; }
+  .cover-top .sub { font-size: 16px; font-weight: 500; color: #d2f0e5; margin: 0; max-width: 560px; }
+  .cover-bottom { padding: 34px 72px 52px; }
+  .cover-info { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 30px; }
+  .cover-info div { font-size: 13px; }
+  .cover-info .k { color: var(--ink-4); font-size: 11.5px; font-weight: 700; letter-spacing: .5px; margin-bottom: 2px; }
+  .cover-info .v { color: var(--ink); font-weight: 600; }
+
+  .part-tag { display: inline-flex; align-items: center; gap: 9px; font-family: var(--num); font-weight: 800; font-size: 13px; letter-spacing: 1px; color: var(--find); background: var(--find-soft); padding: 6px 14px; border-radius: 999px; margin-bottom: 18px; }
+  h2.part { font-size: 28px; font-weight: 900; color: var(--ink); margin: 0 0 10px; letter-spacing: -.4px; }
+  .part-lead { font-size: 15px; color: var(--ink-2); margin: 0 0 8px; line-height: 1.75; }
+  .part-divider { height: 4px; width: 54px; background: var(--find); border-radius: 2px; margin: 22px 0 0; }
+
+  h3.sec { font-size: 21px; font-weight: 800; color: var(--ink); margin: 50px 0 8px; padding-top: 8px; letter-spacing: -.2px; scroll-margin-top: 20px; }
+  h3.sec:first-of-type { margin-top: 8px; }
+  h3.sec .idx { color: var(--find); font-family: var(--num); font-weight: 900; margin-right: 10px; }
+  h4.sub { font-size: 16.5px; font-weight: 800; color: var(--ink); margin: 30px 0 8px; }
+  h5.sub2 { font-size: 14.5px; font-weight: 800; color: #127a58; margin: 22px 0 6px; }
+  .sec-note { font-size: 14px; color: var(--ink-2); margin: 0 0 14px; }
+  p { margin: 0 0 13px; }
+  b, strong { color: var(--ink); font-weight: 700; }
+  em { color: #127a58; font-style: normal; font-weight: 700; }
+  code { font-family: var(--num), monospace; font-size: 12.5px; background: #f2f4f7; color: #127a58; padding: 1.5px 6px; border-radius: 5px; font-weight: 700; }
+  a.xref { color: var(--brand); text-decoration: none; border-bottom: 1px solid var(--brand-line); font-weight: 600; }
+
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--ink-4); }
+  ul.clean { list-style: none; padding-left: 0; }
+  ul.clean > li { position: relative; padding-left: 22px; }
+  ul.clean > li::before { content: ""; position: absolute; left: 4px; top: 10px; width: 6px; height: 6px; border-radius: 2px; background: var(--find); }
+
+  .note { border-left: 3px solid var(--brand); background: var(--brand-soft); border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 18px 0; font-size: 13.5px; color: var(--ink-2); }
+  .note.find { border-color: var(--find); background: var(--find-soft); }
+  .note.warn { border-color: var(--accent); background: #fdf1ea; }
+  .note.ok { border-color: var(--green); background: #ecf8f3; }
+  .note .nt { font-weight: 800; color: var(--ink); display: block; margin-bottom: 3px; font-size: 13px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 18px; font-size: 13px; }
+  th { background: #f6f8fa; text-align: left; font-weight: 800; color: var(--ink-2); padding: 10px 13px; border-bottom: 2px solid var(--line); font-size: 12.5px; }
+  td { padding: 9px 13px; border-bottom: 1px solid var(--line-2); color: var(--ink-2); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td b { color: var(--ink); }
+  .tbl-wrap { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 16px 0 18px; }
+  .tbl-wrap table { margin: 0; }
+  .tbl-wrap th:first-child, .tbl-wrap td:first-child { padding-left: 16px; }
+
+  .pill { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 999px; font-family: var(--font); white-space: nowrap; }
+  .pill.find { background: #e7f6ef; color: #167a56; }
+  .pill.paper { background: #fbede4; color: #b65324; }
+  .pill.cw { background: #ece9fc; color: #5a44c4; }
+  .pill.lesson { background: #fbe8f0; color: #b22a59; }
+  .pill.tb { background: #e6f1fb; color: #1f5fae; }
+  .pill.mind { background: #eef6e3; color: #5a7a25; }
+  .pill.gen { background: #eceef3; color: #515b6b; }
+  .pill.gray { background: #eef0f3; color: var(--ink-3); }
+  .pill.a { background: #e6f1fb; color: #1f5fae; }
+  .pill.b { background: #fdf0e8; color: #b65324; }
+  .pill.c { background: #ece9fc; color: #5a44c4; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px; }
+  .card .ic { width: 34px; height: 34px; border-radius: 9px; background: var(--find-soft); color: var(--find); display: grid; place-items: center; font-weight: 900; margin-bottom: 11px; font-family: var(--num); font-size: 16px; }
+  .card h4 { font-size: 15px; margin: 0 0 5px; color: var(--ink); }
+  .card p { font-size: 12.5px; color: var(--ink-3); margin: 0; line-height: 1.6; }
+
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 18px 0; }
+  .step { display: flex; gap: 16px; }
+  .step .rail { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .step .dot { width: 30px; height: 30px; border-radius: 50%; background: var(--find); color: #fff; display: grid; place-items: center; font-family: var(--num); font-weight: 900; font-size: 14px; flex-shrink: 0; }
+  .step .line { width: 2px; flex: 1; background: var(--line); margin: 4px 0; min-height: 8px; }
+  .step:last-child .line { display: none; }
+  .step .body { padding-bottom: 22px; flex: 1; }
+  .step .body h4 { margin: 4px 0 4px; font-size: 15px; }
+  .step .body p { margin: 0; font-size: 13px; color: var(--ink-3); }
+
+  .schem { border: 1px solid var(--line); border-radius: 12px; background: #fafbfc; padding: 20px; margin: 18px 0; }
+  .schem .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .schem .row:last-child { margin-bottom: 0; }
+  .schem .box { background: #fff; border: 1px solid var(--line); border-radius: 9px; padding: 9px 14px; font-size: 12.5px; font-weight: 700; color: var(--ink-2); text-align: center; }
+  .schem .box.brand { background: var(--find); border-color: var(--find); color: #fff; }
+  .schem .box.soft { background: var(--find-soft); border-color: var(--find-line); color: #127a58; }
+  .schem .lbl { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--ink-4); margin-bottom: 8px; }
+  .schem .arrow { text-align: center; color: var(--ink-4); font-size: 16px; margin: 2px 0; }
+
+  .spec { border: 1px solid var(--line); border-radius: 12px; margin: 18px 0; overflow: hidden; }
+  .spec > .spec-h { background: #f6f8fa; padding: 12px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .spec > .spec-h .id { font-family: var(--num); font-weight: 900; font-size: 12px; color: #fff; background: var(--find); padding: 2px 9px; border-radius: 6px; }
+  .spec > .spec-h h4 { margin: 0; font-size: 15px; }
+  .spec-b { padding: 16px 18px; }
+  .spec-b table { margin: 0; }
+  .spec-b th { width: 130px; background: transparent; border-bottom: 1px solid var(--line-2); color: var(--ink-3); font-size: 12px; vertical-align: top; padding-left: 0; }
+  .spec-b td { border-bottom: 1px solid var(--line-2); padding-left: 0; }
+  .spec-b tr:last-child th, .spec-b tr:last-child td { border-bottom: none; }
+
+  .foot { text-align: center; font-size: 12px; color: var(--ink-4); margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); }
+
+  /* chat mock for the 资源详情问题列表 section */
+  .chatmock { border: 1px solid var(--line); border-radius: 14px; background: #fafbfc; padding: 18px; margin: 16px 0; }
+  .cm-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .cm-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; max-width: 80%; }
+  .cm-ref { display: flex; align-items: center; gap: 8px; padding: 7px 11px; border-radius: 11px; border: 1px solid var(--brand-line); background: var(--brand-soft); }
+  .cm-ref .ri { width: 24px; height: 24px; border-radius: 7px; background: #fff; border: 1px solid var(--brand-line); display: grid; place-items: center; color: var(--brand-deep); flex-shrink: 0; font-size: 12px; }
+  .cm-ref .rt { font-size: 11.5px; font-weight: 800; color: var(--ink); }
+  .cm-ref .rs { font-size: 10px; font-weight: 700; color: var(--brand-deep); }
+  .cm-bubble { background: linear-gradient(180deg,#3a7ce4,#2f73e0); color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; font-size: 13px; font-weight: 500; }
+  .cm-ai { display: flex; gap: 9px; align-items: flex-start; }
+  .cm-av { width: 26px; height: 26px; border-radius: 8px; background: var(--find-soft); border: 1px solid var(--find-line); display: grid; place-items: center; color: var(--find); flex-shrink: 0; font-size: 13px; }
+  .cm-ab { background: #fff; border: 1px solid var(--line); padding: 9px 13px; border-radius: 4px 14px 14px 14px; font-size: 13px; color: var(--ink-2); }
+
+  @media (max-width: 1080px) {
+    .toc { display: none; }
+    .pages { padding: 18px 14px 50px; }
+    .page { padding: 38px 24px; }
+    .cover-top, .cover-bottom { padding-left: 28px; padding-right: 28px; }
+    .grid2, .grid3, .cover-info { grid-template-columns: 1fr; }
+  }
+  @media print {
+    @page { margin: 0.7in; size: A4; }
+    body { background: #fff; font-size: 11.5pt; line-height: 1.6; }
+    .toc { display: none; }
+    .pages { padding: 0; gap: 0; display: block; }
+    .page { box-shadow: none; border-radius: 0; max-width: none; width: 100%; padding: 0; margin: 0; break-after: page; }
+    .page:last-child { break-after: auto; }
+    .cover-top { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pill, .part-tag, .note, .schem .box.brand, .schem .box.soft, .step .dot, .spec-h .id, .toc-logo, .card .ic, th, .cm-bubble, .cm-ref { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2.part, h3.sec, h4.sub { break-after: avoid; }
+    table, .spec, .card, .note, .step, li, tr, .schem, .chatmock { break-inside: avoid; }
+    a.xref { color: var(--ink); border: none; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="toc">
+    <div class="toc-brand">
+      <div class="toc-logo"><img src="../assets/logo-cap-white.png" alt="" style="width:26px;height:auto;display:block"/></div>
+      <div>
+        <h1>找资源 · 详细设计</h1>
+        <p>AI 小博士 · 场景子文档</p>
+      </div>
+    </div>
+    <div class="toc-meta">
+      <span><b>版本</b> v1.1</span>
+      <span><b>日期</b> 2026-06-16</span>
+      <span><b>状态</b> 设计基线（含设想标注）</span>
+    </div>
+    <nav id="toc-nav">
+      <div class="grp">业务流程</div>
+      <a href="#s1">1 · 场景定位与边界</a>
+      <a href="#s2">2 · 端到端流程总览</a>
+      <a href="#s3">3 · 前台交互层</a>
+      <a href="#s4">4 · 意图路由层</a>
+      <a href="#s5">5 · 内部处理层</a>
+      <a href="#s6">6 · 资源操作与跨场景流转</a>
+      <div class="grp">详情页交互</div>
+      <a href="#s7">7 · 资源详情页「问小博士」</a>
+      <a class="sub" href="#s7-1">7.1 核心交互原则</a>
+      <a class="sub" href="#s7-2">7.2 问题列表生成逻辑</a>
+      <a class="sub" href="#s7-3">7.3 点击后的前端处理</a>
+      <a class="sub" href="#s7-4">7.4 后端处理三类</a>
+      <a class="sub" href="#s7-5">7.5 按类别完整对应表</a>
+      <div class="grp">落地实现</div>
+      <a href="#s8">8 · 系统架构与里程碑</a>
+      <a href="#s9">9 · 异常分支与关键原则</a>
+      <a href="#s10">10 · 原型实现状态对照</a>
+      <a class="back" href="产品设计文档.html">← 返回产品设计文档</a>
+    </nav>
+  </aside>
+
+  <main class="pages">
+    <!-- COVER -->
+    <section class="page cover">
+      <div class="cover-top">
+        <span class="cover-badge">🔍 场景详细设计 · 找资源</span>
+        <h1>找资源场景 · 详细设计</h1>
+        <p class="sub">从全局路由命中找资源（或主动进入），到一次检索结果呈现、资源操作、详情页追问与跨场景流转的端到端设计。以 <code>workspace_find</code> 原型为事实底座。</p>
+      </div>
+      <div class="cover-bottom">
+        <div class="cover-info">
+          <div><div class="k">场景定位</div><div class="v">已有成品资源检索（学科网资源库底座）</div></div>
+          <div><div class="k">工作台形态</div><div class="v">左侧对话 + 右侧结果舞台 · 可拖拽分栏</div></div>
+          <div><div class="k">核心契约</div><div class="v">结果冻结、可回看 ——「给你了就是你的」</div></div>
+          <div><div class="k">关联原型</div><div class="v">workspace_find.jsx · workspace_find_media.jsx</div></div>
+          <div><div class="k">关联文档</div><div class="v">业务流程 / 详情页问题列表 / 实现步骤与系统提示词</div></div>
+          <div><div class="k">实现状态</div><div class="v">前端交互已实现（mock）；检索底座与 Agent 待建</div></div>
+        </div>
+        <div class="note find" style="margin-bottom:0">
+          <span class="nt">阅读约定</span>原型已实现的部分作为事实描述；属于设计设想、尚未实现的部分在文中明确标注「<b>（设想）</b>」。本文是产品设计文档 <a class="xref" href="产品设计文档.html#s2-3">§2.3 找资源（WS-1）</a> 的场景级展开。
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 业务流程 ============ -->
+    <section class="page">
+      <span class="part-tag">PART A · 业务流程</span>
+      <h2 class="part">找资源端到端业务流程</h2>
+      <p class="part-lead">找资源是小博士的「已有资源检索」场景，对应学科网作为资源聚合平台的底座能力。教师的核心诉求是从已有成品资源中，快速找到贴合班级学情的文档、视频、成套专辑，并据此收藏、下载，或直接流转到生成类场景。</p>
+      <div class="part-divider"></div>
+
+      <h3 class="sec" id="s1"><span class="idx">1</span>场景定位与边界</h3>
+      <p>找资源是小博士的<b>已有成品资源检索</b>场景：用户已经知道自己要一份现成的东西，系统的职责是从学科网资源库（及用户自己的内容、资源篮）里把贴合学情的成品<b>找出来并整理呈现</b>，而不是新建、也不是讲解知识。一句话定位——<b>「要现成的，来找资源」</b>。</p>
+      <h4 class="sub">纳入与不纳入</h4>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>维度</th><th><span class="pill find">找资源负责</span></th><th>不在本场景</th></tr></thead>
+          <tbody>
+            <tr><td><b>用户当前要什么</b></td><td>已有成品资源（文档 / 视频 / 成套专辑）</td><td>新建一份资源 · 对知识点的理解</td></tr>
+            <tr><td><b>典型输入</b></td><td>「找一份三角函数试卷」「下载光合作用课件」</td><td>「出一份三角函数卷子」「三角函数是什么」</td></tr>
+            <tr><td><b>系统产出</b></td><td>检索整理出的资源列表（冻结为可回看轮次）</td><td>AI 生成的新产物 · 结构化知识回答</td></tr>
+            <tr><td><b>不做什么</b></td><td colspan="2">不原创内容、不做知识讲解、不替用户决定排序之外的取舍——只检索、整理、呈现已有资源。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4 class="sub">与相邻场景的边界</h4>
+      <p>找资源真正要划清的是「<b>要现成的</b>」与「<b>要新生成的 / 要知识解答的</b>」之间的界：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>相邻场景</th><th>区别（它要什么）</th><th>衔接关系</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill tb">问教材</span></td><td>要对知识点的直接理解，而非成品文件</td><td>问教材回答底部「查看相关资源」可<b>流入</b>找资源</td></tr>
+            <tr><td><span class="pill paper">出卷子</span> <span class="pill lesson">写教案</span> <span class="pill cw">做课件</span></td><td>要 AI <b>新生成</b>一份资源，而非检索已有</td><td>已有资源不合适时，「直接生成」可<b>流出</b>到这些场景（见 <a class="xref" href="#s6">§6</a>）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sec-note">边界是<b>衔接而非互斥</b>：用户常先找现成的、不满意再让 AI 生成，或先问懂知识点再去找配套资源。全局意图路由负责在这几端之间分发（见 <a class="xref" href="#s4">§4</a>）。<br><b>覆盖范围：</b>从全局路由命中找资源（或用户主动进入）开始，到一次检索结果呈现并提供资源操作与跨场景流转为止，包含正常链路与异常分支。</p>
+
+      <h3 class="sec" id="s2"><span class="idx">2</span>端到端流程总览</h3>
+      <p>一次完整交互由<b>前台交互层、意图路由层、内部处理层</b>三段组成。主线如下：</p>
+      <div class="flow">
+        <div class="step"><div class="rail"><div class="dot">1</div><div class="line"></div></div><div class="body"><h4>用户入口</h4><p>点「找资源」 / 路由命中 / 从问教材「查看相关资源」流入。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">2</div><div class="line"></div></div><div class="body"><h4>冷启动或带需求进入</h4><p>无输入 → 冷启动面板（个性化示例 / 热门检索 / 分类示例）；有输入 → 直接进入检索。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">3</div><div class="line"></div></div><div class="body"><h4>检索意图解析</h4><p>把需求转化为结构化条件：资源形态 · 学科 · 学段 · 版本 · 类型 · 难度 · 主题。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">4</div><div class="line"></div></div><div class="body"><h4>追问 / 澄清判断（设想）</h4><p>仅当需求宽到结果噪声过大才发起一轮追问；否则用累积上下文先给一批。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">5</div><div class="line"></div></div><div class="body"><h4>多源检索与排序</h4><p>学科网库 / 我的内容 / 资源篮 → 打来源标签 → 排序 → 冻结为一轮 round。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">6</div><div class="line"></div></div><div class="body"><h4>结果分轨呈现</h4><p>全部 / 文档 / 视频 / 专辑 + 来源标签 + 筛选项；内容感知回复 + 跟进建议。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">7</div><div class="line"></div></div><div class="body"><h4>资源操作与流转</h4><p>预览 / 播放 / 看专辑 / 收藏入篮 / 下载 / 详情页追问；不合适则直接生成（HANDOFF）。</p></div></div>
+      </div>
+
+      <h3 class="sec" id="s3"><span class="idx">3</span>前台交互层</h3>
+      <h4 class="sub">3.1 场景入口（三条路径）</h4>
+      <ul class="clean">
+        <li>用户主动点击首页「<b>找资源</b>」入口；</li>
+        <li>在通用输入框输入带资源检索意图的句子，由<b>全局意图路由</b>命中找资源；</li>
+        <li>从问教材回答底部「<b>查看相关资源</b>」流入，带着上一轮学科 / 主题上下文进入。</li>
+      </ul>
+      <p>三条路径汇合后进入同一套内部处理链路，采用「<b>左侧对话 + 右侧结果舞台</b>」的双栏工作台形态，顶部场景切换栏可切到其他场景。</p>
+
+      <h4 class="sub">3.2 冷启动面板（无输入进入）</h4>
+      <p>教师进入但还没有输入时，展示冷启动面板，引导用一句话描述需求，并说明结果会涵盖<b>文档、视频、成套专辑</b>三类。面板内容随登录态分化：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>登录态</th><th>顶部横幅</th><th>推荐区</th><th>分类示例</th></tr></thead>
+          <tbody>
+            <tr><td><b>已登录</b>（有记忆画像）</td><td>已结合记忆（如人教版·七年级·数学）推荐</td><td>「为你推荐」——按画像挑选</td><td>贴合你的班级 / 你常找的视频 / 成套备课专辑</td></tr>
+            <tr><td><b>未登录</b></td><td>提示登录后推荐更懂你</td><td>「热门检索」——大家都在找</td><td>文档（教案/课件/卷子）/ 视频（实验/微课）/ 专辑（成套合集）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sec-note">冷启动示例和热门词均可点击直接发起一轮检索。</p>
+
+      <h4 class="sub">3.3 输入与累积上下文</h4>
+      <p>输入框接受自然语言需求。系统从输入中识别<b>学科、学段、资源形态</b>，并把识别到的学科 / 学段<b>累积记忆</b>到当前会话上下文，使后续模糊追问（「难度再高一点」「只要含答案的文档」）也能正确解析。</p>
+
+      <h3 class="sec" id="s4"><span class="idx">4</span>意图路由层</h3>
+      <p>全局意图路由是所有场景之前的前置分发层，综合动作词、资源词、学科词、附件类型、上下文历史判断主场景。与找资源直接相关的判定：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>路由结果</th><th>命中条件</th><th>典型输入</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill find">命中找资源</span></td><td>含 找、下载、有没有、资源、试卷、课件 等检索意图</td><td>「找一份三角函数试卷」</td></tr>
+            <tr><td><span class="pill gray">不命中（生成）</span></td><td>明确要求生成课件 / 教案 / 卷子 / 讲义</td><td>「生成一份三角函数课件」</td></tr>
+            <tr><td><span class="pill tb">不命中（问教材）</span></td><td>问概念 / 定理 / 原因 / 区别 / 教材内容理解</td><td>「三角函数是什么」</td></tr>
+            <tr><td><span class="pill gen">不命中（通用兜底）</span></td><td>非教学、闲聊、无法判断</td><td>「今天天气怎么样」</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><span class="nt">优先级与混合意图</span>找资源（明确资源检索）排在明确文件处理、明确生成类之后，问教材、方法指导之前。「知识 + 资源」混合（如「三角函数有哪些重点？有没有相关课件？」）<b>先问教材回答重点，再提供相关资源入口</b>——先问教材、后找资源衔接。详见 <a class="xref" href="产品设计文档.html#s2-2">主文档 §2.2 意图识别与分类</a>。</div>
+
+      <h3 class="sec" id="s5"><span class="idx">5</span>内部处理层</h3>
+      <h4 class="sub">5.1 检索意图解析</h4>
+      <p>命中后不再判断「是不是要找资源」，而是把需求转化为多源检索所需的结构化条件：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>解析要素</th><th>用途</th><th>来源</th></tr></thead>
+          <tbody>
+            <tr><td><b>资源形态</b></td><td>决定结果分轨（文档 / 视频 / 专辑 / 全部混合）</td><td>关键词：含「专辑/合集/套/打包」→ 专辑；含「视频/实验/研修/微课」→ 视频；否则全部混合</td></tr>
+            <tr><td><b>学科</b></td><td>限定检索范围</td><td>从输入识别，识别不到取累积上下文</td></tr>
+            <tr><td><b>学段 / 年级</b></td><td>限定检索范围</td><td>从输入识别，识别不到取累积上下文</td></tr>
+            <tr><td><b>版本</b></td><td>筛选条件</td><td>输入或筛选器（人教版 / 北师大版 / 通用…）</td></tr>
+            <tr><td><b>资源类型</b></td><td>筛选条件</td><td>课件 / 教案 / 学案 / 作业 / 试卷 / 题集 / 素材…（对齐标签树一级类型）</td></tr>
+            <tr><td><b>难度</b></td><td>筛选条件</td><td>基础 / 中等 / 拔高</td></tr>
+            <tr><td><b>知识主题</b></td><td>检索核心对象</td><td>输入中的知识点或《书名》</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="sub">5.2 追问 / 澄清判断</h4>
+      <p>当需求信息不足以精准检索时（核心是<b>学科未知</b>），先发起<b>一轮澄清</b>再检索；其余情况默认「先用累积上下文给一批」不打断。是否追问与登录态相关：已登录（有记忆画像）默认已知学科学段，几乎不追问；未登录或无画像时，宽泛输入会触发追问。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>当前情况</th><th>是否追问</th><th>处理方式</th></tr></thead>
+          <tbody>
+            <tr><td>学科可提取（输入含学科词 / 已登录有画像）</td><td>否</td><td>直接检索</td></tr>
+            <tr><td>找资源意图但学科未知（如未登录时「帮我找点试卷」）</td><td>是</td><td>一轮澄清：学段必选 → 学科必选（选项随学段变）→ 年级选填，保留自由输入</td></tr>
+            <tr><td>模糊跟进（「难度再高一点」「有没有相关课件」）</td><td>否</td><td>用已确认的累积上下文 + 新条件，直接出新一轮</td></tr>
+            <tr><td>同一会话已追问过一次</td><td>否</td><td><b>最多一轮</b>：学科已确认（subjectConfirmed）后不再追问</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sec-note">追问原则与问教材一致：<b>最多一轮、动态生成选项、保留自由输入</b>；放弃补全则用现有上下文先给一批。<b>原型已实现</b>：未登录进入找资源、输入「帮我找点试卷」后，小博士<b>先回一句「已识别你要找试卷、但还缺学科学段」的铺垫</b>，随即从<b>输入框上方上拉浮现追问弹框</b>（Claude AskUserQuestion 式）。弹框按<b>依赖顺序</b>展开：先选<b>学段（必选，小学 / 初中 / 高中）</b>——因为学段决定了可选的学科与年级——再选<b>学科（必选，选项随学段变，支持键盘 1–9 选学科）</b>与<b>年级（选填，如初中→七 / 八 / 九年级）</b>；回车确认 / Esc 跳过 / 也可直接在输入框自己描述，对话停在<b>等待选择</b>状态；选定后<b>在 AI 回复里补一张紧凑的「已答」摘要卡</b>（问题 + 所选「初中 · 物理」），随后照常出检索结果——既利落又保住会话连续性。已登录（记忆画像提供学科学段）则不追问。可在 Tweaks 面板关闭「已登录」来复现。</p>
+
+      <h4 class="sub">5.3 多源检索与排序</h4>
+      <p>检索从三个来源取数，构成一轮混合结果，按固定优先级重排：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>来源</th><th>含义</th><th>排序权重</th></tr></thead>
+          <tbody>
+            <tr><td><b>我的内容</b></td><td>登录用户自己上传 / 拥有的资源</td><td>最高（排最前）</td></tr>
+            <tr><td><b>资源篮</b></td><td>用户已收藏进资源篮的资源</td><td>次高</td></tr>
+            <tr><td><b>学科网</b></td><td>学科网资源库的公共成品资源</td><td>基础</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>按资源形态决定混排比例（「全部」默认约 2 专辑 + 8 文档 + 3 视频，单轮上限约 14 项）；按学科 / 学段过滤，<b>过滤后为空时逐级放宽</b>（先放宽学段，再放宽学科）保证不空手而归。</p>
+      <div class="note find"><span class="nt">结果冻结、可回看 ——「给你了就是你的」</span>每次检索产出一个<b>冻结的结果集（round）</b>：每条 AI 回复携带它那一轮的 id，点击该回复下方的结果入口可精确重开那一轮结果，历史轮次<b>永不被覆盖</b>。这是找资源区别于普通搜索框的关键交互模型。</div>
+
+      <h4 class="sub">5.4 结果呈现</h4>
+      <p>检索过程中右侧先展示「正在从学科网资源库检索匹配…」的骨架占位，确保结果不早于 AI 回复出现。完成后：</p>
+      <ul class="clean">
+        <li>AI 回复说明本轮理解（如「理解为七年级数学」）、检索总数、其中多少来自你的内容 / 资源篮收藏；</li>
+        <li>回复下方挂一个结果入口「<b>已为你匹配 N 个资源</b>」，点击查看本轮结果；</li>
+        <li>右侧结果舞台按轨道分页：<b>全部 / 文档 / 视频 / 专辑</b>；每张卡片带来源标签和关键字段（版本、学段学科、难度、题量 / 页数、匹配度、是否已审校等）；</li>
+        <li>提供更多筛选：学段 / 学科 / 版本 / 类型 / 难度；回复区给出贴合当前结果形态的跟进建议。</li>
+      </ul>
+      <p class="sec-note">资源回复是<b>内容感知</b>的：基于资源 / 视频的真实字段自洽生成（视频说明分章节、时长、画质、适合环节；文档说明页数、题量、覆盖知识点、是否审校），不空泛吹捧。</p>
+
+      <h3 class="sec" id="s6"><span class="idx">6</span>资源操作与跨场景流转</h3>
+      <p>用户对单个资源可执行：<b>预览</b>（文档）/ <b>播放</b>（视频，按章节跳转）/ <b>展开专辑</b> / <b>收藏入篮</b> / <b>下载</b> / <b>追问该资源</b>（见 <a class="xref" href="#s7">§7</a>）。收藏后该资源在后续轮次会带「资源篮」来源标签并优先排序。</p>
+      <p>找资源的出口不止于「找到」。当已有资源不完全合适时，提供直接生成的流转入口（<b>HANDOFF</b>），把当前检索上下文（知识点、难度、学段学科）带到生成类场景：</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>流转动作</th><th>去向</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>直接出一份卷子</td><td><span class="pill paper">出卷子</span></td><td>从学科网题库按当前知识点和难度智能组卷</td></tr>
+            <tr><td>生成配套教案</td><td><span class="pill lesson">写教案</span></td><td>对齐课标的教学设计</td></tr>
+            <tr><td>做成课件</td><td><span class="pill cw">做课件</span></td><td>结构清晰的 PPT</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><span class="nt">handoff 含义</span>切换到另一个生成场景<b>只改右侧面板</b>，左侧对话线索不中断——用户感知为「同一位助手继续」，不是新开会话。详见 <a class="xref" href="产品设计文档.html#s2-4">主文档 §2.4 会话与多轮迭代模型</a>。</div>
+      <div class="foot">找资源场景 · 详细设计 — AI 小博士　|　PART A · 业务流程</div>
+    </section>
+
+    <!-- ============ 详情页交互 ============ -->
+    <section class="page">
+      <span class="part-tag">PART B · 详情页交互</span>
+      <h2 class="part" id="s7">资源详情页「问小博士」问题列表</h2>
+      <p class="part-lead">用户进入资源详情页（文档预览 / 视频播放 / 专辑页）后，底部「问小博士」给出一组<b>按资源类别预设</b>的问题入口。本节定义其交互逻辑、问题配置策略与后端处理方案。</p>
+      <div class="part-divider"></div>
+
+      <h3 class="sec" id="s7-1"><span class="idx">7.1</span>核心交互原则</h3>
+      <p>遵循「<b>一条会话贯穿</b>」产品原则：用户点击详情页的问题，消息发送到<b>左侧对话面板（现有对话）</b>，不开新会话、不切换场景，找资源的历史对话线索不中断。右侧面板保持显示资源详情，场景标识仍是「找资源」。后端处理路径不同（见 <a class="xref" href="#s7-4">§7.4</a>），但对用户透明——感知为「同一位助手回答了资源相关问题」。</p>
+      <h5 class="sub2" style="margin-top:0">消息气泡上方的资源引用卡片</h5>
+      <p>消息在左侧对话中显示时，气泡上方以<b>独立引用块</b>形式显示资源引用卡片（资源标题 + 类别），让用户清楚这条问题针对哪份资源。点击引用卡片：该资源已在右侧打开 → 提示「已打开」；未打开 → 右侧面板重新打开该资源详情。若该引用是在<b>出卷子 / 写教案等生成场景</b>里（由 C 类 handoff 带入），点击则跳回找资源并打开该资源；配合输入框上方的会话任务条（见 <a class="xref" href="#s7-4">§7.4</a>）可随时一键切回草稿。</p>
+      <div class="chatmock">
+        <div class="cm-row"><div class="cm-stack">
+          <div class="cm-ref"><span class="ri">❝</span><span><span class="rt" style="display:block">有理数概念课 教学课件（精品）</span><span class="rs">引用 · 教学课件 · 点此查看</span></span></div>
+          <div class="cm-bubble">提取这份课件的教学目标</div>
+        </div></div>
+        <div class="cm-ai"><span class="cm-av">🤖</span><div class="cm-ab">已通读《有理数概念课 教学课件》，为你梳理其<b style="color:#127a58">教学目标</b>：围绕「有理数概念、数轴、相反数」展开，共 28 页。需要我整理成可直接用的清单或据此生成教案都行。</div></div>
+      </div>
+      <p class="sec-note">原型表现：在 <code>workspace_find</code> 的文档预览 / 视频播放 / 专辑页底部，「问小博士」胶囊条按资源类别渲染；点击 A / B 类问题在左侧对话回复，点击 C 类触发 handoff（见下）。</p>
+
+      <h3 class="sec" id="s7-2"><span class="idx">7.2</span>问题列表生成逻辑</h3>
+      <p>问题列表<b>纯前端生成</b>，不调用 LLM、不需网络请求。根据资源的<b>资源类别（类型字段）</b>，从预设模板取对应题组：<b>2 个固定 + 1~2 个动态，总数不超过 4 个</b>。</p>
+      <h4 class="sub">固定问题（全部类别共用）</h4>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>问题文本</th><th>处理类</th><th>备注</th></tr></thead>
+          <tbody>
+            <tr><td>总结这份资料的<b>考点 / 教学重点</b></td><td><span class="pill a">A 内容RAG</span></td><td>文字按类别微调（试题→考点；课件 / 教案→教学重点；视频→视频要点；专辑→合集主题范围）</td></tr>
+            <tr><td>这份<b>适合我的班级</b>吗？</td><td><span class="pill b">B 画像对比</span></td><td>依赖记忆系统；<b>记忆系统未就绪前隐藏此入口</b>（原型：仅登录态展示）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4 class="sub">动态问题（按资源类别配置）</h4>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>资源类别</th><th>动态问题</th><th>处理类</th></tr></thead>
+          <tbody>
+            <tr><td><b>试题试卷</b></td><td>「挑几道典型题讲讲」「据此出一份同类卷子」</td><td><span class="pill a">A</span> <span class="pill c">C</span></td></tr>
+            <tr><td><b>课件</b></td><td>「提取这份课件的教学目标」「据此生成一份教案」</td><td><span class="pill a">A</span> <span class="pill c">C</span></td></tr>
+            <tr><td><b>教案 / 讲义</b></td><td>「整理一下这份教案的教学流程」</td><td><span class="pill a">A</span></td></tr>
+            <tr><td><b>学案 / 导学案</b></td><td>「提取学生学习目标和重点」</td><td><span class="pill a">A</span></td></tr>
+            <tr><td><b>音视频</b></td><td>「总结视频要点」（依赖字幕 / 转写文本；无转写时隐藏）「适合课堂哪个环节」</td><td><span class="pill a">A</span></td></tr>
+            <tr><td><b>素材</b></td><td>无动态问题（图片为主，无法做内容 RAG）</td><td><span class="pill gray">—</span></td></tr>
+            <tr><td><b>备课综合</b></td><td>「提取教学设计思路」</td><td><span class="pill a">A</span></td></tr>
+            <tr><td><b>假期作业</b></td><td>「据此出一份同类练习」</td><td><span class="pill c">C</span></td></tr>
+            <tr><td><b>专辑</b></td><td>「这个合集涵盖哪些知识主题」（针对集合整体）</td><td><span class="pill a">A</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><span class="nt">展示规则</span>题组上限 = 2 固定 + 2 动态 = <b>最多 4 个</b>。某条件不满足（记忆系统未就绪 / 无字幕）→ 对应问题入口<b>隐藏、不占位</b>。<b>试卷 / 题集 / 作业等含多题的资料不用「这道题怎么讲」</b>——一份试卷里题太多，直接问「这道题」小博士无法定位是哪道；改为「挑几道典型题讲讲」，由 AI 从原卷选题讲解（用户也可补一句「第几题」逐题讲）。<b>专辑详情页只展示专辑级问题</b>，不展示子资源各自的问题入口；专辑详情页按 <b>单元 → 课文 / 专题 → 资料</b> 的层级全量展开（资料行只列文档类），子资源点击后进入该子资源的资料详情页，按其普通资料类型展示对应问题，与专辑无关。</div>
+
+      <h3 class="sec" id="s7-3"><span class="idx">7.3</span>点击后的前端处理</h3>
+      <div class="flow">
+        <div class="step"><div class="rail"><div class="dot">1</div><div class="line"></div></div><div class="body"><h4>打包资源上下文进消息体</h4><p>资源 ID、标题、类别、学科、学段、难度、版本，如有则附内容摘要 / 前 N 段正文 / 视频字幕片段，加来源标记字段 <code>source: "resource_detail"</code>。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">2</div><div class="line"></div></div><div class="body"><h4>左侧对话展示引用卡片 + 问题</h4><p>气泡上方独立引用块显示资源标题 + 类别；引用卡片可点击重开 / 提示已打开。</p></div></div>
+        <div class="step"><div class="rail"><div class="dot">3</div><div class="line"></div></div><div class="body"><h4>后端按来源标记与问题类型走不同路径</h4><p>识别为「资源详情发来的消息」，<b>不触发</b> <code>search_resources</code> 资源搜索流程，按 A / B / C 三类处理。</p></div></div>
+      </div>
+      <div class="note warn"><span class="nt">关键防误触发</span>消息打包了资源上下文，后端需能区分「资源详情发来的消息」与「用户手打的普通消息」，避免意外触发资源搜索。产品层设计为在消息体中加来源标记字段（<code>source: "resource_detail"</code>）；具体实现（消息体字段或 header）由开发决定。</div>
+
+      <h3 class="sec" id="s7-4"><span class="idx">7.4</span>后端处理方式（三类）</h3>
+      <div class="spec">
+        <div class="spec-h"><span class="id">A</span><span class="pill a">内容 RAG 类</span><h4>基于资源正文回答</h4></div>
+        <div class="spec-b"><table>
+          <tr><th>适用问题</th><td>总结考点 / 教学重点、讲题、提取教学目标 / 学习重点、总结视频要点、整理教学流程。</td></tr>
+          <tr><th>依赖</th><td>资源正文文本（文档需 PDF / Word / PPT 解析；视频需字幕或转写文本）。</td></tr>
+          <tr><th>流程</th><td>按 <code>resource_id</code> 查缓存 → 未命中则实时拉取解析并写缓存 → 截取相关段落（RAG 或全文）→ 注入 LLM 要求基于提供文本回答，<b>不检索新资源</b>。</td></tr>
+          <tr><th>解析策略</th><td>首次实时解析 + 结果缓存；首个访问用户经历完整耗时，后续命中缓存。性能上线后测试，必要时改离线预处理。</td></tr>
+          <tr><th>降级</th><td>正文不可用时基于标题 + 元数据作答，并注明「仅基于资源描述，未读取正文」。</td></tr>
+        </table></div>
+      </div>
+      <div class="spec">
+        <div class="spec-h"><span class="id">B</span><span class="pill b">画像对比类</span><h4>判断是否适合班级</h4></div>
+        <div class="spec-b"><table>
+          <tr><th>适用问题</th><td>这份适合我的班级吗？</td></tr>
+          <tr><th>依赖</th><td>用户记忆系统的 <code>tags</code>（学科 / 学段 / 偏好难度）与资源元数据。</td></tr>
+          <tr><th>流程</th><td>读取记忆 tags → 与资源学科 / 学段 / 难度对比 → LLM 输出判断 + 理由，<b>不检索新资源、不需正文</b>。</td></tr>
+          <tr><th>降级</th><td>记忆系统未建设 → <b>前端隐藏此入口</b>；已建设但当前用户无数据 → 展示入口，点击后在左侧对话提示用户补全学科 / 学段 / 难度偏好，回复后写入 tags。</td></tr>
+        </table></div>
+      </div>
+      <div class="spec">
+        <div class="spec-h"><span class="id">C</span><span class="pill c">生成 handoff 类</span><h4>据此生成新资源</h4></div>
+        <div class="spec-b"><table>
+          <tr><th>适用问题</th><td>据此出一份同类卷子 / 同类练习、据此生成教案。</td></tr>
+          <tr><th>依赖</th><td>资源元数据（知识主题、学科、学段、难度）。</td></tr>
+          <tr><th>流程</th><td>识别为生成 handoff → 提取资源知识主题 + 学科 + 学段 + 难度 → <b>右侧面板切换到对应生成场景</b>（出卷子 / 写教案），携带上述参数；<b>左侧对话线索不中断</b>。</td></tr>
+          <tr><th>草稿保留</th><td>handoff 产生的草稿处于未完成态；用户从资源详情切回后草稿不丢失——在找资源左侧<b>输入框上方常驻一条「会话任务条」</b>，一键回到该草稿。任务条有<b>两种状态且样式区分</b>：<b>草稿条</b>（虚线边框 / 灰底，编辑中）与<b>结果条</b>（实线 / 品牌浅底 + 绿点，已成稿）。</td></tr>
+        </table></div>
+      </div>
+
+      <h3 class="sec" id="s7-5"><span class="idx">7.5</span>按资源类别的完整对应表</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>资源类别</th><th>可用处理方式</th><th>问题入口总数</th></tr></thead>
+          <tbody>
+            <tr><td>试题试卷</td><td>A（考点 / 讲题）+ B（适配）+ C（出同类卷）</td><td>最多 4</td></tr>
+            <tr><td>课件</td><td>A（教学目标 / 重点）+ B（适配）+ C（生成教案）</td><td>最多 4</td></tr>
+            <tr><td>教案 / 讲义</td><td>A（教学流程 / 思路）+ B（适配）</td><td>最多 3</td></tr>
+            <tr><td>学案 / 导学案</td><td>A（学习目标 / 重点）+ B（适配）</td><td>最多 3</td></tr>
+            <tr><td>音视频</td><td>A（视频要点，依赖字幕）+ B（适配）</td><td>有字幕 3，无字幕 2</td></tr>
+            <tr><td>素材</td><td>仅 B（图片为主，A 暂不支持）</td><td>最多 2</td></tr>
+            <tr><td>备课综合</td><td>A（教学设计）+ B（适配）</td><td>最多 3</td></tr>
+            <tr><td>假期作业</td><td>A（内容 / 考点）+ B（适配）+ C（出同类练习）</td><td>最多 4</td></tr>
+            <tr><td>专辑</td><td>A（合集主题聚合）+ B（适配）</td><td>最多 3</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note warn"><span class="nt">MVP 建议</span>先只上 A 类的「总结考点 / 教学重点」（全文本资源）和 C 类 handoff（出卷子）。B 类等记忆系统就绪后再上；讲题类已改为「挑几道典型题讲讲」——由 AI 从原卷选题，回避了「指定哪道题」的定位难题，可与 A 类一并上。</div>
+      <div class="foot">找资源场景 · 详细设计 — AI 小博士　|　PART B · 详情页交互</div>
+    </section>
+
+    <!-- ============ 落地实现 ============ -->
+    <section class="page">
+      <span class="part-tag">PART C · 落地实现</span>
+      <h2 class="part">系统架构、里程碑与实现状态</h2>
+      <p class="part-lead">找资源里 <b>LLM 不负责「找」</b>。真正把资源找出来的是学科网的检索 / 推荐服务，LLM 只做三件事：理解意图、编排检索、叙述结果。约 80% 的工作量在数据与检索底座，系统提示词是最薄、最后、最易改的一层。一句话原则：<b>先把数据和检索做实，再写 Agent 和提示词。</b></p>
+      <div class="part-divider"></div>
+
+      <h3 class="sec" id="s8"><span class="idx">8</span>系统架构与里程碑</h3>
+      <h4 class="sub">8.1 四层架构（职责严格分离）</h4>
+      <div class="schem">
+        <div class="lbl">路由层 · LLM 触点①</div>
+        <div class="row"><div class="box soft">全局意图路由：这句话进不进「找资源」</div></div>
+        <div class="arrow">▼ 命中找资源</div>
+        <div class="lbl">Agent 层 · LLM 触点②（核心）</div>
+        <div class="row"><div class="box brand">解析需求 → 判断追问 / 检索 → 调工具 → 叙述 → handoff</div></div>
+        <div class="arrow">▼ 调 search_resources</div>
+        <div class="lbl">检索层 · 确定性工程</div>
+        <div class="row"><div class="box">多源检索 · 打来源标签 · 排序 · 放宽 · 冻结 round</div></div>
+        <div class="arrow">▼ 依赖</div>
+        <div class="lbl">数据层</div>
+        <div class="row"><div class="box">资源元数据库 + 三源（学科网 / 我的内容 / 资源篮）</div></div>
+      </div>
+      <div class="note"><span class="nt">关键分工纪律</span><b>排序、过滤放宽、round 冻结一律是确定性代码，不交给 LLM</b>，否则优先级与「给你了就是你的」冻结契约会不稳定；<b>LLM 只读检索结果、不做计算</b>，它叙述结果，但不决定哪些资源排前面。</div>
+
+      <h4 class="sub">8.2 实现步骤与里程碑（按落地顺序）</h4>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>阶段</th><th>核心产出</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td><b>阶段 0</b> 数据与检索底座</td><td>资源元数据 schema 落库 · 检索服务 · 三源打通 · 登录态降级</td><td>最难、先做；原型与真实系统最大鸿沟</td></tr>
+            <tr><td><b>阶段 1</b> 全局意图路由层</td><td>路由分类能力 · 低置信度确认 · 混合意图衔接</td><td>输出 {场景, 置信度, 依据}</td></tr>
+            <tr><td><b>阶段 2</b> 找资源 Agent</td><td>系统提示词 · <code>search_resources</code> 工具 · 追问决策 · 防幻觉兜底</td><td>后端校验回复提到的标题都在本轮返回集合内</td></tr>
+            <tr><td><b>阶段 3</b> 检索编排服务</td><td>多源合并 + 打标 · 排序 · 过滤放宽 · round 冻结</td><td>我的内容(0) &gt; 资源篮(1) &gt; 学科网(2)</td></tr>
+            <tr><td><b>阶段 4</b> 前端状态 + 操作 + handoff</td><td>round 回看 · 资源操作 · 跨场景 handoff</td><td>原型已基本实现</td></tr>
+            <tr><td><b>阶段 5</b> 灰度与评估</td><td>路由命中率 · 需求解析准确率 · 检索相关性 · 流转点击率 · 幻觉率</td><td>幻觉率应趋零</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="sub">8.3 匹配度（match）计算</h4>
+      <p>匹配度是<b>检索层计算好后挂在每条资源上返回的字段（0~100 整数）</b>，前端直接展示圆环，Agent 层只读引用、不做二次计算。两层叠加：<b>字段精确匹配（0~60，确定性代码）</b>——学科 / 学段 / 难度 / 版本 / 类型逐项命中加分；<b>语义相似度（0~40，向量计算）</b>——用户知识主题与「资源标题 + 知识点 tag」做 Embedding 余弦相似度。向量在资源入库时预计算存储。</p>
+      <div class="note"><span class="nt">原型现状 / 最简落地</span><code>data.jsx</code> 里的 match（98、95、92…）是写死的 mock。真实系统若 Embedding 短期成本高，可先只做第一层字段精确匹配跑通链路，后续再叠加向量层。提示词中可自然引用 match，但<b>不得自行估算或编造</b>该数值。</div>
+
+      <h4 class="sub">8.4 三处 LLM 触点</h4>
+      <p>「系统提示词」不是一个，是三个触点，<b>不要用一个大 prompt 包圆</b>（避免上下文污染、职责混乱，且各触点可独立选型）。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>触点</th><th>所在层</th><th>职责</th><th>形态</th></tr></thead>
+          <tbody>
+            <tr><td>① 全局路由</td><td>路由层</td><td>判断进不进找资源</td><td>分类 prompt 或轻量模型</td></tr>
+            <tr><td>② 找资源 Agent（主方案）</td><td>Agent 层</td><td>解析 + 追问决策 + 叙述 + handoff，LLM 为控制中枢</td><td>system prompt + 函数调用工具</td></tr>
+            <tr><td>② 独立抽取（备选）</td><td>Agent 层</td><td>解析→代码判断→调检索→LLM 叙述，代码为控制中枢</td><td>三段独立 prompt，代码串联</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sec-note">系统提示词草稿（路由、Agent、回复生成、意图抽取等）见《找资源场景-实现步骤与系统提示词》原文，上线前需结合真实数据与模型表现迭代。</p>
+
+      <h3 class="sec" id="s9"><span class="idx">9</span>异常分支与关键原则</h3>
+      <h4 class="sub">9.1 异常与边界分支</h4>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>分支</th><th>系统处理</th><th>用户提示</th></tr></thead>
+          <tbody>
+            <tr><td><b>未登录</b></td><td>「我的内容」不可用，记忆个性化降级为热门检索</td><td>提示登录后推荐更懂你、可保存资源篮</td></tr>
+            <tr><td><b>过滤后为空</b></td><td>逐级放宽（先学段、再学科）兜底出一批</td><td>说明已放宽范围，可继续加筛选</td></tr>
+            <tr><td><b>完全无匹配</b>（设想）</td><td>不空手，回到示例引导或建议改写需求</td><td>提示换个说法或直接生成</td></tr>
+            <tr><td><b>资源形态识别错误</b>（设想）</td><td>提供轨道切换与跟进建议快速纠偏</td><td>「只看视频」「有没有成套专辑」一键跟进</td></tr>
+            <tr><td><b>下载 / 收藏需登录</b></td><td>拦截并引导登录</td><td>提示登录后可收藏到资源篮、下载</td></tr>
+            <tr><td><b>路由误判</b></td><td>轻量确认或允许切换到问教材</td><td>允许手动切换场景</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4 class="sub">9.2 关键原则回顾</h4>
+      <div class="grid2">
+        <div class="card"><div class="ic">①</div><h4>结果冻结、可回看</h4><p>每轮检索是不可变结果集，历史轮次永不覆盖，回复入口可精确重开——「给你了就是你的」。</p></div>
+        <div class="card"><div class="ic">②</div><h4>多源优先级</h4><p>我的内容 &gt; 资源篮 &gt; 学科网，让用户自己的和收藏的资源优先露出。</p></div>
+        <div class="card"><div class="ic">③</div><h4>不空手而归</h4><p>过滤无命中时逐级放宽，宁可放宽范围也不返回空列表，配合明确范围说明。</p></div>
+        <div class="card"><div class="ic">④</div><h4>检索与生成连续</h4><p>找资源不是终点，资源不合适时一键流转到出卷子 / 写教案 / 做课件。</p></div>
+      </div>
+
+      <h3 class="sec" id="s10"><span class="idx">10</span>原型实现状态对照</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>环节</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>冷启动面板（登录 / 未登录分化、分类示例、热门词）</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>资源形态识别（文档 / 视频 / 专辑）与分轨呈现</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>多源检索、来源标签、按来源排序、过滤放宽（本地）</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>结果冻结为 round、回复入口重开、累积上下文</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>检索骨架占位、内容感知回复、跟进建议</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>资源操作（预览 / 播放 / 专辑 / 收藏 / 下载）与跨场景流转</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>资源详情页问题列表（按类别生成 + 引用卡片 + C 类 handoff）</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>更多筛选（学段 / 学科 / 版本 / 类型 / 难度）</td><td><span class="pill find">原型已实现（UI）</span></td></tr>
+            <tr><td>主动追问 / 澄清引擎（学科未知时上拉弹框，按 学段→学科→年级 依赖顺序补齐，答后在回复里补摘要卡）</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>资源引用卡片可点击回看原资源（含生成场景跳回找资源）</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>跨场景草稿「会话任务条」（草稿条 / 结果条两态，钉在输入框上方）</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>专辑详情全量层级（单元 → 课文 / 专题 → 资料，仅文档行）</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>输入框附件上传 / 解析过程态、发送前后点击预览</td><td><span class="pill find">原型已实现</span></td></tr>
+            <tr><td>完全无匹配的兜底文案与改写建议</td><td><span class="pill gray">设想</span></td></tr>
+            <tr><td>资源详情 A 类正文解析 / B 类记忆 tags / 来源标记字段</td><td><span class="pill gray">待建</span></td></tr>
+            <tr><td>真实学科网资源库 / 题库后端、检索服务、Agent 与提示词</td><td><span class="pill gray">待建（阶段 0–2）</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note ok"><span class="nt">文档分工</span>本文为找资源<b>场景级详细设计</b>，聚合业务流程、详情页交互与落地实现三部分。产品全局设计见 <a class="xref" href="产品设计文档.html">《AI 小博士 · 产品设计文档》</a>；意图路由规则见其 <a class="xref" href="产品设计文档.html#s2-2">§2.2</a>；会话与多轮迭代模型见 <a class="xref" href="产品设计文档.html#s2-4">§2.4</a>。</div>
+      <div class="foot">找资源场景 · 详细设计 — AI 小博士　|　PART C · 落地实现　·　文档结束</div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const links = [...document.querySelectorAll('#toc-nav a')].filter(a => a.getAttribute('href').startsWith('#'));
+  const map = links.map(a => ({ a, el: document.querySelector(a.getAttribute('href')) })).filter(x => x.el);
+  const onScroll = () => {
+    let cur = map[0];
+    const y = window.scrollY + 120;
+    for (const m of map) { if (m.el.offsetTop <= y) cur = m; }
+    links.forEach(a => a.classList.remove('active'));
+    if (cur) cur.a.classList.add('active');
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+</body>
+</html>
