@@ -96,6 +96,40 @@
 .drawer-setup{width:min(780px,100%);margin:0 auto;padding:26px 20px 40px;height:100%;overflow:auto}.drawer-setup .setup-shell{min-height:0}
 .drawer-generating{height:100%;display:flex;align-items:center;justify-content:center;overflow:auto}
 .drawer-workspace{height:100%;display:flex;overflow:hidden}.drawer-workspace .chat-column{width:25%;min-width:250px;max-width:330px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;transition:.2s}.drawer-workspace .chat-column.collapsed{width:50px;min-width:50px}.drawer-workspace .chat-column.collapsed .chat-body,.drawer-workspace .chat-column.collapsed .brand-name{display:none}
+
+/* v1-style home additions */
+.home-v1-hero{padding:4vh 24px 24px;text-align:center}
+.home-v1-hero h1{font-size:36px;font-weight:800;color:var(--ink);margin:0 0 12px;letter-spacing:-.8px}
+.home-v1-hero p{font-size:16px;color:var(--ink-3);margin:0 0 28px;line-height:1.6}
+.home-v1-hero p b{color:var(--brand)}
+.home-v1-chips{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:22px}
+.home-v1-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 15px 6px 12px;border-radius:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .2s,border-color .2s}
+.home-v1-chip:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px rgba(47,115,224,.28)}
+.home-v1-chip .chip-icon{width:22px;height:22px;display:grid;place-items:center;border-radius:6px;background:var(--brand-soft);color:var(--brand-deep);font-size:14px}
+.home-v1-chip.active{border-color:var(--brand)}
+.home-v1-examples{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:38px auto 0;max-width:min(940px,96vw)}
+.home-v1-examples-label{font-size:12px;color:var(--ink-3);font-weight:700;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.home-v1-examples-label .spark{color:var(--brand)}
+.home-v1-example{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-3);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:transform .15s,border-color .2s,box-shadow .2s}
+.home-v1-example:hover{transform:translateY(-2px);border-color:#9fc5ff}
+.home-v1-memory{max-width:760px;margin:28px auto 0;padding:0 24px}
+.home-v1-login{margin-top:26px;background:var(--surface);border:1px dashed var(--brand-soft-border);border-radius:20px;overflow:hidden;text-align:left;padding:20px 22px}
+.home-v1-login h3{font-size:17px;font-weight:800;color:var(--ink);margin:0 0 6px}
+.home-v1-login p{margin:0 0 14px;font-size:13.5px;color:var(--ink-2);line-height:1.7}
+.home-v1-login-row{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2);margin-bottom:8px}
+.home-v1-login-row span{width:22px;height:22px;border-radius:7px;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;color:var(--brand-deep);font-size:12px}
+.home-v1-login-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 26px;border-radius:13px;border:0;background:var(--brand-grad);background-color:var(--brand);color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px -6px var(--brand-glow)}
+.home-v1-auth{margin:32px auto 0;padding:0 24px;text-align:center}
+.home-v1-auth-inner{display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;padding:10px 22px;border-radius:999px;background:#f3f6fa;border:1px solid var(--line)}
+.home-v1-auth-inner span{font-size:12px;color:var(--ink-3);white-space:nowrap}
+.home-v1-auth-inner b{font-weight:800;color:var(--ink-2)}
+.home-v1-auth-disclaimer{font-size:11px;color:var(--ink-3);margin-top:8px}
+@media(max-width:720px){.home-v1-auth-inner{border-radius:14px}.home-v1-hero h1{font-size:28px}.home-v1-hero p{font-size:14.5px}}
+
+/* rail item uses svg icon via background */
+.rail-item .icon{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--ink-3)}
+.rail-item.active .icon{color:var(--brand-deep)}
+.rail-hist-item .icon{color:var(--ink-3)}
 </style>
 
 <style>
@@ -121,7 +155,7 @@
 </head>
 <body><div id="app"></div><script>
 const $=id=>document.getElementById(id);
-const icons={book:'▤',spark:'✦',file:'▧',ppt:'▣',link:'⌁',chat:'◌',quiz:'✓',task:'≡',check:'✓',upload:'↑',clock:'◷',risk:'!',sync:'↻',more:'⋯',home:'⌂',back:'‹',collapse:'‹',expand:'›',drag:'⠿',edit:'✎',copy:'⧉'};
+const icons={book:'▤',spark:'✦',file:'▧',ppt:'▣',link:'⌁',chat:'◌',quiz:'✓',task:'≡',check:'✓',upload:'↑',clock:'◷',risk:'!',sync:'↻',more:'⋯',home:'⌂',back:'‹',collapse:'‹',expand:'›',drag:'⠿',edit:'✎',copy:'⧉',grade:'G',image:'I',megaphone:'M',grid:'#'};
 const planOptions={
 intro:[
  {name:'双雪景对比导入',time:'5 分钟',source:'两段雪景视频 / 真实教案',confidence:'92%',lines:['呈现《江雪》清冷孤寂的雪景，再播放北国长城、黄土高原的壮阔雪景。','提问：“同样是写雪，两组画面给你的感受有何不同？”学生先写下一个感受词，再说明画面依据。','从“清冷孤寂”与“壮阔豪迈”的差异进入《沁园春·雪》，板书课题与作者。']},
@@ -170,7 +204,23 @@ function isTaskSection(id){return ['task','practice','分层作业'].includes(id
 function copyToClipboard(text){if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>toast('已复制到剪贴板'))}else{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('已复制到剪贴板')}}
 function getSectionText(s){return `【${s.title}】\n${getSectionLines(s).join('\n')}`}
 function isTaskSection(s){return ['preview','scene','read1','history','read2','thinking','summary','homework'].includes(s.id)}function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function icon(name){return `<span class="icon">${icons[name]||name}</span>`}
+function icon(name,size=16){return `<span class="icon" style="width:${size}px;height:${size}px">${icons[name]||''}</span>`}
+function svgIcon(name,w=20,h=20){const svgs={
+ search:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>`,
+ paper:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>`,
+ slides:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M9 21h6M12 17v4"/></svg>`,
+ lesson:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M8.5 9h5M8.5 13h3.5"/></svg>`,
+ book:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5V5.5z"/><path d="M4 20.5H20M12 3v18"/></svg>`,
+ mindmap:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2.4"/><circle cx="19" cy="6" r="2.2"/><circle cx="19" cy="18" r="2.2"/><path d="M7.3 11l9.5-4M7.3 13l9.5 4"/></svg>`,
+ grade:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.2"/><path d="M8.2 12.4l2.6 2.6 5-5.6"/></svg>`,
+ megaphone:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4a1 1 0 0 0 1 1h2l7 4V5l-7 4H5a1 1 0 0 0-1 1z"/><path d="M18 9a4 4 0 0 1 0 6"/></svg>`,
+ image:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M5 17l4.5-4.5L13 16l3-3 3 3"/></svg>`,
+ spark:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z"/></svg>`,
+ grid:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.4"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.4"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.4"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.4"/></svg>`,
+ history:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12a7 7 0 1 1 2 5"/><path d="M5 17v-4h4"/><path d="M12 8v4l3 2"/></svg>`,
+ plus:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>`,
+ file:`<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg>`
+};return svgs[name]||''}
 function toast(msg){const old=$('toast');if(old)old.remove();const el=document.createElement('div');el.id='toast';el.className='toast';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2700)}
 function render(){renderHome();renderDrawer();}function renderDrawer(){let overlay=$('drawerOverlay'),drawer=$('drawerPanel');if(!overlay){overlay=document.createElement('div');overlay.id='drawerOverlay';overlay.className='drawer-overlay';overlay.onclick=()=>closeDrawer();document.body.appendChild(overlay);}if(!drawer){drawer=document.createElement('div');drawer.id='drawerPanel';drawer.className='drawer';document.body.appendChild(drawer);}overlay.className='drawer-overlay '+(state.drawerOpen?'open':'');drawer.className='drawer '+(state.drawerOpen?'open':'');if(state.drawerOpen){if(state.drawerView==='setup')renderSetup();else if(state.drawerView==='generating')renderGenerating();else renderWorkspace();}else{drawer.innerHTML='';}}function openDrawer(view){state.drawerOpen=true;state.drawerView=view;render();}function closeDrawer(){state.drawerOpen=false;if(genTimer){clearInterval(genTimer);genTimer=null;}render();}
 function topbar(){return `<header class="topbar"><div class="brand"><img class="logo" src="./assets/logo-cap-blue.png">AI 小博士</div><nav class="nav"><div class="nav-item active">智能备课</div><div class="nav-item">智能组卷</div><div class="nav-item">教学问答</div><div class="nav-item">我的资料</div></nav><div class="user-dot">王</div></header>`}
@@ -178,8 +228,8 @@ function topbar(){return `<header class="topbar"><div class="brand"><img class="
 
 function renderHome(){
 const railItems=[
- {i:'file',l:'智能组卷'},
- {i:'spark',l:'互动课件'},
+ {i:'paper',l:'智能组卷'},
+ {i:'slides',l:'互动课件'},
  {i:'book',l:'教材百科'},
  {i:'grade',l:'作文批改'},
  {i:'image',l:'AI 生图'},
@@ -188,24 +238,27 @@ const railItems=[
  {i:'grid',l:'我的内容'}
 ];
 const history=[
- {t:'《沁园春·雪》/ 毛泽东',icon:'file'},
- {t:'《我爱这土地》/ 艾青',icon:'file'},
- {t:'《乡愁》/ 余光中',icon:'file'}
+ {t:'《沁园春·雪》/ 毛泽东',icon:'lesson'},
+ {t:'《我爱这土地》/ 艾青',icon:'lesson'},
+ {t:'《乡愁》/ 余光中',icon:'lesson'}
 ];
-const examples=[
- '统编版九年级上册《沁园春·雪》/ 毛泽东',
+const phs=[
  '人教版七年级上《有理数》同步练习，含解析',
  '按湖北中考结构出一份物理中考模拟卷',
  '外研版英语必修二 Unit3 早读课件，精美一些',
- '九年级 二次函数 思维导图'
+ '九年级 二次函数 思维导图',
+ '光反应和暗反应有什么区别？'
 ];
-const scenes=[
- {id:'write-lesson',glyph:'📝',name:'写教案',tag:'AI 辅助',desc:'告诉课题或选教材章节，先列大纲再展开内容，编辑或下载成稿'},
- {id:'find-resource',glyph:'🔍',name:'找资源',tag:'',desc:'基于学科网资源库，按学段·学科·版本智能匹配'},
- {id:'paper',glyph:'📋',name:'出卷子',tag:'',desc:'基于学科网题库智能组卷，难度梯度、知识点全覆盖'},
- {id:'courseware',glyph:'🎨',name:'做课件',tag:'',desc:'告诉课题或选教材章节，先列大纲再展开内容，最后挑模板成稿'},
- {id:'textbook',glyph:'📚',name:'问教材',tag:'',desc:'答案逐条引用教材原文，章节页码可溯源'},
- {id:'explain',glyph:'📢',name:'AI 讲卷',tag:'',desc:'上传试卷或作业，AI 逐题讲解思路与考点，生成可直接投屏的讲评稿'}
+const examples=phs;
+const chips=[
+ {id:'write-lesson',icon:'lesson',label:'写教案'},
+ {id:'find-resource',icon:'search',label:'找资源'},
+ {id:'paper',icon:'paper',label:'出卷子'},
+ {id:'courseware',icon:'slides',label:'做课件'},
+ {id:'textbook',icon:'book',label:'问教材'},
+ {id:'mindmap',icon:'mindmap',label:'画导图'},
+ {id:'grade',icon:'grade',label:'改作业',badge:'拍照可批'},
+ {id:'explain',icon:'megaphone',label:'AI 讲卷'}
 ];
 const go=q=>{
  state.query=q||$('topicInput').value.trim();
@@ -214,9 +267,9 @@ const go=q=>{
  state.chat.push({role:'user',text:state.query},{role:'ai',text:'我已识别到课题信息。再补充少量学情和课时，我会让活动与练习更贴合你的课堂。'});
  render();
 };
-$('app').innerHTML=`<div class="app-shell"><aside class="rail"><div class="rail-brand"><img class="logo" src="./assets/logo-cap-blue.png"><div class="rail-brand-text"><b>AI 小博士</b><span>你的备课教学助手</span></div></div><button class="rail-newchat" id="newChatRail">+ 新对话</button><div class="rail-nav">${railItems.map(x=>`<button class="rail-item" data-nav>${icon(x.i)}${x.l}</button>`).join('')}</div><div class="rail-section-title">历史对话</div><div class="rail-history">${history.map((x,i)=>`<button class="rail-hist-item" data-recent="${i}">${icon(x.icon)}<div>${esc(x.t)}</div></button>`).join('')}</div><div class="rail-account"><button class="rail-account-btn"><span class="avatar">王</span><div><b>王老师</b><div style="font-size:11px;color:var(--ink-3)">初中语文</div></div></button></div></aside><main class="main-area"><div class="home-v1"><div class="home" style="background:transparent;min-height:auto"><main class="hero" style="padding:24px 24px 30px"><div style="max-width:760px;margin:0 auto"><h1 style="font-size:36px;font-weight:800;color:var(--ink);margin:0 0 12px;letter-spacing:-.8px">老师好，有什么我能帮你的？</h1><p style="font-size:16px;color:var(--ink-3);margin:0 0 28px;line-height:1.6">说出你的需求，我会从<b style="color:var(--brand)">学科网资源库</b>出发，陪你一起完成。</p><div class="search-box" id="searchBox">
-<div class="search-inner"><textarea id="topicInput" rows="1" placeholder="描述你的教学需求，AI 自动判断该进入哪个场景…">${esc(state.query)}</textarea><button class="send" id="startBtn" title="开始备课" ${!state.query.trim()?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"></path><path d="m6 11.5 6-6 6 6"></path></svg></button></div>
-</div><div class="examples">${examples.map(x=>`<button class="example" data-topic="${esc(x)}">${esc(x)}</button>`).join('')}</div></div></main><section class="scene-section"><h2>选个场景，或直接告诉我你的需求</h2><div class="scene-grid">${scenes.map(s=>`<button class="scene-card ${s.id==='write-lesson'?'':'inactive'}" data-scene="${s.id}"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><span class="glyph">${s.glyph}</span>${s.tag?'<span class="pill blue">'+esc(s.tag)+'</span>':''}</div><div class="name">${esc(s.name)}</div><div class="desc">${esc(s.desc)}</div></button>`).join('')}</div></section><section class="recent"><div class="section-title"><h2>最近课节</h2><button class="btn btn-ghost btn-sm">查看全部</button></div><div class="recent-grid">${[['语文 · 九年级上册','《沁园春·雪》/ 毛泽东','刚刚编辑 · 已识别3份资料'],['语文 · 九年级上册','《我爱这土地》/ 艾青','3 天前 · 已导出'],['语文 · 九年级上册','《乡愁》/ 余光中','上周 · 待继续打磨']].map((x,i)=>`<button class="recent-card" data-recent="${i}"><div class="subject">${esc(x[0])}</div><div class="title">${esc(x[1])}</div><div class="meta">${esc(x[2])}</div></button>`).join('')}</div></section><section class="auth-strip"><div class="auth-strip-inner"><span>✓ 每一份生成，都有学科网资源库支撑</span><span><b>2000万+</b> 精品资源</span><span><b>20年</b> 教研沉淀</span><span><b>三审三校</b> 质量把关</span></div><div class="disclaimer">AI 内容仅供教研参考，请结合实际教学进行调整</div></section></div></div></main></div>`;
+const railHtml=`<aside class="rail"><div class="rail-brand"><img class="logo" src="./assets/logo-cap-blue.png"><div class="rail-brand-text"><b>AI 小博士</b><span>你的备课教学助手</span></div></div><button class="rail-newchat" id="newChatRail">${svgIcon('plus',18,18)}<span>新对话</span></button><div class="rail-nav">${railItems.map(x=>`<button class="rail-item" data-nav>${svgIcon(x.i)}${x.l}</button>`).join('')}</div><div class="rail-section-title">历史对话</div><div class="rail-history">${history.map((x,i)=>`<button class="rail-hist-item" data-recent="${i}">${svgIcon(x.icon,18,18)}<div>${esc(x.t)}</div></button>`).join('')}</div><div class="rail-account"><button class="rail-account-btn"><span class="avatar">王</span><div><b>王老师</b><div style="font-size:11px;color:var(--ink-3)">初中语文</div></div></button></div></aside>`;
+const heroHtml=`<div class="home-v1"><div class="home" style="background:transparent;min-height:auto"><section class="home-v1-hero"><div style="max-width:760px;margin:0 auto"><h1>老师好，有什么我能帮你的？</h1><p>说出你的需求，我会从<b>学科网资源库</b>出发，陪你一起完成。</p><div class="search-box" id="searchBox"><div class="search-inner"><textarea id="topicInput" rows="1" placeholder="描述你的教学需求，AI 自动判断该进入哪个场景…">${esc(state.query)}</textarea><button class="send" id="startBtn" title="开始备课" ${!state.query.trim()?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"></path><path d="m6 11.5 6-6 6 6"></path></svg></button></div></div><div class="home-v1-chips">${chips.map(c=>`<button class="home-v1-chip" data-scene="${c.id}">${svgIcon(c.icon,18,18)}<span>${esc(c.label)}</span>${c.badge?`<span class="pill" style="background:oklch(0.95 .05 45);color:oklch(0.5 .13 45);font-size:9.5px;margin-left:2px">${esc(c.badge)}</span>`:''}</button>`).join('')}</div><div class="home-v1-examples"><span class="home-v1-examples-label">${svgIcon('spark',14,14)} 老师们在问</span>${examples.map(x=>`<button class="home-v1-example" data-topic="${esc(x)}">${esc(x)}</button>`).join('')}</div></div></section><div class="home-v1-memory"><div class="home-v1-login"><h3>登录解锁「小博士记忆」</h3><p>登录后，小博士会记住你、越用越懂你</p><div class="home-v1-login-row"><span>${svgIcon('spark',12,12)}</span>记住你的学科、学段与版本偏好</div><div class="home-v1-login-row"><span>${svgIcon('history',12,12)}</span>一键续作上次的课件、试卷与教案</div><div class="home-v1-login-row"><span>${svgIcon('grid',12,12)}</span>同步你的收藏与下载，随处可取</div><button class="home-v1-login-btn" id="loginBtn">登录 / 注册 ${svgIcon('plus',14,14)}</button><div style="font-size:11.5px;color:var(--ink-3);margin-top:8px">未登录也可正常使用全部场景</div></div></div><section class="home-v1-auth"><div class="home-v1-auth-inner"><span>✓ 每一份生成，都有学科网资源库支撑</span><span><b>2000万+</b> 精品资源</span><span><b>20年</b> 教研沉淀</span><span><b>三审三校</b> 质量把关</span></div><div class="home-v1-auth-disclaimer">AI 内容仅供教研参考，请结合实际教学进行调整</div></section></div></div>`;
+$('app').innerHTML=`<div class="app-shell">${railHtml}<main class="main-area">${heroHtml}</main></div>`;
 const ta=$('topicInput');ta.addEventListener('input',()=>{ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,132)+'px'});
 const sendBtn=$('startBtn');
 const updSend=()=>{const v=$('topicInput').value.trim();sendBtn.disabled=!v;};
@@ -224,11 +277,11 @@ updSend();
 ta.addEventListener('input',updSend);
 sendBtn.onclick=()=>go();
 $('topicInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}};
-document.querySelectorAll('.example').forEach(b=>b.onclick=()=>go(b.dataset.topic));
-document.querySelectorAll('[data-recent]').forEach(b=>b.onclick=()=>{state.query=b.querySelector('.title').textContent;openDrawer('workspace')});
+document.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>go(b.dataset.topic));
 document.querySelectorAll('[data-scene]').forEach(b=>b.onclick=()=>{if(b.dataset.scene==='write-lesson')go();else toast('该场景即将上线')});
 document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>toast('该功能即将上线'));
 $('newChatRail').onclick=()=>{state.query='统编版九年级上册《沁园春·雪》/ 毛泽东';render()};
+$('loginBtn').onclick=()=>toast('登录功能即将上线');
 }
 function progress(step){return `<div class="progress">${['明确课节','准备教案','生成与打磨'].map((x,i)=>`${i?'<div class="progress-line"></div>':''}<div class="progress-step ${i+1<step?'done':i+1===step?'active':''}"><span class="progress-num">${i+1<step?'✓':i+1}</span>${x}</div>`).join('')}</div>`}
 function setupShell(content,step=1){return `<div class="drawer-setup"><div class="setup-shell">${progress(step)}${content}</div></div>`}
